@@ -88,34 +88,35 @@ Vary: Accept
         "description": "description",
         "duration": 123,
         "genres": [
-            {
-                "id": 1,
-                "name": "drama"
-            }
+            "drama"
         ],
         "actors": [
-            {
-                "id": 1,
-                "first_name": "Al",
-                "last_name": "Pacino",
-                "full_name": "Al Pacino"
-            }
+            "F F"
         ]
     },
     "cinema_hall": {
         "id": 1,
         "name": "Green",
-        "rows": 10,
-        "seats_in_row": 14,
+        "rows": 14,
+        "seats_in_row": 20,
         "capacity": 140
     },
     "tickets": [
         {
             "row": 2,
             "seat": 1
+        },
+        {
+            "row": 2,
+            "seat": 3
+        },
+        {
+            "row": 2,
+            "seat": 10
         }
     ]
 }
+
 ```
 - Add `tickets_available` field to movie sessions list endpoint
 
