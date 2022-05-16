@@ -5,7 +5,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from cinema.models import Movie, Genre, Actor, MovieSession, CinemaHall
+from cinema.models import Movie, Genre, Actor, MovieSession, CinemaHall, Ticket
 
 
 class MovieSessionApiTests(TestCase):
@@ -67,3 +67,4 @@ class MovieSessionApiTests(TestCase):
         self.assertEqual(response.data["cinema_hall"]["rows"], 10)
         self.assertEqual(response.data["cinema_hall"]["seats_in_row"], 14)
         self.assertEqual(response.data["cinema_hall"]["name"], "White")
+        self.assertEqual(response.data["tickets"], [])

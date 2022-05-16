@@ -9,21 +9,21 @@ from cinema.models import Movie, Genre, Actor
 class MovieApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        drama = Genre.objects.create(
+        self.drama = Genre.objects.create(
             name="Drama",
         )
-        comedy = Genre.objects.create(
+        self.comedy = Genre.objects.create(
             name="Comedy",
         )
-        actress = Actor.objects.create(first_name="Kate", last_name="Winslet")
-        movie = Movie.objects.create(
+        self.actress = Actor.objects.create(first_name="Kate", last_name="Winslet")
+        self.movie = Movie.objects.create(
             title="Titanic",
             description="Titanic description",
             duration=123,
         )
-        movie.genres.add(drama)
-        movie.genres.add(comedy)
-        movie.actors.add(actress)
+        self.movie.genres.add(self.drama)
+        self.movie.genres.add(self.comedy)
+        self.movie.actors.add(self.actress)
 
     def test_get_movies(self):
         movies = self.client.get("/api/cinema/movies/")
@@ -38,6 +38,24 @@ class MovieApiTests(TestCase):
         self.assertEqual(movies.status_code, status.HTTP_200_OK)
         for field in titanic:
             self.assertEqual(movies.data[0][field], titanic[field])
+
+    def test_get_movies_with_genre_filtering(self):
+        movies = self.client.get(f"/api/cinema/movies/?genres={self.comedy.id}")
+        self.assertEqual(len(movies.data), 1)
+        movies = self.client.get(f"/api/cinema/movies/?genres={123213}")
+        self.assertEqual(len(movies.data), 0)
+
+    def test_get_movies_with_actors_filtering(self):
+        movies = self.client.get(f"/api/cinema/movies/?actors={self.actress.id}")
+        self.assertEqual(len(movies.data), 1)
+        movies = self.client.get(f"/api/cinema/movies/?actors={123}")
+        self.assertEqual(len(movies.data), 0)
+
+    def test_get_movies_with_title_filtering(self):
+        movies = self.client.get(f"/api/cinema/movies/?title=ita")
+        self.assertEqual(len(movies.data), 1)
+        movies = self.client.get(f"/api/cinema/movies/?title=ati")
+        self.assertEqual(len(movies.data), 0)
 
     def test_post_movies(self):
         movies = self.client.post(
