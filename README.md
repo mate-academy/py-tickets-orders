@@ -66,8 +66,9 @@ It should support the following request structure:
 }
 ```
 
-2. Provide filtering for movies by genres, actors and title. 
+2. Provide filtering for movies by genres, actors and title. Use `?actors=`, `?genres=` and `?title=` parameters.
 Filtering by title with the `string` parameter should return all movies whose title contains `string`.
+
 
 3. Return taken places for movie session details endpoint
 ```
@@ -118,7 +119,7 @@ Vary: Accept
 }
 
 ```
-- Add `tickets_available` field to movie sessions list endpoint
+4. Add `tickets_available` field to movie sessions list endpoint
 
 
 Optional tasks:
