@@ -98,6 +98,13 @@ class Ticket(models.Model):
     def __str__(self):
         return f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
 
+    # @staticmethod
+    # def validate_seat(seat: int, num_seats: int, error_to_raise):
+    #     if not (1 <= seat <= num_seats):
+    #         raise error_to_raise({
+    #             "seat": f"seat must be from 1 to {num_seats}, not {seat}"
+    #         })
+
     class Meta:
         unique_together = ("movie_session", "row", "seat")
         ordering = ("seat",)
