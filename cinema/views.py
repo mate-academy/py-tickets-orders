@@ -104,9 +104,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             movie_date = datetime.strptime(date_, "%Y-%m-%d")
             queryset = queryset.filter(show_time=movie_date)
 
-            # Tests of the code above work, but why, if the correct implementation is below?
-            # queryset = queryset.filter(show_time__contains=date_)
-
         if movie:
             queryset = queryset.filter(movie__id=int(movie))
 

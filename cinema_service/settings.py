@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    # "rest_framework.authtoken",
     "debug_toolbar",
     "cinema",
     "user",
@@ -110,8 +109,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "user.User"
 
-# LOGIN_REDIRECT_URL = '/'
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
@@ -133,14 +130,3 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# REST_FRAMEWORK = {
-#     "DEFAULT_AUTHENTICATION_CLASSES": [
-#         "rest_framework.authentication.TokenAuthentication",
-#         "rest_framework.authentication.SessionAuthentication",
-#     ],
-#
-#     "DEFAULT_PERMISSION_CLASSES": [
-#         "rest_framework.permissions.IsAdminUser",
-#     ],
-# }
