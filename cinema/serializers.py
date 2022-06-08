@@ -7,7 +7,8 @@ from cinema.models import (
     CinemaHall,
     Movie,
     MovieSession,
-    Order, Ticket
+    Order,
+    Ticket
 )
 
 
