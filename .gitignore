@@ -1,5 +1,7 @@
 .idea/
 .vscode/
+cinema/tests
+pyproject.toml
 *.iml
 .env
 .DS_Store
