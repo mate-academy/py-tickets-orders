@@ -62,6 +62,9 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
 
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related("genres", "actors")
+
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -86,6 +89,30 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+
+        queryset = self.queryset
+
+        date = self.request.query_params.get("date")
+        if date:
+            year, month, day = date.split("-")
+            queryset = queryset.filter(
+                show_time__year=year,
+                show_time__month=month,
+                show_time__day=day
+            )
+
+        movie = self.request.query_params.get("movie")
+        if movie:
+            movie_ids = [int(str_id) for str_id in movie.split(",")]
+            queryset = self.queryset.filter(movie__id__in=movie_ids)
+
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.select_related("movie")
+
+        return queryset
+
 
 
 class OrderListPagination(PageNumberPagination):
