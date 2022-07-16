@@ -1,3 +1,4 @@
+from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -108,11 +109,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             movie_ids = [int(str_id) for str_id in movie.split(",")]
             queryset = self.queryset.filter(movie__id__in=movie_ids)
 
-        if self.action in ("list", "retrieve"):
-            queryset = queryset.select_related("movie")
+        if self.action == "list":
+            capacity = F("cinema_hall__seats_in_row") * F("cinema_hall__rows")
+            queryset = queryset.select_related("cinema_hall").annotate(
+                tickets_available=(capacity - Count("tickets")))
 
         return queryset
-
 
 
 class OrderListPagination(PageNumberPagination):
@@ -127,7 +129,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderListPagination
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        queryset = self.queryset.filter(user=self.request.user)
+
+        if self.action == "list":
+            queryset = queryset.prefetch_related(
+                "tickets__movie_session__cinema_hall"
+            )
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

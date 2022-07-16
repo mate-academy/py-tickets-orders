@@ -117,3 +117,4 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+        ordering = ("row", "seat")
