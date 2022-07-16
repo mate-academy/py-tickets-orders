@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -104,8 +102,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         date = self.request.query_params.get("date")
         if date:
+            year, month, day = date.split("-")
             queryset = queryset.filter(
-                show_time=datetime.strptime(date, "%Y-%m-%d")
+                show_time__year=year,
+                show_time__month=month,
+                show_time__day=day
             )
 
         if self.action == "list":
