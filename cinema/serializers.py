@@ -48,6 +48,8 @@ class MovieListSerializer(MovieSerializer):
     )
 
 
+
+
 class MovieDetailSerializer(MovieSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     actors = ActorSerializer(many=True, read_only=True)
@@ -94,7 +96,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 class TicketSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
-        data = super(TicketSerializer, self).validate(attrs)
+        data = super().validate(attrs)
         Ticket.validate_seat_and_row(
             attrs["seat"],
             attrs["row"],
