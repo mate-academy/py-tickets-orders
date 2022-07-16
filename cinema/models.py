@@ -119,3 +119,27 @@ class Ticket(models.Model):
     class Meta:
         unique_together = ("movie_session", "row", "seat")
         ordering = ("row", "seat")
+
+        # def get_queryset(self):
+        #     date = self.request.query_params.get("date")
+        #     movies_id = self.request.query_params.get("movie")
+        #     self.queryset = self.queryset.select_related("cinema_hall",
+        #                                                  "movie")
+        #
+        #     if date:
+        #         date = date.split("-")
+        #         self.queryset = self.queryset.filter(show_time__year=date[0],
+        #                                              show_time__month=date[1],
+        #                                              show_time__day=date[2])
+        #
+        #     if movies_id:
+        #         movies_id = [int(num) for num in movies_id.split(",")]
+        #         self.queryset = self.queryset.filter(movie_id__in=movies_id)
+        #
+        #     if self.action == "list":
+        #         self.queryset = (
+        #             self.queryset.prefetch_related("tickets").annotate(
+        #                 tickets_available=F("cinema_hall__seats_in_row") * F(
+        #                     "cinema_hall__rows") - Count("tickets")))
+        #
+        #     return self.queryset

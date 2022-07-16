@@ -125,9 +125,7 @@ class TicketListSerializer(TicketSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(
-        many=True, read_only=False, allow_null=False
-    )
+    tickets = TicketSerializer(many=True, read_only=False, allow_null=False)
 
     class Meta:
         model = Order
@@ -139,7 +137,6 @@ class OrderSerializer(serializers.ModelSerializer):
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
-
             return order
 
 
