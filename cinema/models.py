@@ -80,6 +80,9 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
+    class Meta:
+        unique_together = ("movie_session", "row", "seat")
+
     def clean(self):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (self.row, "row", "count_rows"),
@@ -97,6 +100,3 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
-
-    class Meta:
-        unique_together = ("movie_session", "row", "seat")
