@@ -84,6 +84,7 @@ class Ticket(models.Model):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (self.row, "row", "count_rows"),
             (self.seat, "seat", "count_seats_in_row"),
+
         ]:
             count_attrs = getattr(self.movie_session.cinema_hall, cinema_hall_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
@@ -100,3 +101,4 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+        ordering = ("row", "seat",)
