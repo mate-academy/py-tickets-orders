@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from cinema.models import (
     Genre,
@@ -83,6 +84,18 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        data = super(TicketSerializer, self).validate(attrs)
+        if not(1 <= attrs["row"] <= attrs["movie_session"].cinema_hall.rows):
+            raise serializers.ValidationError({
+                "row": f" row must be in range [1, {attrs['movie_session'].cinema_hall.rows}] not {attrs['row']}"
+            })
+        if not(1 <= attrs["seat"] <= attrs["movie_session"].cinema_hall.seats_in_row):
+            raise serializers.ValidationError({
+                "seat": f" seat must be in range [1, {attrs['movie_session'].cinema_hall.seats_in_row}] not {attrs['seat']}"
+            })
+
+        return data
 
     class Meta:
         model = Ticket
