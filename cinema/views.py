@@ -23,7 +23,8 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderSerializer, OrderListSerializer
+    OrderSerializer,
+    OrderListSerializer
 )
 
 
@@ -100,6 +101,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             capacity = F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+
             queryset = (
                 queryset
                 .select_related("cinema_hall")
