@@ -49,7 +49,7 @@ class ParamsToIntsMixin:
         return [int(str_id) for str_id in qs.split(",")]
 
 
-class MovieViewSet(viewsets.ModelViewSet):
+class MovieViewSet(viewsets.ModelViewSet, ParamsToIntsMixin):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
@@ -86,7 +86,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(viewsets.ModelViewSet, ParamsToIntsMixin):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
@@ -141,11 +141,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def get_serializer_class(self):
+        if self.action == "create":
+            return OrderCreateSerializer
+        return OrderSerializer
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-    def get_serializer_class(self):
-        if self.action == "list":
-            return OrderCreateSerializer
-
-        return OrderSerializer
