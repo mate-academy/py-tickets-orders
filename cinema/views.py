@@ -102,9 +102,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if date_string:
             date = datetime.strptime(date_string, "%Y-%m-%d")
             queryset = queryset.filter(
-                show_time__day=date.day,
-                show_time__year=date.year,
-                show_time__month=date.month
+                show_time=date
             )
 
         if self.action == "list":
