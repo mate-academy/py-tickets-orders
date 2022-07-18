@@ -1,41 +1,28 @@
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
-from cinema.models import (
-    Genre,
-    Actor,
-    CinemaHall,
-    Movie,
-    MovieSession,
-    Order,
-    Ticket
-)
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
 
 class GenreSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Genre
         fields = ("id", "name")
 
 
 class ActorSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Actor
         fields = ("id", "first_name", "last_name", "full_name")
 
 
 class CinemaHallSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = CinemaHall
         fields = ("id", "name", "rows", "seats_in_row", "capacity")
 
 
 class MovieSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Movie
         fields = ("id", "title", "description", "duration", "genres", "actors")
@@ -79,39 +66,66 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         source="cinema_hall.capacity",
         read_only=True
     )
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie_title",
-                  "cinema_hall_name", "cinema_hall_capacity"
-                  )
+        fields = (
+            "id",
+            "show_time",
+            "movie_title",
+            "cinema_hall_name",
+            "cinema_hall_capacity",
+            "tickets_available"
+        )
 
 
-class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+class TicketSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        data = super(TicketSerializer, self).validate(attrs)
+        Ticket.validate_seat(
+            attrs["row"],
+            attrs["movie_session"].cinema_hall.rows,
+            serializers.ValidationError
+        )
+        Ticket.validate_seat(
+            attrs["seat"],
+            attrs["movie_session"].cinema_hall.seats_in_row,
+            serializers.ValidationError,
+        )
 
-    class Meta:
-        model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
-
+        return data
 
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Ticket.objects.all(), fields=("movie_session", "row", "seat")
-            )
-        ]
+
+
+class TicketListSerializer(TicketSerializer):
+    movie_session = MovieSessionListSerializer(many=False)
+
+
+class TicketSeatSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
+    tickets = TicketListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
         fields = ("id", "tickets", "created_at")
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True, read_only=False)
+
+    class Meta:
+        model = Order
+        fields = ("tickets",)
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -120,3 +134,17 @@ class OrderSerializer(serializers.ModelSerializer):
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
             return order
+
+
+class MovieSessionDetailSerializer(MovieSessionSerializer):
+    movie = MovieListSerializer(many=False, read_only=True)
+    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_seats = TicketSeatSerializer(
+        source="tickets",
+        many=True,
+        read_only=True
+    )
+
+    class Meta:
+        model = MovieSession
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_seats")

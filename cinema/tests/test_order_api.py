@@ -35,17 +35,10 @@ class OrderApiTests(TestCase):
         self.movie_session = MovieSession.objects.create(
             movie=self.movie, cinema_hall=self.cinema_hall, show_time=datetime.now()
         )
-        self.user = User.objects.create(
-            username="admin"
-        )
-        self.order = Order.objects.create(
-            user=self.user
-        )
+        self.user = User.objects.create(username="admin")
+        self.order = Order.objects.create(user=self.user)
         self.ticket = Ticket.objects.create(
-            movie_session=self.movie_session,
-            row=2,
-            seat=12,
-            order=self.order
+            movie_session=self.movie_session, row=2, seat=12, order=self.order
         )
 
     def test_get_order(self):
@@ -64,7 +57,9 @@ class OrderApiTests(TestCase):
         self.assertEqual(movie_session["cinema_hall_capacity"], 140)
 
     def test_movie_session_detail_tickets(self):
-        response = self.client.get(f"/api/cinema/movie_sessions/{self.movie_session.id}/")
+        response = self.client.get(
+            f"/api/cinema/movie_sessions/{self.movie_session.id}/"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["taken_places"][0]["row"], self.ticket.row)
         self.assertEqual(response.data["taken_places"][0]["seat"], self.ticket.seat)
@@ -72,5 +67,6 @@ class OrderApiTests(TestCase):
     def test_movie_session_list_tickets_available(self):
         response = self.client.get(f"/api/cinema/movie_sessions/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["tickets_available"], self.cinema_hall.capacity - 1)
-
+        self.assertEqual(
+            response.data[0]["tickets_available"], self.cinema_hall.capacity - 1
+        )
