@@ -5,7 +5,7 @@ from cinema.models import (
     Actor,
     CinemaHall,
     Movie,
-    MovieSession
+    MovieSession, Order
 )
 
 from cinema.serializers import (
@@ -17,7 +17,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer
+    MovieListSerializer, OrderSerializer
 )
 
 
@@ -62,3 +62,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
