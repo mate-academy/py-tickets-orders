@@ -70,7 +70,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             actors_ids = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_class(self):
 
@@ -106,7 +106,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             movie_date = datetime.strptime(_date_, "%Y-%m-%d")
             queryset = queryset.filter(show_time=movie_date)
 
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -120,7 +120,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderPagination(PageNumberPagination):
     page_size = 3
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
 
 
