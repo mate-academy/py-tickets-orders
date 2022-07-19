@@ -56,10 +56,10 @@ class MovieViewSet(viewsets.ModelViewSet):
         if actors:
             actor_ids = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actor_ids)
-        elif genres:
+        if genres:
             genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
-        elif title:
+        if title:
             queryset = queryset.filter(title__icontains=title)
         return queryset.distinct()
 
@@ -81,14 +81,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = MovieSession.objects.all()
         date_ = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
-        if date_ and movie:
-            queryset = queryset.filter(
-                Q(show_time__date=date_) &
-                Q(movie_id=movie)
-            )
-        elif date_:
+        if date_:
             queryset = queryset.filter(show_time__date=date_)
-        elif movie:
+        if movie:
             queryset = queryset.filter(movie_id=movie)
 
         if self.action == "list":
