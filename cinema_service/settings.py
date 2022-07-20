@@ -46,15 +46,6 @@ INSTALLED_APPS = [
     "user",
 ]
 
-
-# REST_FRAMEWORK = {
-#     'DEFAULT_FILTER_BACKENDS': (
-#         'django_filters.rest_framework.DjangoFilterBackend',
-#         'rest_framework.filters.SearchFilter',
-#     ),
-# }
-# SEARCH_PARAM = "title"
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     'debug_toolbar.middleware.DebugToolbarMiddleware',
@@ -137,3 +128,9 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+    ),
+}
