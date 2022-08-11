@@ -1,3 +1,4 @@
+from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -24,6 +25,12 @@ from cinema.serializers import (
 )
 
 
+class ParamsToIntsMixin:
+    @staticmethod
+    def _params_to_ints(qs):
+        return [int(str_id) for str_id in qs.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -39,8 +46,8 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
+class MovieViewSet(viewsets.ModelViewSet, ParamsToIntsMixin):
+    queryset = Movie.objects.all().prefetch_related("actors", "genres")
     serializer_class = MovieSerializer
 
     def get_serializer_class(self):
@@ -52,10 +59,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
-
     def get_queryset(self):
         queryset = self.queryset
 
@@ -64,20 +67,20 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            actors_ids = self._params_to_ints((actors))
+            actors_ids = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
-        elif genres:
-            genres_ids = self._params_to_ints((genres))
+        if genres:
+            genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
-        elif title:
+        if title:
             queryset = queryset.filter(title__contains=title)
 
         return queryset
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(viewsets.ModelViewSet, ParamsToIntsMixin):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
@@ -89,6 +92,32 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        if self.action == "list":
+            queryset = (
+                queryset.select_related("movie", "cinema_hall").
+                annotate(tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets"))
+            ).order_by("-id")
+
+        movie = self.request.query_params.get("movie")
+        date = self.request.query_params.get("date")
+
+        if movie:
+            movie_ids = self._params_to_ints(movie)
+            queryset = queryset.filter(movie__id__in=movie_ids)
+
+        if date:
+            date = date.split("-")
+            queryset = queryset.filter(
+                show_time__year=date[0],
+                show_time__month=date[1],
+                show_time__day=date[2]
+            )
+
+        return queryset
 
 
 class OrderPagination(PageNumberPagination):
