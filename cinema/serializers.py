@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.db.models import Count
 from rest_framework import serializers
 
 from cinema.models import (
@@ -7,7 +6,9 @@ from cinema.models import (
     Actor,
     CinemaHall,
     Movie,
-    MovieSession, Order, Ticket
+    MovieSession,
+    Order,
+    Ticket
 )
 
 
@@ -62,7 +63,6 @@ class MovieDetailSerializer(MovieSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    # movie_session = MovieSessionListSerializer(many=False, read_only=False)
 
     class Meta:
         model = Ticket
@@ -96,8 +96,14 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie_title",
-                  "cinema_hall_name", "cinema_hall_capacity", "tickets_available")
+        fields = (
+            "id",
+            "show_time",
+            "movie_title",
+            "cinema_hall_name",
+            "cinema_hall_capacity",
+            "tickets_available"
+        )
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):

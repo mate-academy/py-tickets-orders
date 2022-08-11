@@ -8,7 +8,9 @@ from cinema.models import (
     Actor,
     CinemaHall,
     Movie,
-    MovieSession, Order, Ticket
+    MovieSession,
+    Order,
+    Ticket
 )
 
 from cinema.serializers import (
