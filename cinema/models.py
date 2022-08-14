@@ -80,12 +80,13 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
+    @staticmethod
+    def validate_seat(row: int, seat: int, movie_session, error_to_raise):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row"),
         ]:
-            count_attrs = getattr(self.movie_session.cinema_hall, cinema_hall_attr_name)
+            count_attrs = getattr(movie_session.cinema_hall, cinema_hall_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise ValidationError(
                     {
@@ -94,6 +95,15 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
+
+    def clean(self):
+        Ticket.validate_seat(self.row, self.seat, self.movie_session, ValidationError)
+
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        self.full_clean()
+        return super(Ticket, self).save(force_insert, force_update, using, update_fields)
 
     def __str__(self):
         return f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
