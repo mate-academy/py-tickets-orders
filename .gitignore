@@ -8,4 +8,3 @@ venv/
 **__pycache__/
 *.pyc
 app/db.sqlite3
-app/cinema_service_db_data.json
