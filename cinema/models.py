@@ -81,6 +81,7 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     def clean(self):
+        # Ticket.validate_seat(self.seat, self.row, ValidationError)
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (self.row, "row", "rows"),
             (self.seat, "seat", "seats_in_row"),
