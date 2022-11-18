@@ -1,7 +1,15 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket,
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -75,7 +83,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class MovieSessionOrderSerializer(MovieSessionListSerializer):
-
     class Meta:
         model = MovieSession
         fields = (
@@ -88,7 +95,6 @@ class MovieSessionOrderSerializer(MovieSessionListSerializer):
 
 
 class TicketRowSeatSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Ticket
         fields = ("row", "seat")
@@ -103,7 +109,6 @@ class TicketListSerializer(serializers.ModelSerializer):
 
 
 class TicketCreateSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Ticket
         fields = ("row", "seat", "movie_session")
@@ -112,8 +117,7 @@ class TicketCreateSerializer(serializers.ModelSerializer):
             UniqueTogetherValidator(
                 queryset=Ticket.objects.all(),
                 fields=["row", "seat", "movie_session"],
-                message="This place isn't available(((((((((((((((("
-
+                message="This place isn't available((((((((((((((((",
             )
         ]
 
@@ -121,7 +125,9 @@ class TicketCreateSerializer(serializers.ModelSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = TicketRowSeatSerializer(source="tickets", many=True, read_only=True)
+    taken_places = TicketRowSeatSerializer(
+        source="tickets", many=True, read_only=True
+    )
 
     class Meta:
         model = MovieSession
@@ -144,7 +150,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         fields = ("tickets",)
 
     def create(self, validated_data):
-        tickets_data = validated_data.pop('tickets')
+        tickets_data = validated_data.pop("tickets")
         order = Order.objects.create(**validated_data)
         for ticket in tickets_data:
             Ticket.objects.create(order=order, **ticket)
