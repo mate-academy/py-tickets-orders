@@ -78,3 +78,9 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
+
+
+class OrderSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ("id", "created_at", "user")
