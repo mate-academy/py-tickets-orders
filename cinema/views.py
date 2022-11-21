@@ -58,7 +58,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             actors_ids = self._param_to_ints(actors)
             queryset = queryset.filter(actors__id_in=actors_ids)
 
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
