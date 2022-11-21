@@ -2,13 +2,15 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import (Genre,
-                           Actor,
-                           CinemaHall,
-                           Movie,
-                           MovieSession,
-                           Order,
-                           Ticket)
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -60,12 +62,17 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
-    movie_title = serializers.CharField(source="movie.title",
-                                        read_only=True)
-    cinema_hall_name = serializers.CharField(source="cinema_hall.name",
-                                             read_only=True)
+    movie_title = serializers.CharField(
+        source="movie.title",
+        read_only=True
+    )
+    cinema_hall_name = serializers.CharField(
+        source="cinema_hall.name",
+        read_only=True
+    )
     cinema_hall_capacity = serializers.IntegerField(
-        source="cinema_hall.capacity", read_only=True
+        source="cinema_hall.capacity",
+        read_only=True
     )
     tickets_available = serializers.IntegerField(read_only=True)
 
@@ -136,7 +143,7 @@ class OrderSerializer(serializers.ModelSerializer):
 class OrderCreateSerializer(OrderSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
 
-    def create(self, validated_data):
+    def create(self, validated_data) -> Order:
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)

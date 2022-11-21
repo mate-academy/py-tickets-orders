@@ -1,4 +1,4 @@
-from django.db.models import Count, F
+from django.db.models import Count, F, QuerySet
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -39,10 +39,10 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def params_to_ints(qs):
+    def params_to_ints(qs) -> list[int]:
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
@@ -75,7 +75,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
 
         date = self.request.query_params.get("date")
@@ -88,13 +88,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie__id=movie)
 
         if self.action == "list":
-            queryset = queryset.select_related("movie",
-                                               "cinema_hall"
-                                               ).annotate(
-                tickets_available=F("cinema_hall__rows")
-                * F("cinema_hall__seats_in_row")
-                - Count("tickets")
-            )
+            queryset = queryset.select_related(
+                "movie",
+                "cinema_hall"
+            ).annotate(
+                tickets_available=(
+                    (F("cinema_hall__rows")
+                     * F("cinema_hall__seats_in_row")
+                     - Count("tickets")
+                     )
+                ))
 
         return queryset
 
@@ -118,7 +121,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return OrderSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action == "list":
@@ -129,5 +132,5 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer) -> None:
         serializer.save(user=self.request.user)
