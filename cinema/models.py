@@ -89,7 +89,8 @@ class Ticket(models.Model):
         if not (1 <= seat <= num_seats):
             raise error_to_raise(
                 {
-                    "Seat": f"seat must be in range [1, {num_seats}, not {seat}]"
+                    "Seat":
+                        f"seat must be in range [1, {num_seats}, not {seat}]"
                 }
             )
 
