@@ -45,20 +45,23 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset
 
-        title = self.request.query_params.get("title")
-        genres = self.request.query_params.get("genres")
         actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
 
-        if title:
-            queryset = queryset.filter(title__icontains=title)
-
-        if genres:
-            genres_ids = self._param_to_ints(genres)
-            queryset = queryset.filter(genres__id_in=genres_ids)
+        if self.action == "list":
+            queryset = queryset.prefetch_related("actors", "genres")
 
         if actors:
             actors_ids = self._param_to_ints(actors)
-            queryset = queryset.filter(actors__id_in=actors_ids)
+            queryset = queryset.filter(actors__id__in=actors_ids)
+
+        if genres:
+            genres_ids = self._param_to_ints(genres)
+            queryset = queryset.filter(genres__id__in=genres_ids)
+
+        if title:
+            queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
 
@@ -78,6 +81,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset
+        movie = self.request.query_params.get("movie")
+        date = self.request.query_params.get("date")
+
+        if movie:
+            queryset = queryset.filter(movie_id=movie)
+
+        if date:
+            queryset = queryset.filter(show_time__date=date)
 
         if self.action == "list":
             queryset = (
@@ -110,6 +121,7 @@ class OrderPagination(PageNumberPagination):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = OrderPagination
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset.filter(user=self.request.user)
