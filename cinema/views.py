@@ -99,6 +99,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
+        if self.action in ("list", "retrieve"):
+            qs = qs.select_related("movie", "cinema_hall")
+
         if date:
             date = datetime.strptime(date, "%Y-%m-%d")
             qs = qs.filter(
