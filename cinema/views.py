@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.db.models import Count, F
 from rest_framework import viewsets
 
 from cinema.models import (
@@ -94,13 +95,22 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
     def get_queryset(self):
-        qs = self.queryset
+        qs = self.queryset.select_related(
+            "movie",
+            "cinema_hall"
+        )
+
+        if self.action == "list":
+            qs = qs.annotate(
+                tickets_available=(
+                    F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row")
+                    - Count("tickets")
+                )
+            )
 
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
-
-        if self.action in ("list", "retrieve"):
-            qs = qs.select_related("movie", "cinema_hall")
 
         if date:
             date = datetime.strptime(date, "%Y-%m-%d")
