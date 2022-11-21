@@ -90,6 +90,10 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
     def validate(self, attrs):
         data = super(TicketSerializer, self).validate(attrs)
 
@@ -101,9 +105,9 @@ class TicketSerializer(serializers.ModelSerializer):
         )
         return data
 
-    class Meta:
-        model = Ticket
-        fields = ("id", "row", "seat", "movie_session")
+
+class TicketListSerializer(TicketSerializer):
+    movie_session = MovieSessionListSerializer(read_only=True, many=False)
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -112,12 +116,6 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ("id", "created_at", "tickets")
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Ticket.objects.all(),
-                fields=["order", "row"]
-            )
-        ]
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -126,3 +124,7 @@ class OrderSerializer(serializers.ModelSerializer):
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
             return order
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
