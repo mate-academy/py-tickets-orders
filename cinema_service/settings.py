@@ -124,7 +124,8 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = False
+# MovieSession model uses TZ-aware data
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
