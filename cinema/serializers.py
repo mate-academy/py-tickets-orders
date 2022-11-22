@@ -129,7 +129,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ["id", "created_at", "tickets"]
 
     @transaction.atomic
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> Order:
         tickets = validated_data.pop("tickets")
         order = Order.objects.create(**validated_data)
 
