@@ -35,7 +35,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.prefetch_related("actors", "genres")
+    queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
     @staticmethod
