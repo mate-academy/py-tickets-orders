@@ -1,6 +1,5 @@
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
     Genre,
@@ -124,12 +123,6 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer(many=False, read_only=True)
-
-
-class OrderPagination(PageNumberPagination):
-    page_size = 1
-    page_size_query_param = "page_size"
-    max_page_size = 10
 
 
 class OrderSerializer(serializers.ModelSerializer):
