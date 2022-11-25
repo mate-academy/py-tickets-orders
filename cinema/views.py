@@ -51,8 +51,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     def params_to_list_int(qs):
         return [int(num) for num in qs.split(",")]
 
-    def get_queryset(self):
-        queryset = self.queryset
+    def filter_queryset(self, queryset):
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
@@ -68,12 +67,27 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        return queryset.distinct().prefetch_related("genres", "actors")
+        return queryset
+
+    def get_queryset(self):
+        return self.queryset.distinct().prefetch_related("genres", "actors")
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+
+    def filter_queryset(self, queryset):
+        movie_id = self.request.query_params.get("movie")
+        date = self.request.query_params.get("date")
+
+        if movie_id:
+            queryset = queryset.filter(movie__id=movie_id)
+
+        if date:
+            queryset = queryset.filter(show_time__date=date)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -84,28 +98,20 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    @staticmethod
-    def _params_to_str(qs):
-        return [str(str_id) for str_id in qs.split(",")]
-
     def get_queryset(self):
         queryset = self.queryset
-        if self.action == "list":
-            queryset = self.queryset\
-                .select_related("movie", "cinema_hall")\
-                .annotate(tickets_available=(
-                    F("cinema_hall__rows")
-                    * F("cinema_hall__seats_in_row")
-                    - Count("tickets")))
 
-        movie = self.request.query_params.get("movie")
-        date = self.request.query_params.get("date")
-        if movie:
-            movie_id = self._params_to_str(movie)
-            queryset = queryset.filter(movie__id__in=movie_id)
-        if date:
-            queryset = queryset.filter(show_time__exact=date)
-        return queryset.distinct()
+        if self.action == "list":
+            queryset = self.queryset.select_related(
+                "movie", "cinema_hall"
+            ).annotate(
+                tickets_available=F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")
+                - Count("tickets")
+            )
+            queryset = self.filter_queryset(queryset)
+
+        return queryset
 
 
 class OrderPagination(PageNumberPagination):
@@ -123,8 +129,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         user = self.request.user
         self.queryset.filter(user=user)
         if self.action == "list":
-            return self.queryset. \
-                prefetch_related("tickets__movie_session__movie")
+            return self.queryset.prefetch_related(
+                "tickets__movie_session__movie"
+            )
 
     def get_serializer_class(self):
         if self.action == "list":
