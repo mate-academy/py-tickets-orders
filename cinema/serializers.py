@@ -58,12 +58,7 @@ class MovieDetailSerializer(MovieSerializer):
 class MovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieSession
-        fields = (
-            "id",
-            "show_time",
-            "movie",
-            "cinema_hall",
-        )
+        fields = ("id", "show_time", "movie", "cinema_hall")
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
@@ -91,15 +86,11 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
-        fields = ("row", "seat", "movie_session")
+        fields = ("id", "row", "seat", "movie_session")
 
 
 class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionSerializer(many=False, read_only=True)
-
-    class Meta:
-        model = Ticket
-        fields = ("id", "row", "seat", "movie_session")
 
 
 class TicketDelailSerializer(TicketSerializer):
@@ -139,14 +130,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(serializers.ModelSerializer):
-    tickets = TicketListSerializer(many=True, read_only=False)
+    tickets = TicketListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
         fields = ("id", "tickets", "created_at")
-
-
-class ResultsSetPagination(PageNumberPagination):
-    page_size = 5
-    page_size_query_param = "page_size"
-    max_page_size = 50
