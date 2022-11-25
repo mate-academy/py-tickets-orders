@@ -38,6 +38,7 @@ class MovieSessionApiTests(TestCase):
                 year=2022,
                 month=9,
                 day=2,
+                hour=9
             ),
         )
 
