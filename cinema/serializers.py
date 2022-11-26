@@ -57,7 +57,10 @@ class TicketSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         data = super(TicketSerializer, self).validate(attrs)
-        Ticket.validate_seat(attrs["seat"], attrs["movie_session"].cinema_hall.seats_in_row, serializers.ValidationError)
+        Ticket.validate_seat(
+            attrs["seat"],
+            attrs["movie_session"].cinema_hall.seats_in_row,
+            serializers.ValidationError)
         return data
 
     class Meta:
