@@ -12,14 +12,14 @@ class CinemaHall(models.Model):
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
 
-    def str(self):
+    def __str__(self):
         return self.name
 
 
 class Genre(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
-    def str(self):
+    def __str__(self):
         return self.name
 
 
@@ -27,7 +27,7 @@ class Actor(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
 
-    def str(self):
+    def __str__(self):
         return self.first_name + " " + self.last_name
 
     @property
@@ -45,7 +45,7 @@ class Movie(models.Model):
     class Meta:
         ordering = ["title"]
 
-    def str(self):
+    def __str__(self):
         return self.title
 
 
@@ -57,7 +57,7 @@ class MovieSession(models.Model):
     class Meta:
         ordering = ["-show_time"]
 
-    def str(self):
+    def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
 
@@ -67,7 +67,7 @@ class Order(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE
     )
 
-    def str(self):
+    def __str__(self):
         return str(self.created_at)
 
     class Meta:
@@ -120,7 +120,7 @@ class Ticket(models.Model):
             force_insert, force_update, using, update_fields
         )
 
-    def str(self):
+    def __str__(self):
         return (
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
