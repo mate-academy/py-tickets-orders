@@ -80,7 +80,7 @@ class Ticket(models.Model):
     movie_session = models.ForeignKey(
         MovieSession,
         on_delete=models.CASCADE,
-        related_name="tickets"
+        related_name="tickets",
     )
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE,
@@ -88,16 +88,6 @@ class Ticket(models.Model):
     )
     row = models.IntegerField()
     seat = models.IntegerField()
-
-    @staticmethod
-    def validate_seat(
-            seat: int, num_seats: int,
-            error_to_raise):
-        if not (1 <= seat <= num_seats):
-            raise error_to_raise({
-                "seat": f"seat must be in range "
-                        f"[1, {num_seats}], not {seat}"
-            })
 
     def clean(self):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
