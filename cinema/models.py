@@ -12,14 +12,14 @@ class CinemaHall(models.Model):
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
 class Genre(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -27,11 +27,11 @@ class Actor(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.first_name + " " + self.last_name
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
 
@@ -45,7 +45,7 @@ class Movie(models.Model):
     class Meta:
         ordering = ["title"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
 
@@ -57,7 +57,7 @@ class MovieSession(models.Model):
     class Meta:
         ordering = ["-show_time"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.movie.title + " " + str(self.show_time)
 
 
@@ -67,7 +67,7 @@ class Order(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.created_at)
 
     class Meta:
@@ -101,11 +101,11 @@ class Ticket(models.Model):
                     }
                 )
 
-    def clean(self):
-        Ticket.validate_seats(self.row,
-                              self.seat,
-                              self.movie_session.cinema_hall,
-                              ValidationError)
+    def clean(self) -> None:
+        self.validate_seats(self.row,
+                            self.seat,
+                            self.movie_session.cinema_hall,
+                            ValidationError)
 
     def save(
         self,
@@ -113,13 +113,13 @@ class Ticket(models.Model):
         force_update=False,
         using=None,
         update_fields=None,
-    ):
+    ) -> None:
         self.full_clean()
         super(Ticket, self).save(
             force_insert, force_update, using, update_fields
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
