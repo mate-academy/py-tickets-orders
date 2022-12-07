@@ -8,12 +8,12 @@ class CinemaHall(models.Model):
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
 
+    def __str__(self):
+        return self.name
+
     @property
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
-
-    def __str__(self):
-        return self.name
 
 
 class Genre(models.Model):
@@ -67,11 +67,11 @@ class Order(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE
     )
 
-    def __str__(self):
-        return str(self.created_at)
-
     class Meta:
         ordering = ["-created_at"]
+
+    def __str__(self):
+        return str(self.created_at)
 
 
 class Ticket(models.Model):
@@ -84,16 +84,30 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
+    class Meta:
+        unique_together = ("movie_session", "row", "seat")
+
+    def __str__(self):
+        return (
+            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+        )
+
+    @staticmethod
+    def validate_ticket(
+            ticket_row: int,
+            ticket_seat: int,
+            movie_session: MovieSession,
+            error
+    ):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
+            (ticket_row, "row", "rows"),
+            (ticket_seat, "seat", "seats_in_row"),
         ]:
             count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+                movie_session.cinema_hall, cinema_hall_attr_name
             )
             if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
+                raise error(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
                         f"number must be in available range: "
@@ -101,6 +115,14 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
+
+    def clean(self):
+        Ticket.validate_ticket(
+            self.row,
+            self.seat,
+            self.movie_session,
+            ValidationError
+        )
 
     def save(
         self,
@@ -113,11 +135,3 @@ class Ticket(models.Model):
         super(Ticket, self).save(
             force_insert, force_update, using, update_fields
         )
-
-    def __str__(self):
-        return (
-            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
-        )
-
-    class Meta:
-        unique_together = ("movie_session", "row", "seat")
