@@ -15,7 +15,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 
 
@@ -79,12 +81,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
 
         if self.action == "list":
-            queryset = (
-                queryset
-                .select_related("cinema_hall")
-                .annotate(
-                    tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets")
-                )
+            queryset = queryset.select_related("cinema_hall").annotate(
+                tickets_available=F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")
+                - Count("tickets")
             )
             if film is not None:
                 film = int(film)
@@ -92,10 +92,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
             if date is not None:
                 date = datetime.datetime.strptime(date, "%Y-%m-%d")
-                queryset = queryset.filter(show_time__range=(
-                    (datetime.datetime.combine(date, datetime.time.min),
-                     datetime.datetime.combine(date, datetime.time.max))
-                ))
+                queryset = queryset.filter(
+                    show_time__range=(
+                        (
+                            datetime.datetime.combine(date, datetime.time.min),
+                            datetime.datetime.combine(date, datetime.time.max),
+                        )
+                    )
+                )
 
         return queryset
 
