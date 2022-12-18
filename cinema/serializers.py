@@ -144,18 +144,3 @@ class OrderListSerializer(OrderSerializer):
     class Meta:
         model = Order
         fields = ("id", "tickets", "created_at")
-
-# {
-#     "tickets": [
-#         {
-#             "seat": 1,
-#             "row": 1,
-#             "movie_session": 1
-#         },
-#         {
-#             "seat": 2,
-#             "row": 2,
-#             "movie_session": 1
-#         }
-#     ]
-# }

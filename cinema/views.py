@@ -46,11 +46,12 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             if actors is not None:
-                queryset = queryset.filter(
-                    Q(actors__first_name__icontains=actors) | Q(actors__last_name__icontains=actors))
+                actors = actors.split(sep=",")
+                queryset = queryset.filter(actors__in=actors)
 
             if genres is not None:
-                queryset = queryset.filter(genres__name__icontains=genres)
+                genres = genres.split(sep=",")
+                queryset = queryset.filter(genres__in=genres)
 
             if title is not None:
                 queryset = queryset.filter(title__icontains=title)
