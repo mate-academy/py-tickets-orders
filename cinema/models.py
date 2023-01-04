@@ -99,7 +99,6 @@ class Ticket(models.Model):
                 movie_session.cinema_hall, cinema_hall_attr_name
             )
             if not (1 <= ticket_attr_value <= count_attrs):
-                # raise ValidationError(
                 raise error(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
