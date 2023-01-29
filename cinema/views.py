@@ -130,7 +130,9 @@ class OrderViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         with transaction.atomic():
             order = Order.objects.create(user=self.request.user)
-            tickets_list = serializer.validated_data["tickets"]
-            for ticket in tickets_list:
-                Ticket.objects.create(order=order, **ticket)
+            tickets_in_order = [
+                Ticket(order=order, **ticket)
+                for ticket in serializer.validated_data["tickets"]
+            ]
+            Ticket.objects.bulk_create(tickets_in_order)
             return order
