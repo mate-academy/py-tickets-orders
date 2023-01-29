@@ -106,6 +106,7 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("row", "seat", "movie_session")
 
     def validate(self, attrs):
+        data = super().validate(attrs)
         ticket_row = attrs["row"]
         ticket_seat = attrs["seat"]
         cinema_hall_rows = attrs["movie_session"].cinema_hall.rows
@@ -122,6 +123,8 @@ class TicketSerializer(serializers.ModelSerializer):
                 "row": f"Seat number must be in available range: "
                        f"1..{cinema_hall_seats}"
             })
+
+        return data
 
 
 class OrderSerializer(serializers.ModelSerializer):
