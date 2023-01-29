@@ -4,7 +4,13 @@ from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
-    Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket,
 )
 
 from cinema.serializers import (
@@ -42,20 +48,23 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     def get_queryset(self):
+        def query_params_to_list(query: str) -> list:
+            return list(
+                map(
+                    lambda x: int(x) if x.isdigit() else None, query.split(",")
+                )
+            )
+
         queryset = self.queryset
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
 
         if actors:
-            actors = list(map(lambda x: int(x) if x.isdigit() else None,
-                              actors.split(",")))
-            queryset = queryset.filter(actors__in=actors)
+            queryset = queryset.filter(actors__in=query_params_to_list(actors))
 
         if genres:
-            genres = list(map(lambda x: int(x) if x.isdigit() else None,
-                              genres.split(",")))
-            queryset = queryset.filter(genres__in=genres)
+            queryset = queryset.filter(genres__in=query_params_to_list(genres))
 
         if title:
             queryset = queryset.filter(title__icontains=title)
@@ -82,12 +91,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if self.action == "list":
-            queryset = (
-                queryset
-                .annotate(tickets_available=(
+            queryset = queryset.annotate(
+                tickets_available=(
                     F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
                     - Count("tickets")
-                ))
+                )
             )
 
         if date:
