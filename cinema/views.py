@@ -40,7 +40,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
+        return list(map(int, qs.split(",")))
 
     def get_queryset(self):
         queryset = self.queryset
@@ -81,7 +81,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
+        return list(map(int, qs.split(",")))
 
     def get_queryset(self):
         queryset = self.queryset
@@ -99,11 +99,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie_id__in=movie_ids)
 
         if self.action in ("list", "retrieve"):
-            queryset = queryset.select_related("movie")
-            queryset = (
-                queryset
-                .select_related("cinema_hall")
-            )
+            queryset = queryset.select_related("movie", "cinema_hall")
 
         return queryset.distinct()
 

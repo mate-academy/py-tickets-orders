@@ -91,23 +91,25 @@ class Ticket(models.Model):
     @staticmethod
     def validate_seat_row(
             seat: int,
-            num_seats: int,
+            max_seats: int,
             row: int,
-            num_rows: int,
+            max_rows: int,
             error_to_raise
     ):
-        if not (1 <= seat <= num_seats and 1 <= row <= num_rows):
+        if not (1 <= seat <= max_seats and 1 <= row <= max_rows):
             raise error_to_raise({
-                "seat": f"seat must be in range [1, {num_seats}], not {seat}",
-                "row": f"row must be in range [1, {num_rows}], not {row}"
+                "seat": f"seat must be in range [1, {max_seats}], not {seat}",
+                "row": f"row must be in range [1, {max_rows}], not {row}"
             })
 
     def clean(self):
-        Ticket.validate_seat_row(self.seat,
-                                 self.movie_session.cinema_hall.seats_in_row,
-                                 self.row,
-                                 self.movie_session.cinema_hall.rows,
-                                 ValidationError)
+        Ticket.validate_seat_row(
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row,
+            self.row,
+            self.movie_session.cinema_hall.rows,
+            ValidationError
+        )
 
     def save(
         self,
