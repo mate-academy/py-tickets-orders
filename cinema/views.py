@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -15,7 +14,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 
 
@@ -79,10 +80,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    @staticmethod
-    def _params_to_ints(qs):
-        return list(map(int, qs.split(",")))
-
     def get_queryset(self):
         queryset = self.queryset
 
@@ -95,8 +92,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=show_time_datetime)
 
         if movie:
-            movie_ids = self._params_to_ints(movie)
-            queryset = queryset.filter(movie_id__in=movie_ids)
+            queryset = queryset.filter(movie_id=int(movie))
 
         if self.action in ("list", "retrieve"):
             queryset = queryset.select_related("movie", "cinema_hall")
