@@ -88,7 +88,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
+        return list(map(int, qs.split(",")))
 
     def get_queryset(self):
         queryset = self.queryset
@@ -122,10 +122,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
-
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset

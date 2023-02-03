@@ -59,9 +59,6 @@ class MovieSessionSerializer(serializers.ModelSerializer):
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
 
-    def get_queryset(self):
-        return MovieSession.objects.select_related("cinema_hall").all()
-
 
 class MovieSessionListSerializer(MovieSessionSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
@@ -71,12 +68,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
-
-    tickets_available = serializers.SerializerMethodField()
-
-    def get_tickets_available(self, obj):
-        taken_seats = obj.tickets.count()
-        return obj.cinema_hall.capacity - taken_seats
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -88,10 +80,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "cinema_hall_capacity",
             "tickets_available",
         )
-
-    def get_queryset(self):
-        queryset = super().get_queryset().select_related("cinema_hall")
-        return queryset
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
