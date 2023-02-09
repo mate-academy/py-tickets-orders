@@ -27,18 +27,6 @@ class ParamsStrToIntMixin:
         return [int(str_id) for str_id in qs.split(",")]
 
 
-class ParamsStrToDictMixin:
-    """
-    Converts a "year-month-day"-format string to the dictionary
-    """
-
-    @staticmethod
-    def _date_str_to_dict(qs):
-        keys = ["year", "month", "day"]
-        values = [int(date) for date in qs.split("-")]
-        return dict(zip(keys, values))
-
-
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -88,7 +76,7 @@ class MovieViewSet(viewsets.ModelViewSet, ParamsStrToIntMixin):
         return MovieSerializer
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet, ParamsStrToDictMixin):
+class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related("cinema_hall", "movie")
     serializer_class = MovieSessionSerializer
 
@@ -100,12 +88,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet, ParamsStrToDictMixin):
             movie = self.request.query_params.get("movie")
 
             if date:
-                date_dict = self._date_str_to_dict(date)
-                queryset = queryset.filter(
-                    show_time__year=date_dict["year"],
-                    show_time__month=date_dict["month"],
-                    show_time__day=date_dict["day"],
-                )
+                queryset = queryset.filter(show_time__date=date)
 
             if movie:
                 queryset = queryset.filter(movie__id=movie)
