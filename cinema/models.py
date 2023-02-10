@@ -1,3 +1,4 @@
+from django.contrib.messages import error
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -90,7 +91,7 @@ class Ticket(models.Model):
             ticket_attr_value: int,
             ticket_attr_name: str,
             cinema_hall_attr_name: str,
-            error_to_raise
+            error_to_raise: error
     ):
         max_attr_value = getattr(
             movie_session.cinema_hall, cinema_hall_attr_name
