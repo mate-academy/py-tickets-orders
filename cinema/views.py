@@ -25,6 +25,10 @@ from cinema.serializers import (
 )
 
 
+def _params_to_ints(qs):
+    return [int(str_id) for str_id in qs.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -44,10 +48,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
-
     def get_queryset(self):
         queryset = self.queryset
 
@@ -56,11 +56,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         genres = self.request.query_params.get("genres")
 
         if actors:
-            actors_ids = self._params_to_ints(actors)
+            actors_ids = _params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         if genres:
-            genres_ids = self._params_to_ints(genres)
+            genres_ids = _params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         if title:
@@ -84,10 +84,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
