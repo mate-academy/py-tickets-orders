@@ -51,7 +51,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _params_to_ints(qs):
+    def _params_to_ints(qs: queryset) -> list:
         return [int(str_id) for str_id in qs.split(",")]
 
     def get_serializer_class(self):
@@ -63,7 +63,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         queryset = self.queryset
         actors = self.request.query_params.get("actors")
         if actors:
@@ -92,7 +92,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         queryset = self.queryset
         if self.action == "list":
             queryset = (queryset
@@ -125,12 +125,12 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer: OrderSerializer) -> None:
         serializer.save(user=self.request.user)
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         if self.action == "list":
-            self.queryset.prefetch_related("tickets").filter(
+            return self.queryset.prefetch_related("tickets").filter(
                 user=self.request.user
             )
         return self.queryset.filter(user=self.request.user)
