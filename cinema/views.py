@@ -95,13 +95,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
         if self.action == "list":
-            queryset = (
-                queryset.select_related("cinema_hall").select_related("movie")
-                .annotate(
-                    tickets_available=F(
-                        "cinema_hall__rows") * F(
-                        "cinema_hall__seats_in_row") - Count("tickets"))
-            )
+            queryset = (queryset
+                        .select_related("cinema_hall", "movie")
+                        .annotate(tickets_available=F("cinema_hall__rows")
+                                  * F("cinema_hall__seats_in_row")
+                                  - Count("tickets"))
+                        )
             if self.request.query_params:
                 date = self.request.query_params.get("date")
                 movie_id = self.request.query_params.get("movie")
@@ -109,9 +108,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                     queryset = queryset.filter(movie_id__exact=int(movie_id))
 
                 if date:
-                    queryset = queryset.filter(
-                        show_time__date__exact=datetime.strptime(
-                            date, "%Y-%m-%d"))
+                    date = datetime.strptime(date, "%Y-%m-%d")
+                    queryset = queryset.filter(show_time__date__exact=date)
 
         return queryset
 
@@ -132,9 +130,9 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.action == "list":
-            self.queryset.prefetch_related(
-                "tickets", "movie_session", "cinema_hall"
-            ).filter(user=self.request.user)
+            self.queryset.prefetch_related("tickets").filter(
+                user=self.request.user
+            )
         return self.queryset.filter(user=self.request.user)
 
     def get_serializer_class(self):
