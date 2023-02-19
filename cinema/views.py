@@ -42,10 +42,10 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def get_id_from_str(string_queryset):
+    def get_id_from_str(string_queryset: str) -> list:
         return [int(string) for string in string_queryset.split(",")]
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> callable:
         if self.action == "list":
             return MovieListSerializer
 
@@ -54,7 +54,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         queryset = self.queryset
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
@@ -86,7 +86,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         queryset = self.queryset
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
@@ -113,13 +113,13 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.select_related("user")
     serializer_class = OrderListSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         return self.queryset.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer: serializer_class) -> None:
         serializer.save(user=self.request.user)
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> callable:
         if self.action == "create":
             return OrderCreateSerializer
         if self.action == "list":
