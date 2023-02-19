@@ -1,6 +1,10 @@
+from typing import Optional
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+
+from django.contrib.messages import error
 
 
 class CinemaHall(models.Model):
@@ -86,18 +90,18 @@ class Ticket(models.Model):
 
     @staticmethod
     def validate_seat_and_row(
-            param,
-            param_to_check,
-            param_count,
-            error_to_raise
-    ):
+            param: str,
+            param_to_check: int,
+            param_count: int,
+            error_to_raise: error
+    ) -> Optional[error]:
         if not (1 <= param_to_check <= param_count):
             raise error_to_raise({
                 f"{param}": f"seat must be in range [1, {param_count}],"
                             f"not {param_to_check}"
             })
 
-    def clean(self):
+    def clean(self) -> Optional[error]:
         Ticket.validate_seat_and_row(
             "seat",
             self.seat,
@@ -117,7 +121,7 @@ class Ticket(models.Model):
         force_update=False,
         using=None,
         update_fields=None,
-    ):
+    ) -> None:
         self.full_clean()
         super(Ticket, self).save(
             force_insert, force_update, using, update_fields
