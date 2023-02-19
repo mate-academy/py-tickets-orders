@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -79,10 +81,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    @staticmethod
-    def _params_to_int(qs):
-        return [int(str_id) for str_id in qs.split(",")]
-
     def get_queryset(self):
         queryset = self.queryset
         if self.action == "list":
@@ -98,11 +96,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie is not None:
             queryset = queryset.filter(movie__id=movie)
         if date is not None:
+            date = datetime.strptime(date, "%Y-%m-%d")
             queryset = queryset.filter(
-                show_time__year=date[0:4],
-                show_time__month=date[5:7],
-                show_time__day=date[8:10],
+                show_time__date=date
             )
+
         return queryset
 
 
