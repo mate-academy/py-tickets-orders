@@ -91,14 +91,14 @@ class Ticket(models.Model):
     @staticmethod
     def validate_seat_and_row(
             param: str,
-            param_to_check: int,
-            param_count: int,
+            number: int,
+            max_number: int,
             error_to_raise: error
     ) -> Optional[error]:
-        if not (1 <= param_to_check <= param_count):
+        if not (1 <= number <= max_number):
             raise error_to_raise({
-                f"{param}": f"seat must be in range [1, {param_count}],"
-                            f"not {param_to_check}"
+                f"{param}": f"seat must be in range [1, {max_number}],"
+                            f"not {number}"
             })
 
     def clean(self) -> Optional[error]:
@@ -119,8 +119,8 @@ class Ticket(models.Model):
         self,
         force_insert: bool = False,
         force_update: bool = False,
-        using: str = None,
-        update_fields: str = None,
+        using: Optional[str] = None,
+        update_fields: Optional[str] = None,
     ) -> None:
         self.full_clean()
         super(Ticket, self).save(

@@ -30,7 +30,7 @@ from cinema.serializers import (
 )
 
 
-def _params_to_int(qs: str) -> list:
+def _params_to_int(qs: str) -> list[int]:
     return [int(str_id) for str_id in qs.split(",")]
 
 
