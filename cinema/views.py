@@ -1,9 +1,8 @@
-from django.db.models import F, Count
+from django.db.models import F, Count, QuerySet
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
-from django.utils.timezone import make_aware
-
+from rest_framework import serializers
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -42,10 +41,10 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def get_id_from_str(string_queryset: str) -> list:
+    def get_id_from_str(string_queryset: str) -> list[int]:
         return [int(string) for string in string_queryset.split(",")]
 
-    def get_serializer_class(self) -> callable:
+    def get_serializer_class(self) -> type[serializers.Serializer]:
         if self.action == "list":
             return MovieListSerializer
 
@@ -54,7 +53,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
@@ -77,7 +76,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type[serializers.Serializer]:
         if self.action == "list":
             return MovieSessionListSerializer
 
@@ -86,7 +85,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
@@ -113,13 +112,13 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.select_related("user")
     serializer_class = OrderListSerializer
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         return self.queryset.filter(user=self.request.user)
 
     def perform_create(self, serializer: serializer_class) -> None:
         serializer.save(user=self.request.user)
 
-    def get_serializer_class(self) -> callable:
+    def get_serializer_class(self) -> type[serializers.Serializer]:
         if self.action == "create":
             return OrderCreateSerializer
         if self.action == "list":
