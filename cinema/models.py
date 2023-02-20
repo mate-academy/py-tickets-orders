@@ -94,14 +94,14 @@ class Ticket(models.Model):
             number: int,
             max_number: int,
             error_to_raise: error
-    ) -> Optional[error]:
+    ) -> None:
         if not (1 <= number <= max_number):
             raise error_to_raise({
                 f"{param}": f"seat must be in range [1, {max_number}],"
                             f"not {number}"
             })
 
-    def clean(self) -> Optional[error]:
+    def clean(self) -> None:
         Ticket.validate_seat_and_row(
             "seat",
             self.seat,
