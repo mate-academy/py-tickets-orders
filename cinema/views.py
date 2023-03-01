@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.db.models import QuerySet
 from rest_framework import viewsets
 
 from cinema.models import (
@@ -79,3 +80,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+    def get_queryset(self) -> QuerySet:
+        return self.queryset.filter(user=self.request.user)
