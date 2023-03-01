@@ -138,5 +138,5 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.prefetch_related("tickets")
         return queryset
 
-    def perform_create(self, serializer) -> None:
+    def perform_create(self, serializer: Serializer) -> None:
         serializer.save(user=self.request.user)

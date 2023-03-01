@@ -1,3 +1,5 @@
+from typing import Type, Any
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -85,7 +87,12 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     @staticmethod
-    def validate_row_seat(row, seat, movie_session, error_to_raise):
+    def validate_row_seat(
+            row: int,
+            seat: int,
+            movie_session: MovieSession,
+            error_to_raise: Type[ValidationError]
+    ):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
@@ -102,7 +109,7 @@ class Ticket(models.Model):
                     }
                 )
 
-    def clean(self):
+    def clean(self) -> None:
         Ticket.validate_row_seat(
             self.row,
             self.seat,
@@ -112,10 +119,10 @@ class Ticket(models.Model):
 
     def save(
         self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
+        force_insert: bool = False,
+        force_update: bool = False,
+        using: Any = None,
+        update_fields: Any = None,
     ):
         self.full_clean()
         super(Ticket, self).save(
