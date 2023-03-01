@@ -92,7 +92,7 @@ class Ticket(models.Model):
             seat: int,
             movie_session: MovieSession,
             error_to_raise: Type[ValidationError]
-    ):
+    ) -> None:
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
@@ -123,13 +123,13 @@ class Ticket(models.Model):
         force_update: bool = False,
         using: Any = None,
         update_fields: Any = None,
-    ):
+    ) -> None:
         self.full_clean()
         super(Ticket, self).save(
             force_insert, force_update, using, update_fields
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
