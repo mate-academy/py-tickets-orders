@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from cinema.models import (
     Genre,
@@ -87,6 +88,13 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
+        # if we don't have unique_together validator in models.py
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Ticket.objects.all(),
+                fields=["movie_session", "row", "seat"]
+            )
+        ]
 
 
 class TicketListSerializer(TicketSerializer):
