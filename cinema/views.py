@@ -1,6 +1,6 @@
 from typing import Type
 
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -44,8 +44,44 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
+    queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
+
+    def _search_by_params(
+            self,
+            title: str,
+            actors: str,
+            genres: str
+    ) -> QuerySet:
+        queryset = self.queryset
+
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+
+        if actors:
+            queryset = queryset.filter(
+                Q(actors__first_name__icontains=actors)
+                | Q(actors__last_name__icontains=actors)
+            )
+
+        if genres:
+            queryset = queryset.filter(genres__name__icontains=genres)
+
+        return queryset.distinct()
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        all_params = {
+            "title": self.request.query_params.get("title"),
+            "actors": self.request.query_params.get("actors"),
+            "genres": self.request.query_params.get("genres")
+        }
+
+        if all_params:
+            return self._search_by_params(**all_params)
+
+        return queryset
 
     def get_serializer_class(self) -> Type[
         MovieListSerializer
