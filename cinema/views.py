@@ -1,6 +1,6 @@
 from typing import Type
 
-from django.db.models import QuerySet, Q
+from django.db.models import QuerySet
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -28,6 +28,11 @@ from cinema.serializers import (
 )
 
 
+def params_to_ints(qs: str) -> list[int]:
+    """Converts a list of string IDs to a list of integers"""
+    return [int(str_id) for str_id in qs.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -45,12 +50,6 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related("genres", "actors")
-    serializer_class = MovieSerializer
-
-    @staticmethod
-    def _params_to_ints(qs: str) -> list[int]:
-        """Converts a list of string IDs to a list of integers"""
-        return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset
@@ -67,11 +66,11 @@ class MovieViewSet(viewsets.ModelViewSet):
             )
 
         if all_params["actors"] is not None:
-            actors_ids = self._params_to_ints(all_params["actors"])
+            actors_ids = params_to_ints(all_params["actors"])
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         if all_params["genres"] is not None:
-            genres_ids = self._params_to_ints(all_params["genres"])
+            genres_ids = params_to_ints(all_params["genres"])
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         return queryset.distinct()
@@ -91,8 +90,26 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all()
-    serializer_class = MovieSessionSerializer
+    queryset = MovieSession.objects.select_related("movie", "cinema_hall")
+
+    def get_queryset(self) -> QuerySet:
+        queryset = self.queryset
+
+        all_params = {
+            "movie": self.request.query_params.get("movie"),
+            "date": self.request.query_params.get("date"),
+        }
+
+        if all_params["date"] is not None:
+            queryset = queryset.filter(
+                show_time__date=all_params["date"]
+            )
+
+        if all_params["movie"] is not None:
+            movie_ids = params_to_ints(all_params["movie"])
+            queryset = queryset.filter(movie__id__in=movie_ids)
+
+        return queryset.distinct()
 
     def get_serializer_class(self) -> Type[
         MovieSessionListSerializer
