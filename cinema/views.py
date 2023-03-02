@@ -55,32 +55,26 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset
 
-        all_params = {
-            "title": self.request.query_params.get("title"),
-            "actors": self.request.query_params.get("actors"),
-            "genres": self.request.query_params.get("genres")
-        }
+        title = self.request.query_params.get("title")
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
 
-        if all_params["title"] is not None:
+        if title is not None:
             queryset = queryset.filter(
-                title__icontains=all_params["title"]
+                title__icontains=title
             )
 
-        if all_params["actors"] is not None:
-            actors_ids = params_to_ints(all_params["actors"])
+        if actors is not None:
+            actors_ids = params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
-        if all_params["genres"] is not None:
-            genres_ids = params_to_ints(all_params["genres"])
+        if genres is not None:
+            genres_ids = params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         return queryset.distinct()
 
-    def get_serializer_class(self) -> Type[
-        MovieListSerializer
-        | MovieDetailSerializer
-        | MovieSerializer
-    ]:
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieListSerializer
 
@@ -120,11 +114,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
-    def get_serializer_class(self) -> Type[
-        MovieSessionListSerializer
-        | MovieSessionDetailSerializer
-        | MovieSessionSerializer
-    ]:
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieSessionListSerializer
 
@@ -158,10 +148,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def get_serializer_class(self) -> Type[
-        OrderListSerializer
-        | OrderSerializer
-    ]:
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return OrderListSerializer
 
