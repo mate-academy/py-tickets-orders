@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Type
 
-from django.db.models import F, Count
+from django.db.models import F, Count, QuerySet
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.serializers import Serializer
@@ -46,7 +46,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     def _params_to_int(qs) -> list[int]:
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
@@ -91,7 +91,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
@@ -130,7 +130,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         return self.queryset.filter(user=self.request.user).prefetch_related(
             "tickets__movie_session__cinema_hall",
             "tickets__movie_session__movie"
