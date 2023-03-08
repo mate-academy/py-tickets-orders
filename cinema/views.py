@@ -5,6 +5,7 @@ from typing import Type
 from django.db.models import QuerySet, Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.serializers import Serializer
 
 from cinema.models import (
     Genre,
@@ -62,7 +63,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             return MovieDetailSerializer
         return MovieSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
         title = self.request.query_params.get("title")
         actors = self.request.query_params.get("actors")
@@ -133,7 +134,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     pagination_class = OrderPagination
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action == "list":
@@ -147,7 +148,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer: Serializer):
         serializer.save(user=self.request.user)
 
     def get_serializer_class(self) -> Type[
