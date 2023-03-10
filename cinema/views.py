@@ -4,6 +4,7 @@ from typing import Type
 from django.db.models import QuerySet, Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.serializers import Serializer
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 from cinema.serializers import (
@@ -155,5 +156,5 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return OrderSerializer
 
-    def perform_create(self, serializer) -> None:
+    def perform_create(self, serializer: Type[Serializer]) -> None:
         serializer.save(user=self.request.user)
