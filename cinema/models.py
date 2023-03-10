@@ -102,7 +102,7 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
-    
+
     def clean(self):
         Ticket.validate_seat(
             self.seat,

@@ -37,7 +37,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
+    queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
 
     @staticmethod
@@ -47,7 +47,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset
-        
+
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
@@ -55,18 +55,15 @@ class MovieViewSet(viewsets.ModelViewSet):
         if actors:
             actors_ids = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
-        
+
         if genres:
             genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
-        
+
         if title:
             queryset = queryset.filter(title__icontains=title)
-        
-        if self.action in ("list", "retrieve"):
-            queryset = queryset.prefetch_related("actors", "genres")
 
-        return queryset.disctinct()
+        return queryset.distinct()
 
     def get_serializer_class(self) -> Type[
         MovieListSerializer
@@ -90,14 +87,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
         date = self.request.query_params.get("date")
         movie_id_str = self.request.query_params.get("movie")
-        
+
         if self.action == "list":
+            num_seats = F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
             queryset = (
                 queryset
                 .select_related("movie", "cinema_hall")
-                .annotate(tickets_available=(
-                    F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
-                    - Count("tickets")
+                .annotate(
+                    tickets_available=(
+                        num_seats - Count("tickets")
                     )
                 )
             ).order_by("id")
@@ -128,7 +126,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 
 class OrderPagination(PageNumberPagination):
-    page_size = 3
+    page_size = 2
     page_query_param = "page_size"
     max_page_size = 100
 
@@ -140,8 +138,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset.filter(user=self.request.user)
+
         if self.action == "list":
             queryset = queryset.prefetch_related(
+                "tickets__movie_session__movie",
                 "tickets__movie_session__cinema_hall"
             )
         return queryset
@@ -152,6 +152,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     ]:
         if self.action == "list":
             return OrderListSerializer
+
         return OrderSerializer
 
     def perform_create(self, serializer) -> None:
