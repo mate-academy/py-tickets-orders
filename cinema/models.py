@@ -27,12 +27,12 @@ class Actor(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
 
-    def __str__(self) -> str:
-        return self.first_name + " " + self.last_name
-
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
+
+    def __str__(self) -> str:
+        return self.full_name
 
 
 class Movie(models.Model):
@@ -88,7 +88,7 @@ class Ticket(models.Model):
     def validate_seat(
             seat: int,
             row: int,
-            cinema_hall,
+            cinema_hall: CinemaHall,
             error_to_raise
     ) -> None:
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [

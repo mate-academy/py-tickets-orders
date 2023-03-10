@@ -46,7 +46,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         """Converts a list of string IDs to a list of ints"""
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_queryset(self) -> QuerySet:
+    def get_queryset(self) -> QuerySet[Movie]:
         queryset = self.queryset
 
         actors = self.request.query_params.get("actors")
@@ -66,11 +66,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
-    def get_serializer_class(self) -> Type[
-        MovieListSerializer
-        | MovieDetailSerializer
-        | MovieSerializer
-    ]:
+    def get_serializer_class(self) -> Type[MovieSerializer]:
         if self.action == "list":
             return MovieListSerializer
 
@@ -84,7 +80,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    def get_queryset(self) -> QuerySet:
+    def get_queryset(self) -> QuerySet[MovieSession]:
         queryset = self.queryset
         date = self.request.query_params.get("date")
         movie_id_str = self.request.query_params.get("movie")
@@ -112,11 +108,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def get_serializer_class(self) -> Type[
-        MovieSessionListSerializer
-        | MovieSessionDetailSerializer
-        | MovieSessionSerializer
-    ]:
+    def get_serializer_class(self) -> Type[MovieSessionSerializer]:
         if self.action == "list":
             return MovieSessionListSerializer
 
@@ -137,7 +129,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
-    def get_queryset(self) -> QuerySet:
+    def get_queryset(self) -> QuerySet[Order]:
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action == "list":
@@ -147,10 +139,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
         return queryset
 
-    def get_serializer_class(self) -> Type[
-        OrderListSerializer
-        | OrderSerializer
-    ]:
+    def get_serializer_class(self) -> Type[OrderSerializer]:
         if self.action == "list":
             return OrderListSerializer
 
