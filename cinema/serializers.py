@@ -1,7 +1,8 @@
-from typing import Optional, Any
+from typing import Optional, Type
 
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.serializers import Serializer
 
 from cinema.models import (
     Genre,
@@ -33,7 +34,7 @@ class CinemaHallSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    def validate(self, attrs: dict) -> Any:
+    def validate(self, attrs: dict) -> Type[Serializer]:
         data = super(TicketSerializer, self).validate(attrs)
         Ticket.validate_seat(
             attrs["seat"],
@@ -158,13 +159,13 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "tickets", "created_at")
 
+    @transaction.atomic()
     def create(self, validated_data: dict) -> Optional[Order]:
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(validated_data)
-            for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(validated_data)
+        for ticket_data in tickets_data:
+            Ticket.objects.create(order=order, **ticket_data)
+        return order
 
 
 class TicketListSerializer(TicketSerializer):

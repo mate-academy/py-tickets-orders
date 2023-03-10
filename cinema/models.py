@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.messages import error
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -89,7 +90,7 @@ class Ticket(models.Model):
             seat: int,
             row: int,
             cinema_hall: CinemaHall,
-            error_to_raise
+            error_to_raise: error
     ) -> None:
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),

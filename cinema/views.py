@@ -42,7 +42,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _params_to_ints(qs: str) -> list:
+    def _params_to_ints(qs: str) -> list[int]:
         """Converts a list of string IDs to a list of ints"""
         return [int(str_id) for str_id in qs.split(",")]
 
