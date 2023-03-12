@@ -90,7 +90,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
-        model: Ticket
+        model = Ticket
         fields = [
             "id",
             "row",
@@ -100,6 +100,15 @@ class TicketSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True, read_only=False)
+
     class Meta:
         model = Order
         fields = ("id", "created_at", "tickets")
+
+    def create(self, validated_data: dict) -> Order:
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
+        for ticket_data in tickets_data:
+            Ticket.objects.create(order=order, **ticket_data)
+        return order

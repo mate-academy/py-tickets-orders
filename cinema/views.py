@@ -1,5 +1,6 @@
 from django.db.models import QuerySet
 from rest_framework import viewsets
+from rest_framework.serializers import Serializer
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -67,5 +68,5 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet:
         return self.queryset.filter(user=self.request.user)
 
-    def perform_create(self, serializer) -> None:
+    def perform_create(self, serializer: Serializer) -> None:
         serializer.save(user=self.request.user)
