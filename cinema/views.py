@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Type
+
 from django.db.models import QuerySet
 from rest_framework import viewsets
 from rest_framework.serializers import Serializer
@@ -38,7 +41,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _params_to_list_ints(qs) -> list:
+    def _params_to_list_ints(qs: str) -> list:
         return [int(int_id) for int_id in qs.split(",")]
 
     def get_queryset(self) -> QuerySet:
@@ -62,7 +65,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return self.queryset
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieListSerializer
 
@@ -75,6 +78,14 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+
+    def get_queryset(self) -> QuerySet:
+        show_time = self.request.query_params.get("show_time")
+        if show_time:
+            show_time = datetime.strptime(show_time, "%Y-%m-%d")
+            self.queryset = self.queryset.filter(show_time__date=show_time.date())
+            return self.queryset
+        return self.queryset
 
     def get_serializer_class(self):
         if self.action == "list":
