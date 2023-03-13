@@ -81,10 +81,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet:
         show_time = self.request.query_params.get("show_time")
-        if show_time:
+        movie = self.request.query_params.get("movie")
+        if show_time and movie:
             show_time = datetime.strptime(show_time, "%Y-%m-%d")
-            self.queryset = self.queryset.filter(show_time__date=show_time.date())
-            return self.queryset
+            self.queryset = self.queryset.filter(
+                show_time__date=show_time.date()
+            ).filter(movie_id=int(movie))
+            return self.queryset.select_related("movie", "cinema_hall")
         return self.queryset
 
     def get_serializer_class(self):
