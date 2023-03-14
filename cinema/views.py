@@ -3,9 +3,17 @@ from typing import Type
 
 from django.db.models import QuerySet, F, Count
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.serializers import Serializer
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order
+)
 
 from cinema.serializers import (
     GenreSerializer,
@@ -18,6 +26,7 @@ from cinema.serializers import (
     MovieSessionDetailSerializer,
     MovieListSerializer,
     OrderSerializer,
+    OrderListSerializer,
 )
 
 
@@ -113,9 +122,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
+class StandardOrderPagination(PageNumberPagination):
+    page_size = 4
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = StandardOrderPagination
 
     def get_queryset(self) -> QuerySet:
         return self.queryset.filter(
@@ -124,6 +140,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             "tickets__movie_session__cinema_hall",
             "tickets__movie_session__movie"
         )
+
+    def get_serializer_class(self) -> Type[Serializer]:
+        if self.action == "list":
+            return OrderListSerializer
+
+        return OrderSerializer
 
     def perform_create(self, serializer: Serializer) -> None:
         serializer.save(user=self.request.user)
