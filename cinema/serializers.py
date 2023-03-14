@@ -45,15 +45,6 @@ class MovieListSerializer(MovieSerializer):
     )
 
 
-class MovieDetailSerializer(MovieSerializer):
-    genres = GenreSerializer(many=True, read_only=True)
-    actors = ActorSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors")
-
-
 class MovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieSession
@@ -80,15 +71,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
 
-class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-
-    class Meta:
-        model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
-
-
 class TicketSerializer(serializers.ModelSerializer):
     movie_session = MovieSessionListSerializer(many=False, read_only=True)
 
@@ -100,6 +82,35 @@ class TicketSerializer(serializers.ModelSerializer):
             "seat",
             "movie_session",
         ]
+
+
+class MovieDetailSerializer(MovieSerializer):
+    genres = GenreSerializer(many=True, read_only=True)
+    actors = ActorSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Movie
+        fields = ("id", "title", "description", "duration", "genres", "actors")
+
+
+class TicketSeatSerializer(TicketSerializer):
+    class Meta:
+        model = Ticket
+        fields = ["row", "seat"]
+
+
+class MovieSessionDetailSerializer(MovieSessionSerializer):
+    movie = MovieListSerializer(many=False, read_only=True)
+    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_place = TicketSeatSerializer(
+        source="tickets",
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = MovieSession
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_place")
 
 
 class OrderSerializer(serializers.ModelSerializer):
