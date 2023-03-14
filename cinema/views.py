@@ -72,7 +72,9 @@ class MovieViewSet(viewsets.ModelViewSet):
             self.queryset = self.queryset.filter(title__icontains=title)
             return self.queryset.distinct()
 
-        return self.queryset
+        return self.queryset.prefetch_related(
+            "genres", "actors"
+        )
 
     def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
@@ -112,7 +114,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             self.queryset = self.queryset.select_related(
-                "cinema_hall"
+                "cinema_hall", "movie"
             ).annotate(
                 tickets_available=F(
                     "cinema_hall__rows"
