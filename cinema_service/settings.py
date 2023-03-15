@@ -124,7 +124,11 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = False
+USE_TZ = True
+
+REST_FRAMEWORK = {
+    "DATETIME_FORMAT": "%Y-%m-%d",
+}
 
 
 # Static files (CSS, JavaScript, Images)
