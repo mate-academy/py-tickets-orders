@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Type
+from typing import Type, List
 
 from django.db.models import QuerySet, F, Count
 from rest_framework import viewsets
@@ -50,7 +50,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _params_to_list_ints(qs: str) -> list:
+    def _params_to_list_ints(qs: str) -> List[int]:
         return [int(int_id) for int_id in qs.split(",")]
 
     def get_queryset(self) -> QuerySet:
