@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -123,8 +123,8 @@ class Ticket(models.Model):
             self,
             force_insert: bool = False,
             force_update: bool = False,
-            using: str = None,
-            update_fields: list = None,
+            using: Optional[str] = None,
+            update_fields: Optional[list[str]] = None,
     ) -> None:
         self.full_clean()
         super(Ticket, self).save(
