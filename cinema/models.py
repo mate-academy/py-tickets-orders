@@ -1,9 +1,8 @@
-from typing import Type, List
+from typing import Type
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
-from django.db.models import fields
 
 
 class CinemaHall(models.Model):
@@ -125,7 +124,7 @@ class Ticket(models.Model):
             force_insert: bool = False,
             force_update: bool = False,
             using: str = None,
-            update_fields: List[fields] = None,
+            update_fields: list = None,
     ) -> None:
         self.full_clean()
         super(Ticket, self).save(
