@@ -117,9 +117,9 @@ class Ticket(models.Model):
 
     def save(
         self,
-        force_insert: bool = False,
-        force_update: bool = False,
-        using: str = None,
+        force_insert: Optional[bool] = False,
+        force_update: Optional[bool] = False,
+        using: Optional[str] = None,
         update_fields: Optional[list[str]] = None,
     ) -> None:
         self.full_clean()
