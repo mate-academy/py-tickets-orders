@@ -45,7 +45,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         """Converts a list of string IDs to a list of integers"""
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_queryset(self) -> QuerySet:
+    def get_queryset(self) -> QuerySet[Movie]:
         """Retrieve the movies with filters"""
         title = self.request.query_params.get("title")
         genres = self.request.query_params.get("genres")
@@ -66,7 +66,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[MovieSerializer]:
         if self.action == "list":
             return MovieListSerializer
 
@@ -80,7 +80,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related("movie", "cinema_hall")
     serializer_class = MovieSessionSerializer
 
-    def get_queryset(self) -> QuerySet:
+    def get_queryset(self) -> QuerySet[MovieSession]:
         date = self.request.query_params.get("date")
         movie_id_str = self.request.query_params.get("movie")
 
@@ -102,11 +102,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def get_serializer_class(self) -> Type[
-            MovieSessionListSerializer
-            | MovieSessionDetailSerializer
-            | MovieSessionSerializer
-    ]:
+    def get_serializer_class(self) -> Type[MovieSessionSerializer]:
         if self.action == "list":
             return MovieSessionListSerializer
 
@@ -128,17 +124,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
-    def get_queryset(self) -> QuerySet:
+    def get_queryset(self) -> QuerySet[Order]:
         return Order.objects.filter(user=self.request.user)
 
-    def get_serializer_class(self) -> Type[
-        OrderListSerializer
-        | OrderSerializer
-    ]:
+    def get_serializer_class(self) -> Type[OrderSerializer]:
         if self.action == "list":
             return OrderListSerializer
 
         return OrderSerializer
 
-    def perform_create(self, serializer) -> None:
+    def perform_create(self, serializer: OrderSerializer) -> None:
         serializer.save(user=self.request.user)

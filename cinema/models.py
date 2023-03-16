@@ -1,6 +1,8 @@
+from typing import Optional, Type
+
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, DEFAULT_DB_ALIAS
 from django.conf import settings
 
 
@@ -86,7 +88,12 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     @staticmethod
-    def validate_ticket(row, seat, cinema_hall, error_to_raise):
+    def validate_ticket(
+            row: int,
+            seat: int,
+            cinema_hall: CinemaHall,
+            error_to_raise: Type[ValidationError]
+    ) -> None:
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
@@ -95,14 +102,15 @@ class Ticket(models.Model):
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise error_to_raise(
                     {
-                        ticket_attr_name: f"{ticket_attr_name} number "
-                                          f"must be in available range: "
+                        ticket_attr_name: f"{ticket_attr_name} "
+                                          f"number must be"
+                                          f" in available range: "
                                           f"(1, {cinema_hall_attr_name}): "
                                           f"(1, {count_attrs})"
                     }
                 )
 
-    def clean(self):
+    def clean(self) -> None:
         Ticket.validate_ticket(
             self.row,
             self.seat,
@@ -112,13 +120,13 @@ class Ticket(models.Model):
 
     def save(
             self,
-            force_insert=False,
-            force_update=False,
-            using=None,
-            update_fields=None,
-    ):
+            force_insert: Optional[bool] = False,
+            force_update: Optional[bool] = False,
+            using: Optional[DEFAULT_DB_ALIAS] = None,
+            update_fields: Optional[list[str]] = None,
+    ) -> None:
         self.full_clean()
-        super(Ticket, self).save(
+        return super(Ticket, self).save(
             force_insert, force_update, using, update_fields
         )
 
