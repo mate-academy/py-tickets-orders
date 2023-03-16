@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -29,12 +29,12 @@ class Actor(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
 
-    def __str__(self) -> str:
-        return self.first_name + " " + self.last_name
-
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
+
+    def __str__(self) -> str:
+        return self.full_name
 
 
 class Movie(models.Model):
@@ -120,7 +120,7 @@ class Ticket(models.Model):
         force_insert: bool = False,
         force_update: bool = False,
         using: str = None,
-        update_fields: list[str] = None,
+        update_fields: Optional[list[str]] = None,
     ) -> None:
         self.full_clean()
         super(Ticket, self).save(

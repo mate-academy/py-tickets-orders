@@ -52,22 +52,16 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if genres:
             genres = self._params_to_list_ints(genres)
-            self.queryset = self.queryset.filter(genres__id__in=genres)
-
-            return self.queryset.distinct()
+            queryset = self.queryset.filter(genres__id__in=genres)
 
         if actors:
             actors = self._params_to_list_ints(actors)
-            self.queryset = self.queryset.filter(actors__id__in=actors)
-
-            return self.queryset.distinct()
+            queryset = self.queryset.filter(actors__id__in=actors)
 
         if title:
-            self.queryset = self.queryset.filter(title__icontains=title)
+            queryset = self.queryset.filter(title__icontains=title)
 
-            return self.queryset.distinct()
-
-        return queryset.prefetch_related("genres", "actors")
+        return queryset.prefetch_related("genres", "actors").distinct()
 
     def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
@@ -88,26 +82,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
-        if date and movie:
-            date = datetime.strptime(date, "%Y-%m-%d")
-            self.queryset = self.queryset.filter(
-                show_time__date=date.date()
-            ).filter(movie_id=int(movie))
-
-            return self.queryset.select_related("movie", "cinema_hall")
-
-        if movie:
-            self.queryset = self.queryset.filter(movie_id=int(movie))
-
-            return self.queryset.select_related("movie", "cinema_hall")
-
         if date:
             date = datetime.strptime(date, "%Y-%m-%d")
-            self.queryset = self.queryset.filter(
-                show_time__date=date.date()
-            )
+            queryset = queryset.filter(show_time__date=date)
 
-            return self.queryset.select_related("movie", "cinema_hall")
+        if movie:
+            queryset = queryset.filter(movie_id=movie)
 
         if self.action == "list":
             queryset = (
