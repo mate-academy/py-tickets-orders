@@ -103,9 +103,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie__id__in=movie_ids)
         if date is not None:
             date = datetime.datetime.strptime(date, "%Y-%m-%d")
-            queryset = queryset.filter(show_time__year=date.year,
-                                       show_time__month=date.month,
-                                       show_time__day=date.day)
+            queryset = queryset.filter(
+                show_time__year=date.year,
+                show_time__month=date.month,
+                show_time__day=date.day
+            )
         if self.action in ("list", "retrieve"):
             queryset = queryset.select_related("movie").annotate(
                 tickets_available=F(
