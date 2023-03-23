@@ -1,7 +1,11 @@
 from datetime import datetime
 from typing import Type
 
-from django.db.models import F, Count
+from django.db.models import (
+    F,
+    Count,
+    QuerySet
+)
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.serializers import Serializer
@@ -56,7 +60,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     def _param_to_ints(qs) -> list:
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
 
         genres = self.request.query_params.get("genres")
@@ -93,7 +97,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def _params_to_int(qs) -> list:
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
         movie = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
@@ -101,9 +105,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if date is not None:
             date = datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(
-                show_time__year=date.year,
-                show_time__month=date.month,
-                show_time__day=date.day
+                show_time__date=date
             )
 
         if movie is not None:
@@ -153,7 +155,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
-    def get_queryset(self) -> queryset:
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
         if self.action == "list":
             user = self.request.user
