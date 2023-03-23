@@ -1,12 +1,14 @@
 from datetime import datetime
+from typing import Type
 
 from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.serializers import Serializer
 
 from cinema.models import (
-    Genre,
     Actor,
+    Genre,
     CinemaHall,
     Movie,
     MovieSession,
@@ -15,8 +17,8 @@ from cinema.models import (
 )
 
 from cinema.serializers import (
-    GenreSerializer,
     ActorSerializer,
+    GenreSerializer,
     CinemaHallSerializer,
     MovieSerializer,
     MovieSessionSerializer,
@@ -51,30 +53,30 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _param_to_ints(qs):
+    def _param_to_ints(qs) -> list:
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         queryset = self.queryset
 
         genres = self.request.query_params.get("genres")
         actors = self.request.query_params.get("actors")
         title = self.request.query_params.get("title")
 
-        if genres:
+        if genres is not None:
             genres_ids = self._param_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
-        if actors:
+        if actors is not None:
             actors_ids = self._param_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
-        if title:
+        if title is not None:
             queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieListSerializer
         if self.action == "retrieve":
@@ -88,15 +90,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
 
     @staticmethod
-    def _params_to_int(qs):
+    def _params_to_int(qs) -> list:
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         queryset = self.queryset
         movie = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
 
-        if date:
+        if date is not None:
             date = datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(
                 show_time__year=date.year,
@@ -104,7 +106,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 show_time__day=date.day
             )
 
-        if movie:
+        if movie is not None:
             movie_ids = self._params_to_int(movie)
             queryset = queryset.filter(movie__id__in=movie_ids)
 
@@ -117,7 +119,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieSessionListSerializer
 
@@ -131,7 +133,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return TicketListSerializer
         return TicketSerializer
@@ -151,7 +153,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         queryset = self.queryset
         if self.action == "list":
             user = self.request.user
@@ -159,7 +161,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(user__exact=user)
         return queryset
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return OrderListSerializer
         return OrderSerializer
