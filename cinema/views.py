@@ -96,12 +96,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        movies = self.request.query_params.get("movies")
+        movie = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
 
-        if movies:
-            movies_ids = self._params_to_ints(movies)
-            queryset = queryset.filter(movies__id__in=movies_ids)
+        if movie:
+            movie_ids = self._params_to_ints(movie)
+            queryset = queryset.filter(movie__id__in=movie_ids)
 
         if date:
             date = datetime.strptime(date, "%Y-%m-%d")
