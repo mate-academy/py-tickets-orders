@@ -3,7 +3,6 @@ from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
-
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -39,15 +38,16 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def str_to_int(attrs):
-        return [int(attr) for attr in attrs.split(",")]
+        if attrs:
+            return [int(attr) for attr in attrs.split(",")]
 
     def get_queryset(self):
         queryset = Movie.objects.prefetch_related("actors", "genres")
         get_attrs = self.request.query_params.get
 
         title = get_attrs("title")
-        actors = self.str_to_int(get_attrs("actors")) if get_attrs("actors") else None
-        genres = self.str_to_int(get_attrs("genres")) if get_attrs("genres") else None
+        actors = self.str_to_int(get_attrs("actors"))
+        genres = self.str_to_int(get_attrs("genres"))
         for attr, name in [
             [title, "title__contains"],
             [actors, "actors__id__in"],
@@ -76,7 +76,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         get_attrs = self.request.query_params.get
 
         movie = get_attrs("movie")
-        date = get_attrs("date").strftime("%Y %m %d")
+        date = get_attrs("date")
+        if date and date[~1] == "-":
+            date = date[:~1] + "-0" + date[~0]
         for attr, name in [
             [movie, "movie__id"],
             [date, "show_time__contains"]
@@ -85,11 +87,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(**{name: attr})
         if self.action == "list":
             queryset = queryset.annotate(
-                tickets_available=(
-                        F("cinema_hall__rows")
-                        * F("cinema_hall__seats_in_row")
-                        - Count("tickets")
-                )
+                tickets_available=(F("cinema_hall__rows")
+                                   * F("cinema_hall__seats_in_row")
+                                   - Count("tickets")
+                                   )
             )
         return queryset
 
@@ -105,7 +106,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderPagination(PageNumberPagination):
     page_size = 5
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
 
 
