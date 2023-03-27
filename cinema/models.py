@@ -119,5 +119,9 @@ class Ticket(models.Model):
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
 
+    @property
+    def seat_info(self):
+        return {"row": self.row, "seat": self.seat}
+
     class Meta:
         unique_together = ("movie_session", "row", "seat")

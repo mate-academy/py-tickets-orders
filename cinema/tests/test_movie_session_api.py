@@ -86,6 +86,7 @@ class MovieSessionApiTests(TestCase):
             f"/api/cinema/movie_sessions/?movie={self.movie.id}&date=2022-09-2"
         )
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
+        print(movie_sessions.data)
         self.assertEqual(len(movie_sessions.data), 1)
 
         movie_sessions = self.client.get(
