@@ -92,20 +92,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie_id = self.request.query_params.get("movie")
 
         if date_str:
-            try:
-                date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                queryset = queryset.filter(show_time__date=date)
-            except ValueError:
-                queryset = queryset.none()
+            date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            queryset = queryset.filter(show_time__date=date)
 
         if movie_id:
             queryset = queryset.filter(movie__id=movie_id)
 
         if self.action == "list":
             queryset = (
-                queryset.
-                select_related("cinema_hall").
-                annotate(
+                queryset.select_related("cinema_hall").annotate(
                     tickets_available=F("cinema_hall__rows")
                     * F("cinema_hall__seats_in_row") - Count("tickets")
                 ).order_by("id")
@@ -117,7 +112,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 class OrderPagination(PageNumberPagination):
     page_size = 1
     page_query_param = "page_size"
-    max_page_size = 2
+    max_page_size = 10
 
 
 class OrderViewSet(viewsets.ModelViewSet):
