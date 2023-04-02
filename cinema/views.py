@@ -78,7 +78,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = (
-            MovieSession.objects.all()
+            MovieSession.objects
             .select_related("movie", "cinema_hall")
             .annotate(
                 tickets_available=F("cinema_hall__rows")
