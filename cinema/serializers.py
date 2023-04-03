@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from django.db import transaction
 from rest_framework import serializers
 
@@ -83,7 +85,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    def validate(self, attrs):
+    def validate(self, attrs: Dict[str, any]) -> Dict[str, any]:
         data = super(TicketSerializer, self).validate(attrs=attrs)
         Ticket.validate_ticket(
             attrs["row"], attrs["seat"], attrs["movie_session"]
@@ -125,7 +127,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ("id", "tickets", "created_at")
 
     @transaction.atomic()
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> Order:
         tickets_data = validated_data.pop("tickets")
         order = Order.objects.create(**validated_data)
         for ticket_data in tickets_data:
