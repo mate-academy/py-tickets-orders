@@ -104,7 +104,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date)
 
         if movie:
-            queryset = queryset.filter(movie__id=int(movie))
+            queryset = queryset.filter(movie=movie)
 
         return queryset
 
@@ -133,7 +133,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             queryset = queryset.prefetch_related(
-                "tickets__movie_session"
+                "tickets__movie_session__movie",
+                "tickets__movie_session__cinema_hall"
             )
 
         return queryset
