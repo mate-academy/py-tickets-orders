@@ -129,7 +129,10 @@ class OrderSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         tickets_data = attrs.get("tickets")
 
-        seats_and_rows = [(ticket["seat"], ticket["row"]) for ticket in tickets_data]
+        seats_and_rows = [
+            (ticket["seat"], ticket["row"])
+            for ticket in tickets_data
+        ]
 
         if len(seats_and_rows) != len(set(seats_and_rows)):
             raise serializers.ValidationError(
