@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 from rest_framework import viewsets
 
 from cinema.models import (
@@ -44,6 +45,10 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
+    @staticmethod
+    def _params_to_ints(qs):
+        return [int(str_id) for str_id in qs.split(",")]
+
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
@@ -52,6 +57,30 @@ class MovieViewSet(viewsets.ModelViewSet):
             return MovieDetailSerializer
 
         return MovieSerializer
+
+    def get_queryset(self) -> QuerySet:
+        queryset = self.queryset
+
+        # filtering
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
+
+        if actors:
+            actors_ids = self._params_to_ints(actors)
+            queryset = queryset.filter(actors__id__in=actors_ids)
+
+        if genres:
+            genres_ids = self._params_to_ints(genres)
+            queryset = queryset.filter(genres__id__in=genres_ids)
+
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related("genres", "actors")
+
+        return queryset
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
