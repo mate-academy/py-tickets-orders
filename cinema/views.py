@@ -144,7 +144,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
         if self.action == "list":
             queryset = queryset.select_related(
-                "user"
             ).prefetch_related(
                 "tickets__movie_session__movie",
                 "tickets__movie_session__cinema_hall"
