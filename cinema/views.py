@@ -60,16 +60,13 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action == "list":
 
             title = self.request.query_params.get(
-                "title",
-                None
+                "title"
             )
             actors = self.request.query_params.get(
-                "actors",
-                None
+                "actors"
             )
             genres = self.request.query_params.get(
-                "genres",
-                None
+                "genres"
             )
             if title:
                 queryset = queryset.filter(
@@ -112,8 +109,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
             )
 
-            movie = self.request.query_params.get("movie", None)
-            date = self.request.query_params.get("date", None)
+            movie = self.request.query_params.get("movie")
+            date = self.request.query_params.get("date")
 
             if movie:
                 queryset = queryset.filter(movie=movie)
