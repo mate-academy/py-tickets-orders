@@ -1,8 +1,8 @@
-from typing import Type, Union
-
+from typing import Type
 from django.db.models import QuerySet, Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.serializers import Serializer
 
 from cinema.models import (
     Genre,
@@ -13,7 +13,6 @@ from cinema.models import (
     Order,
     Ticket
 )
-
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -53,11 +52,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     def _params_to_ints(qs) -> list:
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_serializer_class(self) -> Union[
-        Type[MovieListSerializer],
-        Type[MovieDetailSerializer],
-        Type[MovieSerializer],
-    ]:
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieListSerializer
 
@@ -118,11 +113,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def get_serializer_class(self) -> Union[
-        Type[MovieSessionListSerializer],
-        Type[MovieSessionDetailSerializer],
-        Type[MovieSessionSerializer],
-    ]:
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieSessionListSerializer
 
@@ -156,10 +147,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-    def get_serializer_class(self) -> Union[
-        Type[OrderListSerializer],
-        Type[OrderSerializer],
-    ]:
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return OrderListSerializer
 
@@ -169,11 +157,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
 
-    def get_serializer_class(self) -> Union[
-        Type[TicketListSerializer],
-        Type[MovieDetailSerializer],
-        Type[TicketSerializer],
-    ]:
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return TicketListSerializer
 
