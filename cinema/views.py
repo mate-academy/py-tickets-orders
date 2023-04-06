@@ -48,7 +48,6 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
-    serializer_class = MovieSerializer
 
     @staticmethod
     def _params_to_ints(qs) -> list:
@@ -94,7 +93,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
-    serializer_class = MovieSessionSerializer
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset
@@ -142,7 +140,6 @@ class OrderPagination(PageNumberPagination):
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
-    serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
     def get_queryset(self) -> QuerySet:
@@ -171,7 +168,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
-    serializer_class = TicketSerializer
 
     def get_serializer_class(self) -> Union[
         Type[TicketListSerializer],
