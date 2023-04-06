@@ -1,6 +1,6 @@
 import datetime
 
-from django.db.models import Count, Q, F, Func
+from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -17,7 +17,6 @@ from cinema.serializers import (
     MovieSessionDetailSerializer,
     MovieListSerializer,
     OrderListSerializer,
-    TicketListSerializer,
     OrderSerializer,
 )
 
@@ -56,7 +55,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             genres_id = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_id)
         if title:
-            queryset = queryset.filter(title__contains=title)
+            queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
 
