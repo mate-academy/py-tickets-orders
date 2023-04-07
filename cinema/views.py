@@ -34,26 +34,26 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all().prefetch_related("actors", "genres")
+    queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
     def get_queryset(self):
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
-        queryset = self.queryset
+        queryset = self.queryset.prefetch_related("actors", "genres")
 
         if actors:
             actors_ids = [int(str_id) for str_id in actors.split(",")]
             queryset = queryset.filter(
                 actors__id__in=actors_ids
-            ).prefetch_related("actors", "genres")
+            )
 
         if genres:
             genres_ids = [int(str_id) for str_id in genres.split(",")]
             queryset = queryset.filter(
                 genres__id__in=genres_ids
-            ).prefetch_related("genres", "actors")
+            )
 
         if title:
             queryset = queryset.filter(title__icontains=title)
