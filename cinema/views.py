@@ -124,7 +124,10 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
+    queryset = Order.objects.prefetch_related(
+        "tickets__movie_session__cinema_hall",
+        "tickets__movie_session__movie"
+    )
     pagination_class = OrderPagination
 
     def get_queryset(self) -> QuerySet:
