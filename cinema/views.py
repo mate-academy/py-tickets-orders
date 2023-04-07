@@ -73,9 +73,8 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if self.action in ("list", "retrieve"):
             queryset = queryset.prefetch_related(
-                "actors"
-            ).prefetch_related(
-                "genres"
+                "actors",
+                "genres",
             )
 
         return queryset.distinct()
