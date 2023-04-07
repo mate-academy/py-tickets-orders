@@ -1,6 +1,9 @@
-from django.db.models import F, Count
+from typing import Type
+
+from django.db.models import F, Count, QuerySet
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.serializers import Serializer
 
 from cinema.models import (
     Genre,
@@ -49,7 +52,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     def _params_to_ints(qs) -> list:
         return [int(str_id) for str_id in qs.split(",")]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
 
         actors = self.request.query_params.get("actors")
@@ -72,7 +75,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieListSerializer
 
@@ -86,7 +89,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieSessionListSerializer
 
@@ -95,7 +98,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         queryset = self.queryset
 
         movie = self.request.query_params.get("movie")
