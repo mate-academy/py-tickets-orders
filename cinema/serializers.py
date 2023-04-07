@@ -128,14 +128,22 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketListSerializer(many=True)
+    tickets = TicketSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
-        fields = ["created_at", "user", "tickets"]
+        fields = ["id", "tickets", "created_at"]
 
 
 class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
+
+
+class OrderDetailSerializer(OrderSerializer):
+    pass
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, allow_empty=False, read_only=False)
 
     class Meta:
