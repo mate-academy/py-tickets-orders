@@ -1,6 +1,20 @@
-from rest_framework import viewsets
+from datetime import datetime
+from typing import Type
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from django.db.models import F, Count
+from rest_framework import viewsets
+from rest_framework.serializers import Serializer
+
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket,
+)
+from cinema.pagination import OrderResultSetPagination
 
 from cinema.serializers import (
     GenreSerializer,
@@ -12,7 +26,16 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
+    OrderSerializer,
+    TicketSerializer,
+    TicketListSerializer,
+    OrderListSerializer,
+    OrderCreateSerializer,
 )
+
+
+def params_from_str_to_int(queryset):
+    return [int(id_) for id_ in queryset.split(",")]
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -43,12 +66,31 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    def get_queryset(self):
+        queryset = Movie.objects.all()
+        title = self.request.query_params.get("title")
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        if title:
+            queryset = Movie.objects.filter(title__contains=title)
+            return queryset
+        if actors:
+            actors = params_from_str_to_int(actors)
+            queryset = Movie.objects.filter(actors__id__in=actors)
+            return queryset
+        if genres:
+            genres = params_from_str_to_int(genres)
+            queryset = Movie.objects.filter(genres__id__in=genres)
+            return queryset
+
+        return queryset
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieSessionListSerializer
 
@@ -56,3 +98,64 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = MovieSession.objects.select_related("movie", "cinema_hall")
+        if self.action == "list":
+            queryset = queryset.annotate(
+                tickets_available=(
+                    F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row")
+                    - Count("tickets")
+                )
+            )
+            movie = self.request.query_params.get("movie")
+            date = self.request.query_params.get("date")
+
+            if movie:
+                movie_id = params_from_str_to_int(movie)
+                queryset = queryset.filter(movie__id__in=movie_id)
+            if date:
+                date_to_filter = datetime.strptime(date, "%Y-%m-%d")
+                queryset = queryset.filter(
+                    show_time__date=date_to_filter
+                )
+        return queryset
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    pagination_class = OrderResultSetPagination
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return OrderListSerializer
+        if self.action == "create":
+            return OrderCreateSerializer
+        return OrderSerializer
+
+    def get_queryset(self):
+        queryset = Order.objects.all()
+        user = self.request.user
+        if user:
+            queryset = queryset.filter(user=user)
+            return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class TicketViewSet(viewsets.ModelViewSet):
+    queryset = Ticket.objects.all()
+
+    def get_serializer_class(self) -> Type[Serializer]:
+        if self.action == "list":
+            return TicketListSerializer
+        return TicketSerializer
+
+    def get_queryset(self):
+        queryset = Ticket.objects.all()
+        user = self.request.user
+        if user:
+            queryset = queryset.filter(user=user)
+            return queryset
