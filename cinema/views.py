@@ -48,7 +48,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _params_to_ints(qs):
+    def _params_to_ints(qs) -> list[int]:
         return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
@@ -103,9 +103,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                         - Count("tickets")
                     )
                 )
-            )
+            ).order_by("show_time")
 
-        return queryset.order_by("show_time")
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
