@@ -91,6 +91,25 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+
+        date = self.request.query_params.get("date")
+        movie = self.request.query_params.get("movie")
+
+        if date:
+            queryset = queryset.filter(
+                show_time__date=date
+            )
+
+        if movie:
+            queryset = queryset.filter(
+                movie=movie
+            )
+
+        return queryset.distinct()
+
+
 
 class OrderPagination(PageNumberPagination):
     page_size = 10
