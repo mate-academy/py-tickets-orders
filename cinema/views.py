@@ -12,7 +12,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 
 
@@ -77,7 +79,6 @@ class MovieViewSet(viewsets.ModelViewSet):
         return queryset.distinct()
 
 
-
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
@@ -108,7 +109,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             )
 
         return queryset.distinct()
-
 
 
 class OrderPagination(PageNumberPagination):
