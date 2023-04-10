@@ -117,10 +117,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 movies_id = query_params_str_to_int(movies)
                 queryset = queryset.filter(movie_id__in=movies_id)
             if date:
-                date_to_filter = datetime.strptime(date, "%Y-%m-%d")
-                queryset = queryset.filter(
-                    show_time__date=date_to_filter
-                )
+                queryset = queryset.filter(show_time__date=date)
         return queryset
 
 
