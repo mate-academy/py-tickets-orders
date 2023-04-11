@@ -39,9 +39,8 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _turn_params_to_int(params: list) -> list[int]:
-        if "".join(params).isalnum():
-            return [int(param) for param in params]
+    def _turn_params_to_int(params: str) -> list[int]:
+        return [int(param) for param in params.split(",")]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -54,19 +53,15 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Movie.objects.prefetch_related("actors", "genres")
-        actor_ids = self._turn_params_to_int(
-            self.request.query_params.getlist("actors")
-        )
-        genre_ids = self._turn_params_to_int(
-            self.request.query_params.getlist("genres")
-        )
+        actor_ids = self.request.query_params.get("actors")
+        genre_ids = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
 
         if actor_ids:
-            queryset = queryset.filter(actors__in=actor_ids)
+            queryset = queryset.filter(actors__in=self._turn_params_to_int(actor_ids))
 
         if genre_ids:
-            queryset = queryset.filter(genres__in=genre_ids)
+            queryset = queryset.filter(genres__in=self._turn_params_to_int(genre_ids))
 
         if title:
             queryset = queryset.filter(title__icontains=title)
@@ -88,7 +83,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             if session_date:
                 queryset = queryset.filter(show_time__date=session_date)
             if movie:
-                queryset = queryset.filter(movie=int(movie))
+                queryset = queryset.filter(movie=movie)
         return queryset
 
     def get_serializer_class(self):
