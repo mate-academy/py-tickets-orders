@@ -15,6 +15,7 @@ from cinema.serializers import (
     MovieSessionDetailSerializer,
     MovieListSerializer,
     OrderListSerializer,
+    OrderSerializer,
 )
 
 
@@ -33,6 +34,10 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
+def ids_from_string(string_ids: str) -> list:
+    return [int(str_id) for str_id in string_ids.split(",")]
+
+
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
@@ -44,13 +49,13 @@ class MovieViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.prefetch_related("actors", "genres")
 
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
+            actors_ids = ids_from_string(actors)
             queryset = queryset.filter(
                 actors__id__in=actors_ids
             )
 
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
+            genres_ids = ids_from_string(genres)
             queryset = queryset.filter(
                 genres__id__in=genres_ids
             )
@@ -117,15 +122,21 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().prefetch_related(
-        "tickets__movie_session__cinema_hall",
-        "tickets__movie_session__movie"
-    )
-    serializer_class = OrderListSerializer
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        return self.queryset.prefetch_related(
+            "tickets__movie_session__cinema_hall",
+            "tickets__movie_session__movie"
+        ).filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return OrderListSerializer
+
+        return self.serializer_class
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
