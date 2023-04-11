@@ -107,10 +107,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             if movie:
                 movie_ids = str_ids_to_int(movie)
                 queryset = queryset.filter(movie_id__in=movie_ids)
-            date_str = self.request.query_params.get("date")
-            if date_str:
-                date_obj = str_to_date(date_str)
-                queryset = queryset.filter(show_time__contains=date_obj)
+            date = self.request.query_params.get("date")
+            if date:
+                queryset = queryset.filter(show_time__date=date)
 
             queryset = queryset.distinct()
 
@@ -144,7 +143,3 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 def str_ids_to_int(queries: str) -> list[int]:
     return [int(str_id) for str_id in queries.split(",")]
-
-
-def str_to_date(date_str: str) -> datetime:
-    return datetime.strptime(date_str, "%Y-%m-%d").date()
