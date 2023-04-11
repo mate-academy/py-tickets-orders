@@ -144,7 +144,7 @@ class OrderDetailSerializer(OrderSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, allow_empty=False, read_only=False)
+    tickets = TicketSerializer(many=True, allow_empty=False)
 
     class Meta:
         model = Order

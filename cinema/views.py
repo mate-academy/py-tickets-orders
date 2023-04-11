@@ -25,6 +25,10 @@ from cinema.serializers import (
 )
 
 
+def params_to_ints(string_ids):
+    return [int(str_id) for str_id in string_ids.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -41,10 +45,6 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    @staticmethod
-    def _params_to_ints(string_ids):
-        return [int(str_id) for str_id in string_ids.strip("/").split(",")]
-
     def get_queryset(self):
         queryset = Movie.objects.prefetch_related("genres", "actors")
 
@@ -53,10 +53,10 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            actors_id = self._params_to_ints(actors)
+            actors_id = params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_id)
         if genres:
-            genres_id = self._params_to_ints(genres)
+            genres_id = params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_id)
         if title:
             queryset = queryset.filter(title__icontains=title)
@@ -74,10 +74,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    @staticmethod
-    def _params_to_ints(string_ids):
-        return [int(str_id) for str_id in string_ids.strip("/").split(",")]
-
     def get_queryset(self):
         queryset = MovieSession.objects.all()
         movie = self.request.query_params.get("movie")
@@ -87,7 +83,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(show_time__contains=date)
         if movie:
-            movie_ids = self._params_to_ints(movie)
+            movie_ids = params_to_ints(movie)
             queryset = queryset.filter(movie__id__in=movie_ids)
         if self.action == "list":
             queryset = queryset.select_related(
