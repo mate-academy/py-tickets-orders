@@ -11,7 +11,6 @@ from cinema.models import (
     Movie,
     MovieSession,
     Order,
-    Ticket,
 )
 
 from cinema.serializers import (
@@ -26,7 +25,6 @@ from cinema.serializers import (
     MovieListSerializer,
     OrderSerializer,
     OrderListSerializer,
-    TicketSerializer,
 )
 
 
@@ -60,7 +58,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if genres:
             queryset = queryset.filter(genres__id__in=self.str_to_list(genres))
         if actors:
-            queryset = queryset.filter(actors__id=actors)
+            queryset = queryset.filter(actors__id__in=self.str_to_list(actors))
         if title:
             queryset = queryset.filter(title__icontains=title)
         return queryset
@@ -76,7 +74,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.select_related("movie", "cinema_hall")
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
@@ -92,7 +89,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             if movie:
                 queryset = queryset.filter(movie_id=movie)
             if date:
-                date = datetime.strptime(date, "%Y-%m-%d").date()
                 queryset = queryset.filter(show_time__date=date)
         if self.action == "retrieve":
             queryset = queryset.prefetch_related("tickets")
@@ -106,13 +102,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
-
-
-class TicketViewSet(viewsets.ModelViewSet):
-    queryset = Ticket.objects.select_related(
-        "movie_session", "movie_session__movie", "movie_session__cinema_hall"
-    )
-    serializer_class = TicketSerializer
 
 
 class OrderPagination(PageNumberPagination):
@@ -129,7 +118,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             return (
                 Order.objects.select_related("user")
                 .prefetch_related(
-                    "tickets",
                     "tickets__movie_session__movie",
                     "tickets__movie_session__cinema_hall",
                 )

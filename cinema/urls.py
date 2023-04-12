@@ -8,7 +8,6 @@ from cinema.views import (
     MovieViewSet,
     MovieSessionViewSet,
     OrderViewSet,
-    TicketViewSet,
 )
 
 router = routers.DefaultRouter()
@@ -16,9 +15,11 @@ router.register("genres", GenreViewSet)
 router.register("actors", ActorViewSet)
 router.register("cinema_halls", CinemaHallViewSet)
 router.register("movies", MovieViewSet, basename="movie")
-router.register("movie_sessions", MovieSessionViewSet)
+router.register(
+    "movie_sessions", MovieSessionViewSet, basename="movie-sessions"
+)
 router.register("orders", OrderViewSet, basename="order")
-router.register("tickets", TicketViewSet, basename="ticket")
+
 
 urlpatterns = [path("", include(router.urls))]
 
