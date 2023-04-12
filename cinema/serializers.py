@@ -117,7 +117,7 @@ class OrderListSerializer(OrderSerializer):
 
 
 class OrderCreateSerializer(OrderSerializer):
-    tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
+    tickets = TicketSerializer(many=True, allow_empty=False)
 
     def create(self, validated_data):
         with transaction.atomic():
