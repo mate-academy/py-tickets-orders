@@ -47,7 +47,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return OrderListSerializer
-        return OrderSerializer
+        return self.serializer_class
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -74,7 +74,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.prefetch_related("actors", "genres")
 
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
