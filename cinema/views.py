@@ -106,12 +106,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
             queryset = (
                 queryset
-                .select_related("movie", "cinema_hall")
-                .annotate(tickets_available=(F("cinema_hall__seats_in_row")
-                                             * F("cinema_hall__rows")
-                                             - Count("tickets")
-                                             )
-                          )
+                .select_related("cinema_hall")
+                .annotate(
+                    tickets_available=(
+                            F("cinema_hall__seats_in_row")
+                            * F("cinema_hall__rows")
+                            - Count("tickets")
+                    )
+                )
             ).order_by("id")
 
         return queryset
@@ -146,4 +148,4 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return OrderListSerializer
 
-        return OrderSerializer
+        return self.serializer_class
