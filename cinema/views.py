@@ -34,13 +34,15 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
-    serializer_class = MovieSerializer
-
+class ParamsToIntsMixin:
     @staticmethod
     def _params_to_ints(qs):
         return [int(str_id) for str_id in qs.split(",")]
+
+
+class MovieViewSet(ParamsToIntsMixin, viewsets.ModelViewSet):
+    queryset = Movie.objects.all()
+    serializer_class = MovieSerializer
 
     def get_queryset(self):
         queryset = self.queryset
@@ -75,13 +77,9 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(ParamsToIntsMixin, viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -102,7 +100,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             )
             queryset = (
                 queryset
-                .prefetch_related("movie", "cinema_hall")
+                .select_related("movie", "cinema_hall")
                 .annotate(tickets_available=tickets_taken - Count("tickets"))
                 .order_by("id")
             )
@@ -141,7 +139,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return OrderListSerializer
 
-        return OrderSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
