@@ -56,17 +56,6 @@ class MovieDetailSerializer(MovieSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     actors = ActorSerializer(many=True, read_only=True)
 
-    class Meta:
-        model = Movie
-        fields = (
-            "id",
-            "title",
-            "description",
-            "duration",
-            "genres",
-            "actors",
-        )
-
 
 class MovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -153,25 +142,25 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(
         many=True,
-        allow_empty=False,
+        read_only=True,
     )
 
     class Meta:
         model = Order
         fields = ("id", "created_at", "tickets")
 
+    @transaction.atomic
     def create(self, validated_data):
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
 
-            for ticket_data in tickets_data:
-                Ticket.objects.create(
-                    order=order,
-                    **ticket_data,
-                )
+        for ticket_data in tickets_data:
+            Ticket.objects.create(
+                order=order,
+                **ticket_data,
+            )
 
-            return order
+        return order
 
 
 class OrderListSerializer(OrderSerializer):
