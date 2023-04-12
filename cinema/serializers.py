@@ -140,7 +140,6 @@ class OrderListSerializer(OrderSerializer):
 
 class OrderCreateSerializer(OrderSerializer):
     tickets = TicketSerializer(
-        read_only=False,
         many=True
     )
 

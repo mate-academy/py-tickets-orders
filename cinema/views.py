@@ -68,16 +68,16 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     #
     def get_queryset(self) -> QuerySet:
+        queryset = self.queryset.prefetch_related("genres", "actors")
+
         title = self.request.query_params.get("title")
         if title:
             queryset = Movie.objects.filter(title__contains=title)
-            return queryset
 
         actors = self.request.query_params.get("actors")
         if actors:
             list_id = query_params_str_to_int(actors)
             queryset = Movie.objects.filter(actors__id__in=list_id)
-            return queryset
 
         genres = self.request.query_params.get("genres")
         if genres:
@@ -85,7 +85,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = Movie.objects.filter(genres__id__in=list_id)
             return queryset
 
-        return self.queryset
+        return queryset
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -141,10 +141,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             return OrderListSerializer
         if self.action == "create":
             return OrderCreateSerializer
-        return OrderSerializer
+        return self.serializer_class
 
     def get_queryset(self) -> QuerySet:
-        return self.queryset.filter(user=self.request.user)
+        return self.queryset.filter(
+            user=self.request.user
+        ).select_related("user")
 
     def perform_create(self, serializer) -> None:
         serializer.save(user=self.request.user)
