@@ -7,7 +7,8 @@ from cinema.views import (
     CinemaHallViewSet,
     MovieViewSet,
     MovieSessionViewSet,
-    OrderViewSet, TicketViewSet,
+    OrderViewSet,
+    TicketViewSet,
 
 )
 

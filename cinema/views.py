@@ -1,7 +1,6 @@
 from typing import Type
 
 from django.db.models import QuerySet, F, Count
-from django.utils.datetime_safe import datetime
 from rest_framework import viewsets
 from rest_framework.serializers import Serializer
 
@@ -14,7 +13,7 @@ from cinema.models import (
     Ticket,
     Order
 )
-from cinema.pagination import OrderPagination
+from cinema.pagination import OrderPagination, query_params_str_to_int
 
 from cinema.serializers import (
     GenreSerializer,
@@ -32,10 +31,6 @@ from cinema.serializers import (
     TicketListSerializer,
     OrderCreateSerializer
 )
-
-
-def query_params_str_to_int(queryset):
-    return [int(id_) for id_ in queryset.split(",")]
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -64,7 +59,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieDetailSerializer
 
-        return MovieSerializer
+        return self.serializer_class
 
     #
     def get_queryset(self) -> QuerySet:
@@ -83,7 +78,6 @@ class MovieViewSet(viewsets.ModelViewSet):
         if genres:
             list_id = query_params_str_to_int(genres)
             queryset = Movie.objects.filter(genres__id__in=list_id)
-            return queryset
 
         return queryset
 
@@ -98,7 +92,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
-        return MovieSessionSerializer
+        return self.serializer_class
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset.select_related("cinema_hall")
@@ -128,7 +122,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return TicketListSerializer
-        return TicketSerializer
+        return self.serializer_class
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -144,9 +138,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
     def get_queryset(self) -> QuerySet:
-        return self.queryset.filter(
-            user=self.request.user
-        ).select_related("user")
+        return self.queryset.filter(user=self.request.user)
 
     def perform_create(self, serializer) -> None:
         serializer.save(user=self.request.user)
