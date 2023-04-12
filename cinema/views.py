@@ -86,7 +86,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
     def get_queryset(self) -> QuerySet:
-        queryset = self.queryset
+        queryset = self.queryset.select_related("movie", "cinema_hall")
 
         movie = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
@@ -116,7 +116,10 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
+    queryset = Order.objects.all().prefetch_related(
+        "tickets__movie_session__movie",
+        "tickets__movie_session__cinema_hall"
+    )
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 

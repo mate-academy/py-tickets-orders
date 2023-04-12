@@ -84,7 +84,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionSerializer(many=False, read_only=False)
+    movie_session = MovieSessionSerializer(many=False)
 
     def validate(self, attrs):
         data = super(TicketSerializer, self).validate(attrs)
@@ -127,7 +127,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
+    tickets = TicketSerializer(many=True, allow_empty=False)
 
     class Meta:
         model = Order
