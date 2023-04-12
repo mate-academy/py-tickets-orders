@@ -34,13 +34,18 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
+class StringToIntsMixin:
+    @staticmethod
+    def _string_to_ints(string):
+        return [int(str_id) for str_id in string.split(",")]
+
+
+class MovieViewSet(
+    viewsets.ModelViewSet,
+    StringToIntsMixin
+):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
-
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset.prefetch_related("actors", "genres")
@@ -50,11 +55,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            actors_ids = self._params_to_ints(actors)
+            actors_ids = self._string_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         if genres:
-            genres_ids = self._params_to_ints(genres)
+            genres_ids = self._string_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         if title:
@@ -72,13 +77,12 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(
+    viewsets.ModelViewSet,
+    StringToIntsMixin
+):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-
-    @staticmethod
-    def _movie_to_ints(movie):
-        return [int(str_id) for str_id in movie.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -90,7 +94,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date)
 
         if movie:
-            movie_ids = self._movie_to_ints(movie)
+            movie_ids = self._string_to_ints(movie)
             queryset = queryset.filter(movie__id__in=movie_ids)
 
         if self.action == "list":
@@ -142,7 +146,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return OrderListSerializer
 
-        return OrderSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
