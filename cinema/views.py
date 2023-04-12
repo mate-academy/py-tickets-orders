@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Type
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -123,14 +122,14 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.prefetch_related(
-        "tickets__movie_session__cinema_hall",
-        "tickets__movie_session__movie"
-    )
+    queryset = Order.objects.all()
     pagination_class = OrderPagination
 
     def get_queryset(self) -> QuerySet:
-        return self.queryset.filter(user=self.request.user)
+        return self.queryset.prefetch_related(
+            "tickets__movie_session__cinema_hall",
+            "tickets__movie_session__movie"
+        ).filter(user=self.request.user)
 
     def perform_create(self, serializer) -> None:
         serializer.save(user=self.request.user)
