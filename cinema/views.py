@@ -107,7 +107,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                                              - Count("tickets")))
             ).order_by("id")
 
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -151,7 +151,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return OrderListSerializer
 
-        return self.serializer_class
+        return OrderSerializer
 
 
 class TicketViewSet(viewsets.ModelViewSet):
