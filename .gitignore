@@ -13,4 +13,3 @@ app/db.sqlite3
 /cinema_service/
 /user/
 /cinema/migrations/
-/cinema/tests/
