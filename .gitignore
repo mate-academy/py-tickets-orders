@@ -10,3 +10,7 @@ venv/
 app/db.sqlite3
 /db.sqlite3
 /pyproject.toml
+/cinema_service/
+/user/
+/cinema/migrations/
+/cinema/tests/
