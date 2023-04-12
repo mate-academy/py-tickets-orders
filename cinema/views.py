@@ -166,7 +166,4 @@ class TicketViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return TicketListSerializer
 
-        if self.action == "retrieve":
-            return MovieDetailSerializer
-
         return TicketSerializer
