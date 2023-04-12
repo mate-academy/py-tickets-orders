@@ -14,7 +14,7 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderListSerializer,
+    OrderSerializer,
 )
 
 
@@ -34,7 +34,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all().prefetch_related("actors", "genres")
+    queryset = Movie.objects.prefetch_related("actors", "genres")
     serializer_class = MovieSerializer
 
     def get_serializer_class(self):
@@ -52,20 +52,14 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
         queryset = self.queryset
 
-        if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
-            queryset = queryset.filter(
-                actors__id__in=actors_ids
-            ).prefetch_related("actors", "genres")
+        actors_ids = [int(str_id) for str_id in actors.split(",")] if actors else []
+        genres_ids = [int(str_id) for str_id in genres.split(",")] if genres else []
 
-        if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
-            queryset = queryset.filter(
-                genres__id__in=genres_ids
-            ).prefetch_related("genres", "actors")
-
-        if title:
-            queryset = queryset.filter(title__icontains=title)
+        queryset = queryset.filter(
+            actors__id__in=actors_ids,
+            genres__id__in=genres_ids,
+            title__icontains=title,
+        ).prefetch_related("actors", "genres")
 
         return queryset.distinct()
 
@@ -117,11 +111,11 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().prefetch_related(
+    queryset = Order.objects.prefetch_related(
         "tickets__movie_session__cinema_hall",
         "tickets__movie_session__movie"
     )
-    serializer_class = OrderListSerializer
+    serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
     def get_queryset(self):
