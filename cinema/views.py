@@ -80,38 +80,35 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        if self.action in ("list", "retrieve"):
-            queryset = queryset.prefetch_related("genres", "actors")
-
         return queryset
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all()
+    queryset = MovieSession.objects.select_related("movie", "cinema_hall")
 
     def get_queryset(self) -> QuerySet:
-        queryset = self.queryset
 
         # filtering
         movie = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
 
+        if movie and date:
+            return self.queryset.filter(movie=movie, show_time__date=date)
+
         if movie:
-            queryset = queryset.filter(movie=movie)
+            return self.queryset.filter(movie=movie)
 
         if date:
-            queryset = queryset.filter(show_time__date=date)
+            return self.queryset.filter(show_time__date=date)
 
         if self.action in ("list", "retrieve"):
-            queryset = (
-                queryset
+            return (
+                self.queryset
                 .select_related("movie", "cinema_hall")
                 .annotate(tickets_available=((F("cinema_hall__seats_in_row")
                                               * F("cinema_hall__rows"))
                                              - Count("tickets")))
             ).order_by("id")
-
-        return queryset
 
     def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
