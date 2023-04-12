@@ -72,17 +72,13 @@ class MovieViewSet(viewsets.ModelViewSet):
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         if title:
-            queryset = Movie.objects.filter(title__contains=title)
-            return queryset
+            queryset = queryset.filter(title__icontains=title)
         if actors:
-            actors = params_from_str_to_int(actors)
-            queryset = Movie.objects.filter(actors__id__in=actors)
-            return queryset
+            actors_id = params_from_str_to_int(actors)
+            queryset = queryset.filter(actors__id__in=actors_id)
         if genres:
-            genres = params_from_str_to_int(genres)
-            queryset = Movie.objects.filter(genres__id__in=genres)
-            return queryset
-
+            genres_id = params_from_str_to_int(genres)
+            queryset = queryset.filter(genres__id__in=genres_id)
         return queryset
 
 
@@ -116,9 +112,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 movie_id = params_from_str_to_int(movie)
                 queryset = queryset.filter(movie__id__in=movie_id)
             if date:
-                date_to_filter = datetime.strptime(date, "%Y-%m-%d")
+
                 queryset = queryset.filter(
-                    show_time__date=date_to_filter
+                    show_time__date=date
                 )
         return queryset
 
