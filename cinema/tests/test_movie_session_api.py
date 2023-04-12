@@ -34,7 +34,12 @@ class MovieSessionApiTests(TestCase):
         self.movie_session = MovieSession.objects.create(
             movie=self.movie,
             cinema_hall=self.cinema_hall,
-            show_time=datetime.datetime(year=2022, month=9, day=2, hour=9),
+            show_time=datetime.datetime(
+                year=2022,
+                month=9,
+                day=2,
+                hour=9
+            ),
         )
 
     def test_get_movie_sessions(self):
