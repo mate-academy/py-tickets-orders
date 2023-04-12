@@ -50,7 +50,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return [int(str_id) for str_id in string.split(",")]
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.prefetch_related("genres", "actors")
 
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
