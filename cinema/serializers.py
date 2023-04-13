@@ -1,5 +1,8 @@
+from typing import Type
+
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.serializers import Serializer
 
 from cinema.models import (
     Genre,
@@ -59,7 +62,7 @@ class TicketSerializer(serializers.ModelSerializer):
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
 
-    def validate(self, attrs):
+    def validate(self, attrs) -> Type[Serializer]:
         data = super(TicketSerializer, self).validate(attrs)
         Ticket.validate_seat_and_row(
             seat=attrs["seat"],
@@ -128,7 +131,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "tickets", "created_at")
 
-    def create(self, validated_data):
+    def create(self, validated_data) -> Type[Order]:
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
