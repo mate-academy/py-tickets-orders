@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, Optional
 
 from django.db import transaction
 from rest_framework import serializers
@@ -62,7 +62,7 @@ class TicketSerializer(serializers.ModelSerializer):
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
 
-    def validate(self, attrs) -> Type[Serializer]:
+    def validate(self, attrs) -> Optional[Serializer]:
         data = super(TicketSerializer, self).validate(attrs)
         Ticket.validate_seat_and_row(
             seat=attrs["seat"],
@@ -131,13 +131,14 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "tickets", "created_at")
 
+    @transaction.atomic
     def create(self, validated_data) -> Type[Order]:
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
-            for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
+        # with transaction.atomic():
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
+        for ticket_data in tickets_data:
+            Ticket.objects.create(order=order, **ticket_data)
+        return order
 
 
 class OrderListSerializer(OrderSerializer):
