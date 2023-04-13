@@ -43,7 +43,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.prefetch_related("genres", "actors")
         genres = self.request.query_params.get("genres")
         actors = self.request.query_params.get("actors")
         string = self.request.query_params.get("title")
@@ -87,7 +87,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie__id=movie)
 
         if self.action == "list":
-            queryset = queryset.select_related("movie").annotate(
+            queryset = queryset.select_related(
+                "movie",
+                "cinema_hall"
+            ).annotate(
                 tickets_available=F("cinema_hall__rows")
                 * F("cinema_hall__seats_in_row")
                 - Count("tickets")
