@@ -4,6 +4,7 @@ from django.db.models import QuerySet, F, Count
 from rest_framework import viewsets
 from rest_framework.serializers import Serializer
 
+from cinema.data_convert import query_params_str_to_int
 from cinema.models import (
     Genre,
     Actor,
@@ -13,7 +14,7 @@ from cinema.models import (
     Ticket,
     Order
 )
-from cinema.pagination import OrderPagination, query_params_str_to_int
+from cinema.pagination import OrderPagination
 
 from cinema.serializers import (
     GenreSerializer,
@@ -138,7 +139,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
     def get_queryset(self) -> QuerySet:
-        return self.queryset.filter(user=self.request.user)
+        return self.queryset.filter(
+            user=self.request.user
+        ).prefetch_related("tickets__movie_session")
 
     def perform_create(self, serializer) -> None:
         serializer.save(user=self.request.user)
