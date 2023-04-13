@@ -77,27 +77,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        if not (1 <= attrs["seat"]
-                <= attrs["movie_session"].cinema_hall.seats_in_row):
-            raise serializers.ValidationError(
-                {
-                    "seat": f"Seat must be in range: "
-                    f"[1, {attrs['movie_session'].cinema_hall.seats_in_row}], "
-                    f"not {attrs['seat']}"
-                },
-            )
-        if not (1 <= attrs["row"] <= attrs["movie_session"].cinema_hall.rows):
-            raise serializers.ValidationError(
-                {
-                    "row": f"Row must be in range: "
-                    f"[1, {attrs['movie_session'].cinema_hall.rows}], "
-                    f"not {attrs['row']}"
-                },
-            )
-        return data
-
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
