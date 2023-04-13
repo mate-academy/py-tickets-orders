@@ -74,7 +74,7 @@ class MovieViewSet(
         if self.action == "retrieve":
             return MovieDetailSerializer
 
-        return MovieSerializer
+        return self.serializer_class
 
 
 class MovieSessionViewSet(
@@ -116,7 +116,7 @@ class MovieSessionViewSet(
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return self.serializer_class
 
 
 class OrderPagination(PageNumberPagination):
@@ -137,6 +137,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.prefetch_related(
                 "tickets__movie_session__movie",
                 "tickets__movie_session__cinema_hall"
+
             )
 
         return queryset
