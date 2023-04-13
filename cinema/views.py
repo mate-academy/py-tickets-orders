@@ -80,8 +80,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
 
         if date:
-            date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
-            queryset = queryset.filter(show_time__contains=date)
+            queryset = queryset.filter(show_time__date=date)
         if movie:
             movie_ids = params_to_ints(movie)
             queryset = queryset.filter(movie__id__in=movie_ids)
@@ -116,7 +115,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[Order]:
         queryset = Order.objects.prefetch_related(
-            "tickets__movie_session",
             "tickets__movie_session__cinema_hall",
             "tickets__movie_session__movie",
         ).filter(user=self.request.user)
