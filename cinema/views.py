@@ -54,9 +54,9 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
 
-        actors = self.request.query_params.get("actors") or None
-        genres = self.request.query_params.get("genres") or None
-        title = self.request.query_params.get("title") or None
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
 
         if actors:
             actors_ids = self._params_to_ints(actors)
@@ -89,7 +89,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return self.serializer_class
 
     @staticmethod
     def _params_to_ints(qs) -> list:
@@ -134,7 +134,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return OrderListSerializer
-        return OrderSerializer
+        return self.serializer_class
 
     def get_queryset(self):
         queryset = self.queryset.filter(user=self.request.user)
