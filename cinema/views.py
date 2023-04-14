@@ -86,7 +86,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
     def get_queryset(self):
-        queryset = MovieSession.objects.all()
+        queryset = self.queryset
         date = self.request.query_params.get("date")
         movie_id = self.request.query_params.get("movie")
 
