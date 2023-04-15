@@ -78,7 +78,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = MovieSession.objects.all()
 
-        if self.action == "list":
+        if self.action in ("list", "retrieve"):
             queryset = (
                 queryset.select_related("movie", "cinema_hall")
                 .annotate(
@@ -88,12 +88,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                         - Count("tickets")
                     )
                 )
-            )
-
-        if self.action == "retrieve":
-            queryset = (
-                queryset.select_related("cinema_hall", "movie")
-                .prefetch_related("tickets")
             )
 
         date = self.request.query_params.get("date")
@@ -127,8 +121,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderPagination
 
     def get_queryset(self):
-        queryset = Order.objects.filter(
-            user=self.request.user)
+        queryset = Order.objects.filter(user=self.request.user)
 
         if self.action == "list":
             queryset = queryset.prefetch_related(
