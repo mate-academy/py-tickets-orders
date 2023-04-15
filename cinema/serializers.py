@@ -114,7 +114,7 @@ class TicketListSerializer(TicketSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=False)
+    tickets = TicketSerializer(many=True)
 
     class Meta:
         model = Order
@@ -124,8 +124,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "created_at"
         )
 
+    @transaction.atomic()
     def create(self, validated_data):
-        with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
