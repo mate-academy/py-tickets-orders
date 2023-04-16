@@ -115,7 +115,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             "tickets__movie_session__cinema_hall",
             "tickets__movie_session__movie",
         )
-        return queryset
+        return queryset.filter(pk=self.request.user.pk)
 
     def get_serializer_class(self):
         if self.action == "list":
