@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -29,6 +27,12 @@ from cinema.serializers import (
 )
 
 
+class QueryParamToIntMixin:
+    @staticmethod
+    def _params_to_ints(qs):
+        return [int(str_id) for str_id in qs.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -44,13 +48,9 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
+class MovieViewSet(QueryParamToIntMixin, viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
-
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -85,41 +85,31 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(QueryParamToIntMixin, viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
 
-        show_time_date = self.request.query_params.get("date")
+        date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
         if self.action == "list":
             queryset = (
                 queryset
-                .select_related("movie")
-                .select_related("cinema_hall")
+                .select_related("movie", "cinema_hall")
                 .annotate(tickets_available=(
                     F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
                 ) - Count("tickets")
                 )
             )
 
-        if show_time_date:
-            show_time_date = datetime.strptime(
-                show_time_date,
-                "%Y-%m-%d"
-            ).date()
-            queryset = queryset.filter(show_time__date=show_time_date)
+        if date:
+            queryset = queryset.filter(show_time__date=date)
 
         if movie:
-            movie_ids = self._params_to_ints(movie)
-            queryset = queryset.filter(movie__id__in=movie_ids)
+            queryset = queryset.filter(movie=movie)
 
         return queryset.distinct()
 
