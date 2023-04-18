@@ -83,15 +83,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    def validate(self, attrs):
-        data = super(TicketSerializer, self).validate(attrs)
-        Ticket.validate_seat(
-            attrs["seat"],
-            attrs["row"],
-            attrs["movie_session"],
-            serializers.ValidationError
-        )
-        return data
 
     class Meta:
         model = Ticket
@@ -140,7 +131,3 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class OrderListSerializer(OrderSerializer):
     tickets = TicketListSerializer(many=True, read_only=False)
-
-    class Meta:
-        model = Order
-        fields = ("id", "tickets", "created_at")
