@@ -30,6 +30,12 @@ from cinema.serializers import (
 )
 
 
+class ParamToIds:
+    @staticmethod
+    def params_to_ids(string_with_id):
+        return [int(str_id) for str_id in string_with_id.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -45,7 +51,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
+class MovieViewSet(ParamToIds, viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
@@ -57,10 +63,6 @@ class MovieViewSet(viewsets.ModelViewSet):
             return MovieDetailSerializer
 
         return MovieSerializer
-
-    @staticmethod
-    def params_to_ids(string_with_id):
-        return [int(str_id) for str_id in string_with_id.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -85,13 +87,9 @@ class MovieViewSet(viewsets.ModelViewSet):
         return queryset.distinct()
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(ParamToIds, viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-
-    @staticmethod
-    def params_to_ids(string_with_id):
-        return [int(str_id) for str_id in string_with_id.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -127,7 +125,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return self.serializer_class
 
 
 class TicketViewSet(viewsets.ModelViewSet):
@@ -158,7 +156,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return OrderListSerializer
 
-        return OrderSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
