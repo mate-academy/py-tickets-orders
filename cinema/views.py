@@ -1,6 +1,5 @@
-from rest_framework import viewsets
 from django.db.models import F, Count
-
+from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
@@ -11,7 +10,6 @@ from cinema.models import (
     MovieSession,
     Order
 )
-
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -53,7 +51,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieDetailSerializer
 
-        return MovieSerializer
+        return self.serializer_class
 
     @staticmethod
     def _params_to_ints(qs) -> list:
@@ -121,7 +119,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return self.serializer_class
 
 
 class OrderPagination(PageNumberPagination):
@@ -152,4 +150,4 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return OrderListSerializer
 
-        return OrderSerializer
+        return self.serializer_class
