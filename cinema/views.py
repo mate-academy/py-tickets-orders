@@ -96,7 +96,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset.select_related("movie", "cinema_hall")
                 .annotate(
                     tickets_available=F("cinema_hall__rows")
-                    * F("cinema_hall__seats_in_row") - Count("tickets")
+                                      * F("cinema_hall__seats_in_row") - Count("tickets")
                 )
             )
 
@@ -109,7 +109,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return self.serializer_class
 
 
 class OrderListPagination(PageNumberPagination):
@@ -128,7 +128,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        return Order.objects.prefetch_related(
+            "tickets__movie_session__cinema_hall",
+            "tickets__movie_session__movie",
+        ).filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
