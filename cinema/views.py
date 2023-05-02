@@ -43,7 +43,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return [int(str_id) for str_id in id_s_string.split(",")]
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.prefetch_related("actors", "genres")
 
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
@@ -71,6 +71,34 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
+    @staticmethod
+    def _params_to_int(qs):
+        return [int(str_id) for str_id in qs.split(",")]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        movies = self.request.query_params.get("movie")
+        date = self.request.query_params.get("date")
+
+        if movies:
+            movies_ids = self._params_to_int(movies)
+            queryset = queryset.filter(movie__id__in=movies_ids)
+
+        if date:
+            queryset = queryset.filter(show_time__date=date)
+
+        if self.action == "list":
+            queryset = (
+                queryset.select_related("movie", "cinema_hall").annotate(
+                    tickets_available=(
+                        F(
+                            "cinema_hall__seats_in_row"
+                        ) * F("cinema_hall__rows") - Count("tickets")
+                    )
+                )
+            )
+        return queryset.distinct()
+
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
@@ -78,35 +106,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
-
-    def get_queryset(self):
-        def _params_to_ids(params):
-            return [int(param) for param in params.split(",")]
-
-        seats_in_row = F("cinema_hall__seats_in_row")
-        rows = F("cinema_hall__rows")
-
-        cinema_hall_capacity = seats_in_row * rows
-
-        queryset = (
-            MovieSession.objects.prefetch_related(
-                "movie", "cinema_hall"
-            ).annotate(
-                tickets_available=(cinema_hall_capacity - Count("tickets"))
-            )
-        ).order_by("id")
-
-        movie = self.request.query_params.get("movie")
-        if movie:
-            movie_ids = _params_to_ids(movie)
-            queryset = queryset.filter(movie__in=movie_ids)
-
-        date = self.request.query_params.get("date")
-        if date:
-            queryset = queryset.filter(show_time__contains=date)
-
-        return queryset
-
 
 class OrderPagination(PageNumberPagination):
     page_size = 2
