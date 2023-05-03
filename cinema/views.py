@@ -1,7 +1,7 @@
 from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
-from cinema.logic import _params_to_ints
+from cinema.utils import _params_to_ints
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
@@ -85,11 +85,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             queryset = (
                 queryset
-                .select_related("cinema_hall")
                 .annotate(
                     tickets_available=F("cinema_hall__seats_in_row")
-                    * F("cinema_hall__rows")
-                    - Count("tickets")
+                                      * F("cinema_hall__rows")
+                                      - Count("tickets")
                 )
             )
 
@@ -125,10 +124,6 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.prefetch_related(
-        "tickets__movie_session__cinema_hall",
-        "tickets__movie_session__movie"
-    )
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
@@ -139,7 +134,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         return OrderSerializer
 
     def get_queryset(self):
-        queryset = Order.objects.filter(user=self.request.user)
+        queryset = Order.objects.filter(
+            user=self.request.user
+        ).prefetch_related(
+            "tickets__movie_session__cinema_hall",
+            "tickets__movie_session__movie"
+        )
 
         return queryset
 
