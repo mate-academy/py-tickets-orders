@@ -77,12 +77,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        movies = self.request.query_params.get("movie")
+        movie = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
 
-        if movies:
-            movies_ids = self._params_to_int(movies)
-            queryset = queryset.filter(movie__id__in=movies_ids)
+        if movie:
+            queryset = queryset.filter(movie_id=int(movie))
 
         if date:
             queryset = queryset.filter(show_time__date=date)
@@ -106,7 +105,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
-
 
 class OrderPagination(PageNumberPagination):
     page_size = 2
