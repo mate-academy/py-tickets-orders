@@ -105,6 +105,16 @@ class Ticket(models.Model):
             count_attrs = getattr(
                 movie_session_cinema_hall, cinema_hall_attr_name
             )
+
+            print("row", row)
+            print("seat", seat)
+            print("movie_session_cinema_hall", movie_session_cinema_hall)
+            print("count_attrs", count_attrs)
+            print("ticket_attr_value", ticket_attr_value)
+            print("ticket_attr_name", ticket_attr_name)
+            print("cinema_hall_attr_name", cinema_hall_attr_name)
+            print("---------------------------------------")
+
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise error_to_raise(
                     {
@@ -117,8 +127,8 @@ class Ticket(models.Model):
 
     def clean(self):
         Ticket.validate_row_and_seat(
-            self.seat,
             self.row,
+            self.seat,
             self.movie_session.cinema_hall,
             ValidationError
         )
