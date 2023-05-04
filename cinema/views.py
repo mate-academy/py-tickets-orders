@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework import viewsets
 
 from cinema.models import (
@@ -98,6 +100,37 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        date = self.request.query_params.get("date")
+        movie_id = self.request.query_params.get("movie")
+
+        if self.action in ("list", "retrieve"):
+            queryset = (
+                MovieSession
+                .objects
+                .select_related("movie")
+            )
+
+        if date:
+            queryset = (
+                queryset
+                .filter(
+                    show_time__contains=datetime
+                    .strptime(
+                        date,
+                        "%Y-%m-%d"
+                    )
+                    .strftime("%Y-%m-%d")
+                )
+            )
+
+        if movie_id:
+            queryset = queryset.filter(movie_id=movie_id)
+
+        return queryset.distinct()
 
 
 class OrderViewSet(viewsets.ModelViewSet):
