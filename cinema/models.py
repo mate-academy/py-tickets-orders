@@ -84,6 +84,13 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
+    @property
+    def place(self):
+        return {
+            "row": self.row,
+            "seat": self.seat
+        }
+
     @staticmethod
     def validate_row_and_seat(
             row: int,
@@ -115,7 +122,6 @@ class Ticket(models.Model):
             self.movie_session.cinema_hall,
             ValidationError
         )
-
 
     def save(
         self,
