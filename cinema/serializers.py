@@ -110,7 +110,7 @@ class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer(many=False, read_only=True)
 
 
-class TicketTakenPlaces(serializers.ModelSerializer):
+class TicketTakenPlace(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
@@ -120,7 +120,7 @@ class TicketTakenPlaces(serializers.ModelSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = TicketTakenPlaces(
+    taken_places = TicketTakenPlace(
         source="tickets", many=True, read_only=True
     )
 
@@ -135,6 +135,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ("id", "tickets", "created_at")
+        read_only_fields = ("created_at",)
 
     def create(self, validated_data):
         with transaction.atomic():
