@@ -25,6 +25,7 @@ from cinema.serializers import (
     MovieListSerializer,
     OrderSerializer,
 )
+from cinema.pagination import OrderPagination
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -47,7 +48,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def params_to_int(string) -> list:
+    def params_to_int(string: str) -> list:
         return [int(str_id) for str_id in string.split(",")]
 
     def get_queryset(self) -> queryset:
@@ -86,7 +87,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
 
     @staticmethod
-    def params_to_int(string) -> list:
+    def params_to_int(string: str) -> list:
         return [int(str_id) for str_id in string.split(",")]
 
     def get_queryset(self) -> queryset:
@@ -120,12 +121,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
-
-
-class OrderPagination(PageNumberPagination):
-    page_size = 2
-    page_size_query_param = "page_size"
-    max_page_size = 100
 
 
 class OrderViewSet(viewsets.ModelViewSet):
