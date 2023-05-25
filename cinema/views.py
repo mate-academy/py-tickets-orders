@@ -2,7 +2,7 @@ from typing import Type
 
 from django.db.models import Count, F
 from rest_framework import viewsets
-from rest_framework.pagination import PageNumberPagination
+from cinema.function import params_to_int
 
 from cinema.models import (
     Genre,
@@ -47,9 +47,9 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    @staticmethod
-    def params_to_int(string: str) -> list:
-        return [int(str_id) for str_id in string.split(",")]
+    # @staticmethod
+    # def params_to_int(string: str) -> list:
+    #     return [int(str_id) for str_id in string.split(",")]
 
     def get_queryset(self) -> queryset:
         queryset = super().get_queryset()
@@ -60,12 +60,12 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         genres = self.request.query_params.get("genres")
         if genres:
-            genres_ids = self.params_to_int(genres)
+            genres_ids = params_to_int(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         actors = self.request.query_params.get("actors")
         if actors:
-            actors_ids = self.params_to_int(actors)
+            actors_ids = params_to_int(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         if self.action in ("list", "retrieve"):
@@ -86,16 +86,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    @staticmethod
-    def params_to_int(string: str) -> list:
-        return [int(str_id) for str_id in string.split(",")]
-
     def get_queryset(self) -> queryset:
         queryset = super().get_queryset()
 
         movie = self.request.query_params.get("movie")
         if movie:
-            movies_ids = self.params_to_int(movie)
+            movies_ids = params_to_int(movie)
             queryset = queryset.filter(movie__id__in=movies_ids)
 
         date = self.request.query_params.get("date")
