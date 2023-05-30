@@ -34,7 +34,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-def _string_to_list_ints(string: str) -> list:
+def _string_to_list_ints(string: str) -> list[int]:
     return [int(item) for item in string.split(",")]
 
 
