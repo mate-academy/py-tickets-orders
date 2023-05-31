@@ -19,6 +19,10 @@ from cinema.serializers import (
 )
 
 
+def _params_to_ints(qs):
+    return [int(str_id) for str_id in qs.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -38,10 +42,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
-
     def get_queryset(self):
         queryset = self.queryset
 
@@ -49,15 +49,15 @@ class MovieViewSet(viewsets.ModelViewSet):
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
 
-        if actors:
-            actors_ids = self._params_to_ints(actors)
+        if actors is not None:
+            actors_ids = _params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
-        if genres:
-            genres_ids = self._params_to_ints(genres)
+        if genres is not None:
+            genres_ids = _params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
-        if title:
+        if title is not None:
             queryset = queryset.filter(title__icontains=title)
 
         if self.action in ("list", "retrieve"):
@@ -84,18 +84,18 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
         movies = self.request.query_params.get("movie")
 
-        if movies and date:
-            movies_ids = MovieViewSet._params_to_ints(movies)
+        if movies is not None and date is not None:
+            movies_ids = _params_to_ints(movies)
             queryset = queryset.filter(
                 movie__id__in=movies_ids,
                 show_time__date=date
             )
 
-        elif movies:
-            movies_ids = MovieViewSet._params_to_ints(movies)
+        elif movies is not None:
+            movies_ids = _params_to_ints(movies)
             queryset = queryset.filter(movie__id__in=movies_ids)
 
-        elif date:
+        elif date is not None:
             queryset = queryset.filter(show_time__date=date)
 
         if self.action == "list":
