@@ -110,17 +110,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie_id=movie)
 
         if date:
-            date_list = self._date_str_to_list(date)
             queryset = queryset.filter(
-                show_time__date=datetime.date(
-                    date_list[0],
-                    date_list[1],
-                    date_list[2]))
-
-        # queryset = queryset.annotate(
-        #     tickets_available=(F("cinema_hall__rows") *
-        #                        F("cinema_hall__seats_in_row")
-        #                        - Count("tickets")))
+                show_time__date=date)
 
         return queryset.order_by("id")
 
