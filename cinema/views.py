@@ -87,9 +87,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .select_related("movie")
                 .annotate(
                     tickets_available=(
-                            F("cinema_hall__rows")
-                            * F("cinema_hall__seats_in_row")
-                            - Count("tickets")))).order_by("id")
+                        F("cinema_hall__rows")
+                        * F("cinema_hall__seats_in_row")
+                        - Count("tickets")))).order_by("id")
 
         if movie:
             queryset = queryset.filter(movie__id=movie)
@@ -131,7 +131,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action == "list":
-            return self.queryset.prefetch_related("tickets__movie_session__cinema_hall")
+            return self.queryset.prefetch_related(
+                "tickets__movie_session__cinema_hall"
+            )
 
         return queryset
 
