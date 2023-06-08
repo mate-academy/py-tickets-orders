@@ -67,7 +67,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieDetailSerializer
 
-        return MovieSerializer
+        return super().get_serializer_class()
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -87,9 +87,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .select_related("movie")
                 .annotate(
                     tickets_available=(
-                        F("cinema_hall__rows")
-                        * F("cinema_hall__seats_in_row")
-                        - Count("tickets")))).order_by("id")
+                            F("cinema_hall__rows")
+                            * F("cinema_hall__seats_in_row")
+                            - Count("tickets")
+                    )
+                )
+            ).order_by("id")
 
         if movie:
             queryset = queryset.filter(movie__id=movie)
@@ -107,7 +110,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return super().get_serializer_class()
 
 
 class OrderPagination(PageNumberPagination):
@@ -125,7 +128,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return OrderListSerializer
 
-        return OrderSerializer
+        return super().get_serializer_class()
 
     def get_queryset(self):
         queryset = self.queryset.filter(user=self.request.user)
