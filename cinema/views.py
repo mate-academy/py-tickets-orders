@@ -13,7 +13,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 
 
@@ -92,8 +94,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if movie:
-            movie_ids = params_to_ints(movie)
-            queryset = queryset.filter(movie__id__in=movie_ids)
+            queryset = queryset.filter(movie__id__in=movie)
 
         date = self.request.query_params.get("date")
 
