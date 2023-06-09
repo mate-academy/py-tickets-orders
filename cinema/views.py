@@ -94,7 +94,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if movie:
-            queryset = queryset.filter(movie__id__in=movie)
+            queryset = queryset.filter(movie__id=movie)
 
         date = self.request.query_params.get("date")
 
