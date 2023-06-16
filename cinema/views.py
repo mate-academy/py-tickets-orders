@@ -78,9 +78,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
+    # @staticmethod
+    # def _params_to_ints(qs):
+    #     return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -88,7 +88,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
 
         if movie:
-            movie_ids = self._params_to_ints(movie)
+            movie_ids = MovieViewSet._params_to_ints(movie)
             queryset = queryset.filter(movie__id__in=movie_ids)
 
         if date:
