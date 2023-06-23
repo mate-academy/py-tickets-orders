@@ -87,19 +87,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    @staticmethod
-    def _params_to_ints(qs):
-        """Converts a list of strings to list of integers"""
-        return [int(str_id) for str_id in qs.split(",")]
-
     def get_queryset(self):
         queryset = self.queryset
         movie = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
 
         if movie:
-            movie_ids = self._params_to_ints(movie)
-            queryset = queryset.filter(movie__id__in=movie_ids)
+            queryset = queryset.filter(movie__id=movie)
 
         if date:
             queryset = queryset.filter(show_time__date=date)
