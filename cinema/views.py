@@ -105,8 +105,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         movie_id = self.request.query_params.get("movie")
         if movie_id:
-            movie_id = [int(string_id) for string_id in movie_id.split(",")]
-            queryset = queryset.filter(movie__id__in=movie_id)
+            queryset = queryset.filter(movie__id=int(movie_id))
 
         return queryset
 
