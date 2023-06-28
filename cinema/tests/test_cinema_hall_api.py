@@ -43,7 +43,9 @@ class CinemaHallApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[1]["name"], vip_hall["name"])
         self.assertEqual(response.data[1]["rows"], vip_hall["rows"])
-        self.assertEqual(response.data[1]["seats_in_row"], vip_hall["seats_in_row"])
+        self.assertEqual(
+            response.data[1]["seats_in_row"], vip_hall["seats_in_row"]
+        )
 
     def test_post_cinema_halls(self):
         response = self.client.post(
@@ -70,7 +72,9 @@ class CinemaHallApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["name"], vip_hall["name"])
         self.assertEqual(response.data["rows"], vip_hall["rows"])
-        self.assertEqual(response.data["seats_in_row"], vip_hall["seats_in_row"])
+        self.assertEqual(
+            response.data["seats_in_row"], vip_hall["seats_in_row"]
+        )
         self.assertEqual(response.data["capacity"], vip_hall["capacity"])
 
     def test_get_invalid_cinema_hall(self):
