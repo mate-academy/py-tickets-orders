@@ -96,7 +96,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         show_time = self.request.query_params.get("date")
         if show_time:
-            show_time_convert = datetime.datetime.strptime(show_time, "%Y-%m-%d")
+            show_time_convert = datetime.datetime.strptime(
+                show_time, "%Y-%m-%d"
+            )
             queryset = queryset.filter(
                 show_time__date=show_time_convert.date()
             )
