@@ -139,19 +139,15 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "tickets", "created_at")
 
+    @transaction.atomic
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
         order = Order(**validated_data)
 
-        try:
-            with transaction.atomic():
-                order.save()
+        order.save()
 
-                for ticket_data in tickets_data:
-                    Ticket.objects.create(order=order, **ticket_data)
-        except Exception as e:
-            order.delete()
-            raise e
+        for ticket_data in tickets_data:
+            Ticket.objects.create(order=order, **ticket_data)
 
         return order
 
