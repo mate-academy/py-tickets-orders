@@ -79,18 +79,32 @@ class Ticket(models.Model):
         MovieSession, on_delete=models.CASCADE, related_name="tickets"
     )
     order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="tickets"
+        Order, on_delete=models.CASCADE,
+        related_name="tickets"
     )
     row = models.IntegerField()
     seat = models.IntegerField()
 
+    @staticmethod
+    def validate_seat(seat: int, seats_in_row: int, error_to_raise):
+        if not (1 <= seat <= seats_in_row):
+            raise error_to_raise(
+                {"seat": f"seat must be in range [1, {seats_in_row}]"}
+            )
+
     def clean(self):
+        Ticket.validate_seat(
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row,
+            ValidationError
+        )
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (self.row, "row", "rows"),
             (self.seat, "seat", "seats_in_row"),
         ]:
             count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+                self.movie_session.cinema_hall,
+                cinema_hall_attr_name
             )
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise ValidationError(
@@ -111,13 +125,15 @@ class Ticket(models.Model):
     ):
         self.full_clean()
         super(Ticket, self).save(
-            force_insert, force_update, using, update_fields
+            force_insert,
+            force_update,
+            using,
+            update_fields
         )
 
     def __str__(self):
-        return (
-            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
-        )
+        return f"{str(self.movie_session)} " \
+               f"(row: {self.row}, seat: {self.seat})"
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
