@@ -1,3 +1,4 @@
+from typing import Type
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -89,7 +90,7 @@ class Ticket(models.Model):
         row: int,
         seat: int,
         movie_session: MovieSession,
-        error_to_raise: Exception
+        error_to_raise: Type[Exception]
     ) -> None:
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),
