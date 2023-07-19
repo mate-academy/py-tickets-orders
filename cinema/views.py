@@ -62,21 +62,20 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    @staticmethod
+    def _params_to_int(qs):
+        return [int(str_id) for str_id in qs.split(",")]
+
     def get_queryset(self):
         queryset = self.queryset.prefetch_related("actors", "genres")
 
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
-
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
-            queryset = queryset.filter(actors__in=actors_ids)
-
+            queryset = queryset.filter(actors__in=self._params_to_int(actors))
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
-            queryset = queryset.filter(genres__in=genres_ids)
-
+            queryset = queryset.filter(genres__in=self._params_to_int(genres))
         if title:
             queryset = queryset.filter(title__icontains=title)
 
@@ -117,7 +116,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
+    queryset = Order.objects.prefetch_related(
+        "tickets__movie_session",
+        "tickets__movie_session__movie",
+        "tickets__movie_session__cinema_hall"
+    )
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
