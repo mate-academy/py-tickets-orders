@@ -61,11 +61,11 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if genres:
             genres_ids = self._params_to_ints(genres)
-            queryset = Movie.objects.filter(genres__id__in=genres_ids)
+            queryset = queryset.filter(genres__id__in=genres_ids)
 
         if actors:
             actors_ids = self._params_to_ints(actors)
-            queryset = Movie.objects.filter(actors__id__in=actors_ids)
+            queryset = queryset.filter(actors__id__in=actors_ids)
 
         return queryset
 
