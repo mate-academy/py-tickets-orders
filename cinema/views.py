@@ -63,17 +63,6 @@ class MovieViewSet(viewsets.ModelViewSet):
             actors_id = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_id)
 
-        # actors = self.request.query_params.get("actors")
-        # if actors:
-        #     queryset = queryset.annotate(
-        #         full_name=Concat(
-        #             F("actors__first_name"),
-        #             Value(" "),
-        #             F("actors__last_name"),
-        #             output_field=CharField(),
-        #         )
-        #     ).filter(full_name__icontains=actors)
-
         genres = self.request.query_params.get("genres")
         if genres:
             genres_id = self._params_to_ints(genres)
