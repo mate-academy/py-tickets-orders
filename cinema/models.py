@@ -85,7 +85,12 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     @staticmethod
-    def validate_seat(row: int, seat: int, movie_session: MovieSession, error_to_raise):
+    def validate_seat(
+            row: int,
+            seat: int,
+            movie_session: MovieSession,
+            error_to_raise
+    ):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
@@ -104,7 +109,12 @@ class Ticket(models.Model):
                 )
 
     def clean(self):
-        self.validate_seat(self.row, self.seat, self.movie_session, ValidationError)
+        self.validate_seat(
+            self.row,
+            self.seat,
+            self.movie_session,
+            ValidationError
+        )
 
     def save(
             self,
