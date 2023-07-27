@@ -105,7 +105,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                         - Count("tickets")
                     )
                 )
-            ).order_by("id")
+            )
 
         if movie:
             queryset = queryset.filter(movie=movie)
