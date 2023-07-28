@@ -1,5 +1,6 @@
 from django.db.models import F, Count
 from rest_framework import viewsets
+from datetime import datetime
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 from cinema.pagination import OrderPagination
@@ -79,6 +80,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
+    @staticmethod
+    def _params_to_ints(qs):
+        return [int(str_id) for str_id in qs.split(",")]
+
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
@@ -107,11 +112,19 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 )
             )
 
-        if movie:
-            queryset = queryset.filter(movie=movie)
-
         if date:
-            queryset = queryset.filter(show_time__date=date)
+            date = datetime.strptime(date, "%Y-%m-%d")
+            queryset = queryset.filter(
+                show_time__day=date.day,
+                show_time__year=date.year,
+                show_time__month=date.month
+            )
+
+        if movie:
+            movies_ids = self._params_to_ints(movie)
+            queryset = queryset.filter(
+                movie__id__in=movies_ids
+            )
 
         return queryset.distinct()
 
