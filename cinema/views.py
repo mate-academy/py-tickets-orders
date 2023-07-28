@@ -47,7 +47,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         }
 
         for param, value in query_params.items():
-            if value:
+            if value is not None:
                 if param in ["actors", "genres"]:
                     ids = [int(str_id) for str_id in value.split(",")]
                     queryset = queryset.filter(**{f"{param}__id__in": ids})
@@ -84,10 +84,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
         movie_id = self.request.query_params.get("movie")
 
-        if date:
+        if date is not None:
             queryset = queryset.filter(show_time__date=date)
 
-        if movie_id:
+        if movie_id is not None:
             queryset = queryset.filter(movie__id=movie_id)
 
         return queryset.distinct()
