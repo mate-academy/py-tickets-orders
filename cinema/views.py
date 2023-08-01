@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -11,7 +11,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer,
+    MovieListSerializer, OrderSerializer,
 )
 
 
@@ -43,6 +43,31 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    @staticmethod
+    def _params_to_int(params):
+        return [int(str_id) for str_id in params.split(",")]
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
+
+        if actors:
+            actors_ids = self._params_to_int(actors)
+            queryset = queryset.filter(actors__id__in=actors_ids)
+
+        if genres:
+            genres_ids = self._params_to_int(genres)
+            queryset = queryset.filter(genres__id__in=genres_ids)
+
+        if title:
+            title_ids = self._params_to_int(title)
+            queryset = queryset.filter(title__id__in=title_ids)
+
+        return queryset.distinct()
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
@@ -56,3 +81,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+
+class OrderViewsSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

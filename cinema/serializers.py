@@ -1,6 +1,7 @@
+from django.db import transaction
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Ticket, Order
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -45,6 +46,18 @@ class MovieDetailSerializer(MovieSerializer):
         fields = ("id", "title", "description", "duration", "genres", "actors")
 
 
+class TickedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session",)
+
+
+class TicketTakenPlaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
+
+
 class MovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieSession
@@ -74,7 +87,28 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TicketTakenPlaceSerializer(source="tickets", many=True, read_only=True)
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TickedSerializer(many=True, read_only=False, allow_empty=False)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tickets_data = validated_data.pop("tickets")
+            order = Order.objects.create(**validated_data)
+            for ticket_data in tickets_data:
+                Ticket.objects.create(order=order, **ticket_data)
+                return order
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TickedSerializer(many=True, read_only=True)
