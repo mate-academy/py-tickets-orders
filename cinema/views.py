@@ -51,6 +51,13 @@ class MovieViewSet(viewsets.ModelViewSet):
     )
     serializer_class = MovieSerializer
 
+    @staticmethod
+    def get_ids(queryset):
+        return [
+            obj_id
+            for obj_id in queryset.split(",")
+        ]
+
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
@@ -68,17 +75,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            actors_ids = [
-                int(actor_id)
-                for actor_id in actors.split(",")
-            ]
+            actors_ids = self.get_ids(actors)
             queryset = Movie.objects.filter(actors__in=actors_ids)
 
         if genres:
-            genres_ids = [
-                int(genres_id)
-                for genres_id in genres.split(",")
-            ]
+            genres_ids = self.get_ids(genres)
             queryset = Movie.objects.filter(genres__in=genres_ids)
 
         if title:
@@ -121,7 +122,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(show_time__date=show_time)
 
             if movie:
-                queryset = queryset.filter(movie__id=int(movie))
+                queryset = queryset.filter(movie__id=movie)
 
         return queryset
 
