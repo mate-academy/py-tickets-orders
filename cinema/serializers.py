@@ -111,14 +111,9 @@ class TakenTicketSerializer(serializers.ModelSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = serializers.SerializerMethodField(
-        method_name="get_taken_places"
+    taken_places = TakenTicketSerializer(
+        source="tickets", many=True, read_only=True
     )
-
-    @staticmethod
-    def get_taken_places(movie_session):
-        tickets = Ticket.objects.filter(movie_session=movie_session)
-        return TakenTicketSerializer(tickets, many=True).data
 
     class Meta:
         model = MovieSession
