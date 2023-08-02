@@ -78,6 +78,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     def _get_ids(filter_data):
         return [int(_id) for _id in filter_data.split(",")]
 
+
     def get_queryset(self):
         queryset = self.queryset
         genres = self.request.query_params.get("genres")
