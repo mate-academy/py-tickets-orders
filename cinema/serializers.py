@@ -80,6 +80,10 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        exclude = ("order",)
+
     def validate(self, attrs):
         data = super(TicketSerializer, self).validate(attrs)
         Ticket.validate_seats(
@@ -89,9 +93,6 @@ class TicketSerializer(serializers.ModelSerializer):
         )
         return data
 
-    class Meta:
-        model = Ticket
-        exclude = ("order",)
 
 
 class TicketListSerializer(TicketSerializer):
