@@ -94,7 +94,6 @@ class TicketSerializer(serializers.ModelSerializer):
         return data
 
 
-
 class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer()
 

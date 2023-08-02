@@ -59,11 +59,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
+            actors_ids = self.get_ids_list(actors)
             queryset = queryset.filter(actors__in=actors_ids)
 
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
+            genres_ids = self.get_ids_list(genres)
             queryset = queryset.filter(genres__in=genres_ids)
 
         if title:
@@ -73,6 +73,10 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = queryset.prefetch_related("actors", "genres")
 
         return queryset.distinct()
+
+    @staticmethod
+    def get_ids_list(ids_str: str) -> list:
+        return [int(str_id) for str_id in ids_str.split(",")]
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
