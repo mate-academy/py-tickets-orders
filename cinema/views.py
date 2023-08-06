@@ -24,6 +24,7 @@ from cinema.serializers import (
     OrderCreateSerializer,
 )
 
+
 class OrderPagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = "page_size"
@@ -90,8 +91,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset
                 .prefetch_related("tickets")
                 .annotate(tickets_available=(
-                        F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
-                        - Count("tickets"))
+                    F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                    - Count("tickets"))
                 )
             )
 

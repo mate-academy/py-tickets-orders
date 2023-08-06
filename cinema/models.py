@@ -114,7 +114,6 @@ class Ticket(models.Model):
             self.row, self.seat, self.movie_session.id, ValidationError
         )
 
-
     def save(
         self,
         force_insert=False,

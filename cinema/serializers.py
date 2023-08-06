@@ -69,6 +69,7 @@ class MovieSessionListSerializer(serializers.ModelSerializer):
         source="cinema_hall.capacity", read_only=True
     )
     tickets_available = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = MovieSession
         fields = (
