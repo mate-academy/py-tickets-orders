@@ -85,7 +85,7 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     @staticmethod
-    def validate_sits(
+    def validate_seats(
             row: int,
             seat: int,
             movie_session_id,
