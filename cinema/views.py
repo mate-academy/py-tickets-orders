@@ -91,19 +91,17 @@ class MovieSessionViewSet(viewsets.ModelViewSet, ParamToIntsBaseClass):
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset.prefetch_related("tickets")
-        filters = self.request.query_params
 
-        if filters:
-            if filters.get("date"):
-                date_obj = datetime.strptime(
-                    filters.get("date"),
-                    "%Y-%m-%d"
-                ).date()
-                queryset = queryset.filter(show_time__date=date_obj)
-            if filters.get("movie"):
-                queryset = queryset.filter(
-                    movie_id__in=self._params_to_ints(filters.get("movie"))
-                )
+        date = self.request.query_params.get("date")
+        movie_id = self.request.query_params.get("movie")
+
+        if date:
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+            queryset = queryset.filter(show_time__date=date_obj)
+
+        if movie_id:
+            movie_id = self._params_to_ints(movie_id)
+            queryset = queryset.filter(movie_id__in=movie_id)
 
         if self.action == "list":
             queryset = queryset.select_related("cinema_hall").annotate(
