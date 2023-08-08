@@ -98,7 +98,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date_obj)
 
         if movie_id:
-            queryset = queryset.filter(movie_id=movie_id)
+            queryset = queryset.filter(movie_id=int(movie_id))
 
         if self.action == "list":
             queryset = queryset.select_related("cinema_hall").annotate(
