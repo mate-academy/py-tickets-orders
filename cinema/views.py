@@ -38,15 +38,13 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class ParamToIntsBaseClass:
+class MovieViewSet(viewsets.ModelViewSet):
+    queryset = Movie.objects.all()
+    serializer_class = MovieSerializer
+
     @staticmethod
     def _params_to_ints(params: str) -> list[int]:
         return [int(item) for item in params.split(",")]
-
-
-class MovieViewSet(viewsets.ModelViewSet, ParamToIntsBaseClass):
-    queryset = Movie.objects.all()
-    serializer_class = MovieSerializer
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset
@@ -76,7 +74,7 @@ class MovieViewSet(viewsets.ModelViewSet, ParamToIntsBaseClass):
         return MovieSerializer
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet, ParamToIntsBaseClass):
+class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
@@ -100,8 +98,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet, ParamToIntsBaseClass):
             queryset = queryset.filter(show_time__date=date_obj)
 
         if movie_id:
-            movie_id = self._params_to_ints(movie_id)
-            queryset = queryset.filter(movie_id__in=movie_id)
+            queryset = queryset.filter(movie_id=movie_id)
 
         if self.action == "list":
             queryset = queryset.select_related("cinema_hall").annotate(
