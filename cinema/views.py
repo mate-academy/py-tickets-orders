@@ -44,17 +44,13 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class GetQueryParams:
+class GetQueryParamsMixin:
     @staticmethod
     def _params_to_ints(qs):
         return [int(str_id) for str_id in qs.split(",")]
 
-    @staticmethod
-    def _params_to_stings(qs):
-        return [str_id for str_id in qs.split("-")]
 
-
-class MovieViewSet(GetQueryParams, viewsets.ModelViewSet):
+class MovieViewSet(GetQueryParamsMixin, viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
@@ -88,7 +84,7 @@ class MovieViewSet(GetQueryParams, viewsets.ModelViewSet):
         return MovieSerializer
 
 
-class MovieSessionViewSet(GetQueryParams, viewsets.ModelViewSet):
+class MovieSessionViewSet(GetQueryParamsMixin, viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
