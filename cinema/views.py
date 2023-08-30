@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework import viewsets
 
 from cinema.models import (
@@ -27,6 +29,17 @@ from cinema.serializers import (
 )
 
 
+class ParamConverter:
+
+    @staticmethod
+    def param_to_int(qs):
+        return [int(str_id) for str_id in qs.split(",")]
+
+    @staticmethod
+    def param_to_date(date):
+        return datetime.strptime(date, "%Y-%m-%d")
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -46,10 +59,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related("actors", "genres")
     serializer_class = MovieSerializer
 
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
-
     def get_queryset(self):
         queryset = self.queryset
         actors = self.request.query_params.get("actors")
@@ -57,17 +66,17 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            actors_ids = self._params_to_ints(actors)
+            actors_ids = self.ParamConverter.params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         if genres:
-            genres_ids = self._params_to_ints(genres)
+            genres_ids = self.ParamConverter.params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -82,6 +91,21 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related("movie", "cinema_hall")
     serializer_class = MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        date = self.request.query_params.get("date")
+        movie = self.request.query_params.get("movie")
+
+        if date:
+            show_time = ParamConverter.param_to_date(date)
+            queryset = queryset.filter(show_time__date=show_time)
+
+        if movie:
+            movie_id = int(movie)
+            queryset = queryset.filter(movie__id=movie_id)
+
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
