@@ -99,7 +99,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(show_time__date=target_date)
             if movie:
                 movie_ids = self._params_to_ints(movie)
-                queryset = queryset.filter(movie__id__in=movie_ids)
+                queryset = queryset.filter(movie_id__in=movie_ids)
 
             return queryset.distinct()
         return queryset
@@ -122,7 +122,6 @@ class OrderPagination(PageNumberPagination):
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
-    serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
     def get_queryset(self):

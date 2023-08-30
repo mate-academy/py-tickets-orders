@@ -36,7 +36,7 @@ class Actor(models.Model):
 
 
 class Movie(models.Model):
-    title = models.CharField(max_length=255, unique=True)
+    title = models.CharField(max_length=255)
     description = models.TextField()
     duration = models.IntegerField()
     genres = models.ManyToManyField(Genre)
@@ -85,7 +85,7 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     @staticmethod
-    def validate_seats(row: int, seat: int, movie_session, error_to_raise):
+    def validate_seats(row: int, seat: int, movie_session):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
@@ -94,7 +94,7 @@ class Ticket(models.Model):
                 movie_session, cinema_hall_attr_name
             )
             if not (1 <= ticket_attr_value <= count_attrs):
-                raise error_to_raise(
+                raise ValidationError(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
                         f"number must be in available range: "
@@ -102,14 +102,6 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
-
-    def clean(self):
-        Ticket.validate_seats(
-            self.row,
-            self.seat,
-            self.movie_session.cinema_hall,
-            ValidationError
-        )
 
     def save(
         self,

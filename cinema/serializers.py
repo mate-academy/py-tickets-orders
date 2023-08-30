@@ -96,7 +96,6 @@ class TicketSerializer(serializers.ModelSerializer):
             attrs["seat"],
             attrs["row"],
             attrs["movie_session"].cinema_hall,
-            serializers.ValidationError
         )
 
         return data
