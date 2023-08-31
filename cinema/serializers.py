@@ -124,12 +124,6 @@ class TicketDetailSerializer(TicketSerializer):
         )
 
 
-class TicketTakenSerializer(TicketSerializer):
-    class Meta:
-        model = Ticket
-        fields = ("row", "seat")
-
-
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
 
