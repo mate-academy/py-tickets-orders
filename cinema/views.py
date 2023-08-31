@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.db.models import Count, F
 from rest_framework import viewsets
 
 from cinema.models import (
@@ -66,11 +67,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            actors_ids = self.ParamConverter.params_to_ints(actors)
+            actors_ids = ParamConverter.param_to_int(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         if genres:
-            genres_ids = self.ParamConverter.params_to_ints(genres)
+            genres_ids = ParamConverter.param_to_int(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         if title:
@@ -89,7 +90,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.select_related("movie", "cinema_hall")
+    queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
@@ -104,6 +105,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie:
             movie_id = int(movie)
             queryset = queryset.filter(movie__id=movie_id)
+
+        if self.action in ["list", "retrieve"]:
+            rows = F("cinema_hall__rows")
+            seats = F("cinema_hall__seats_in_row")
+            queryset = (
+                queryset
+                .select_related("movie", "cinema_hall")
+                .annotate(tickets_available=(rows * seats - Count("tickets")))
+            )
 
         return queryset.distinct()
 
