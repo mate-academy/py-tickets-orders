@@ -1,6 +1,11 @@
+
 from datetime import datetime
 
-from rest_framework import viewsets
+from django.db.models import Q
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.utils.timezone import make_aware
+from rest_framework import viewsets, filters
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -37,7 +42,6 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
@@ -51,18 +55,26 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        genres = self.request.query_params.getlist("genres")
-        actors = self.request.query_params.getlist("actors")
-        title = self.request.query_params.get("title")
+        queryset = Movie.objects.all()
 
-        # Filter by genres and actors
+        # Filter by genres
+        genres = self.request.query_params.getlist('genres', [])
         if genres:
             queryset = queryset.filter(genres__name__in=genres)
-        if actors:
-            queryset = queryset.filter(actors__full_name__in=actors)
 
-        # Filter by title containing the provided string
+        # Filter by actors (first_name and last_name)
+        actors = self.request.query_params.getlist('actors', [])
+        if actors:
+            actor_filters = Q()
+            for actor_name in actors:
+                actor_name_parts = actor_name.split()
+                if len(actor_name_parts) == 2:
+                    first_name, last_name = actor_name_parts
+                    actor_filters |= Q(actors__first_name__icontains=first_name) & Q(actors__last_name__icontains=last_name)
+            queryset = queryset.filter(actor_filters)
+
+        # Filter by title (contains)
+        title = self.request.query_params.get('title', None)
         if title:
             queryset = queryset.filter(title__icontains=title)
 
@@ -72,39 +84,33 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionListSerializer
+    filter_backends = [filters.OrderingFilter]
 
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
-
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
-
         return MovieSessionSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        date = self.request.query_params.get("date")
-        movie_id = self.request.query_params.get("movie")
+        date_param = self.request.query_params.get("date")
+        print("date_param:", date_param)  # Додайте цей рядок
+        movie_id_param = self.request.query_params.get("movie")
 
-        # Filter by date and movie ID
-        if date:
+        if date_param:
             try:
-                date = datetime.strptime(date, "%Y-%m-%d")
-                queryset = queryset.filter(show_time__date=date)
+                date_param = datetime.strptime(date_param, "%Y-%m-%d").date()
+                queryset = queryset.filter(show_time__date=date_param)
             except ValueError:
-                # Handle invalid date format gracefully
                 queryset = queryset.none()
 
-        if movie_id:
-            queryset = queryset.filter(movie_id=movie_id)
+        if movie_id_param:
+            queryset = queryset.filter(movie_id=movie_id_param)
 
         return queryset
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
 
 
 class OrderPagination(PageNumberPagination):
