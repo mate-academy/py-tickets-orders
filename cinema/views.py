@@ -49,18 +49,16 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Movie.objects.all()
-        # Фільтрування за акторами (по імені та прізвищу)
-        actors = self.request.query_params.getlist("actors", [])
+
+        actors = self.request.query_params.getlist("actors", None)
         if actors:
             queryset = queryset.filter(actors__in=actors)
 
-        # Фільтрування за жанрами
         genre_ids = self.request.query_params.get("genres", None)
         if genre_ids:
             genre_ids = genre_ids.split(",")
             queryset = queryset.filter(genres__id__in=genre_ids)
 
-        # Фільтрування за назвою (містить рядок)
         title_contains = self.request.query_params.get("title", None)
         if title_contains:
             queryset = queryset.filter(title__icontains=title_contains)

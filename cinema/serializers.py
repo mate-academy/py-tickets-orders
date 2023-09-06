@@ -85,7 +85,6 @@ class MovieSessionListSerializer(serializers.ModelSerializer):
         )
 
     def get_tickets_available(self, obj):
-        # Calculate the number of available tickets for the movie session
         taken_tickets = Ticket.objects.filter(movie_session=obj).count()
         total_capacity = obj.cinema_hall.capacity
         available_tickets = total_capacity - taken_tickets
