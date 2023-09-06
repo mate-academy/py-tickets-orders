@@ -1,15 +1,8 @@
-
 from datetime import datetime
-
-from django.db.models import Q
-from django.utils import timezone
-from django.utils.dateparse import parse_date
-from django.utils.timezone import make_aware
 from rest_framework import viewsets, filters
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -21,9 +14,9 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderSerializer, OrderListSerializer,
-    # TicketSerializer,
-    # OrderListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
+
 )
 
 
@@ -56,27 +49,21 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Movie.objects.all()
-
-        # Filter by genres
-        genres = self.request.query_params.getlist('genres', [])
-        if genres:
-            queryset = queryset.filter(genres__name__in=genres)
-
-        # Filter by actors (first_name and last_name)
-        actors = self.request.query_params.getlist('actors', [])
+        # Фільтрування за акторами (по імені та прізвищу)
+        actors = self.request.query_params.getlist("actors", [])
         if actors:
-            actor_filters = Q()
-            for actor_name in actors:
-                actor_name_parts = actor_name.split()
-                if len(actor_name_parts) == 2:
-                    first_name, last_name = actor_name_parts
-                    actor_filters |= Q(actors__first_name__icontains=first_name) & Q(actors__last_name__icontains=last_name)
-            queryset = queryset.filter(actor_filters)
+            queryset = queryset.filter(actors__in=actors)
 
-        # Filter by title (contains)
-        title = self.request.query_params.get('title', None)
-        if title:
-            queryset = queryset.filter(title__icontains=title)
+        # Фільтрування за жанрами
+        genre_ids = self.request.query_params.get("genres", None)
+        if genre_ids:
+            genre_ids = genre_ids.split(",")
+            queryset = queryset.filter(genres__id__in=genre_ids)
+
+        # Фільтрування за назвою (містить рядок)
+        title_contains = self.request.query_params.get("title", None)
+        if title_contains:
+            queryset = queryset.filter(title__icontains=title_contains)
 
         return queryset
 
@@ -96,7 +83,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         date_param = self.request.query_params.get("date")
-        print("date_param:", date_param)  # Додайте цей рядок
         movie_id_param = self.request.query_params.get("movie")
 
         if date_param:
@@ -110,7 +96,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie_id=movie_id_param)
 
         return queryset
-
 
 
 class OrderPagination(PageNumberPagination):
