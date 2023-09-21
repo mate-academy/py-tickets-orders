@@ -84,6 +84,21 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
+    @staticmethod
+    def validate_attr(
+            attr_name: str,
+            attr_value: int,
+            attr_max_value: int,
+            error_to_raise
+    ):
+        if not (1 <= attr_value <= attr_max_value):
+            raise error_to_raise(
+                {
+                    attr_name: f"{attr_name} number must be in range: "
+                               f"(1, {attr_max_value}): not {attr_value})"
+                }
+            )
+
     def clean(self):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (self.row, "row", "rows"),
@@ -92,15 +107,12 @@ class Ticket(models.Model):
             count_attrs = getattr(
                 self.movie_session.cinema_hall, cinema_hall_attr_name
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+            Ticket.validate_attr(
+                ticket_attr_name,
+                ticket_attr_value,
+                count_attrs,
+                ValidationError
+            )
 
     def save(
         self,
@@ -121,3 +133,4 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+        ordering = ("row", "seat")
