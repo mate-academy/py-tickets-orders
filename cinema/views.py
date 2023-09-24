@@ -20,7 +20,7 @@ from cinema.serializers import (
 )
 
 
-def get_params_id(string: str) -> list:
+def get_params_id(string: str) -> list[int]:
     return [int(param) for param in string.split(",")]
 
 
