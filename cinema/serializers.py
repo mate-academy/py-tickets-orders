@@ -94,4 +94,9 @@ class TicketSerializer(serializers.ModelSerializer):
         exclude = ["order"]
 
 
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True, read_only=False)
 
+    class Meta:
+        model = Order
+        fields = "__all__"
