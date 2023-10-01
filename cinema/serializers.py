@@ -90,19 +90,27 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(many=False, read_only=True)
-
     class Meta:
         model = Ticket
         exclude = ["order"]
 
 
+class TicketListSerializer(TicketSerializer):
+    movie_session = MovieSessionListSerializer(
+        many=False, read_only=True
+    )
+
+
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=False)
+    tickets = TicketSerializer(
+        many=True,
+        read_only=False,
+        allow_empty=False
+    )
 
     class Meta:
         model = Order
-        exclude = ["user"]
+        fields = ["id", "tickets", "created_at"]
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -112,3 +120,5 @@ class OrderSerializer(serializers.ModelSerializer):
                 Ticket.objects.create(order=order, **ticket_data)
 
             return order
+
+
