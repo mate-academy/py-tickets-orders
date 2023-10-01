@@ -122,3 +122,5 @@ class OrderSerializer(serializers.ModelSerializer):
             return order
 
 
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer()
