@@ -32,6 +32,10 @@ from cinema.serializers import (
 from .pagination import OrderPagination
 
 
+def get_ids(query_value: str) -> list[int]:
+    return [int(value) for value in query_value.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -51,10 +55,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    @staticmethod
-    def get_ids(query_value: str) -> list[int]:
-        return [int(value) for value in query_value.split(",")]
-
     def get_queryset(self):
         queryset = self.queryset
         actors = self.request.query_params.get("actors")
@@ -62,11 +62,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            actors_id = self.get_ids(actors)
+            actors_id = get_ids(actors)
             queryset = queryset.filter(actors__id__in=actors_id)
 
         if genres:
-            genres_id = self.get_ids(genres)
+            genres_id = get_ids(genres)
             queryset = queryset.filter(genres__id__in=genres_id)
 
         if title:
@@ -96,6 +96,20 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        date = self.request.query_params.get("date")
+        movies = self.request.query_params.get("movie")
+
+        if date:
+            queryset = queryset.filter(show_time__date=date)
+
+        if movies:
+            movies_id = get_ids(movies)
+            queryset = queryset.filter(movie__id__in=movies_id)
+
+        return queryset.distinct()
 
 
 class OrderViewSet(viewsets.ModelViewSet):
