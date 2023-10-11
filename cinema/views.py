@@ -43,7 +43,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     @staticmethod
     def get_ids_from_query(string):
         return [int(str_id) for str_id in string.split(",")]
-    
+
     def get_queryset(self):
         queryset = self.queryset
         genres = self.request.query_params.get("genres")
