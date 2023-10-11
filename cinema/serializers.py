@@ -133,26 +133,9 @@ class OrderListSerializer(serializers.ModelSerializer):
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
-                ticket_data["order"] = order
                 serializer = TicketSerializer(data=ticket_data)
                 if serializer.is_valid():
                     serializer.save()
                 else:
                     print(serializer.errors)
-            return order
-
-
-class OrderCreateSerializer(serializers.ModelSerializer):
-    tickets = TicketCreateSerializer(many=True, read_only=False)
-
-    class Meta:
-        model = Order
-        fields = ("tickets",)
-
-    def create(self, validated_data):
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
-            for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
             return order
