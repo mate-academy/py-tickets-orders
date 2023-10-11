@@ -18,7 +18,6 @@ from cinema.serializers import (
     MovieSessionDetailSerializer,
     MovieListSerializer,
     OrderListSerializer,
-    OrderCreateSerializer,
 )
 
 
@@ -41,6 +40,10 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
+    @staticmethod
+    def get_ids_from_query(string):
+        return [int(str_id) for str_id in string.split(",")]
+    
     def get_queryset(self):
         queryset = self.queryset
         genres = self.request.query_params.get("genres")
@@ -48,11 +51,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
+            genres_ids = self.get_ids_from_query(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
+            actors_ids = self.get_ids_from_query(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         if title:
@@ -125,9 +128,3 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-    def get_serializer_class(self):
-        if self.action == "create":
-            return OrderCreateSerializer
-
-        return self.serializer_class
