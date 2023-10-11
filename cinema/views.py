@@ -60,7 +60,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         if title is not None:
-            queryset = queryset.filter(title__icontains=title.lower())
+            queryset = queryset.filter(title__icontains=title)
 
         if self.action in ("list", "retrieve"):
             queryset = queryset.prefetch_related("actors")
