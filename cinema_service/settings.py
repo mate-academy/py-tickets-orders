@@ -124,8 +124,11 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = False
+# USE_TZ = False
+# ValueError: Problem installing fixture 'C:\Users\Expert\PycharmProjects\py-tickets-orders\cinema_service_db_data.json': Could not load cinema.MovieSession(pk=1): SQLite backend does no
+# t support timezone-aware datetimes when USE_TZ is False.
 
+USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
