@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from django.db.models import F, Count
+from django.utils.timezone import make_aware
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -76,10 +79,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    @staticmethod
-    def _params_to_date(qs):
-        return (int(str_id) for str_id in qs.split("-"))
-
     def get_queryset(self):
         queryset = self.queryset
 
@@ -87,12 +86,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            year, month, day = self._params_to_date(date)
-            queryset = queryset.filter(
-                show_time__year=year,
-                show_time__month=month,
-                show_time__day=day
-            )
+            date = datetime.strptime(date, "%Y-%m-%d")
+            queryset = queryset.filter(show_time__date=date)
 
         if movie:
             queryset = queryset.filter(movie__id=int(movie))
