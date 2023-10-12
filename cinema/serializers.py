@@ -89,7 +89,7 @@ class MovieSessionTicketsSerializer(serializers.ModelSerializer):
         fields = ("row", "seat")
 
 
-class MovieSessionDetailSerializer(MovieSessionSerializer):
+class MovieSessionDetailSerializer(serializers.ModelSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
     taken_places = MovieSessionTicketsSerializer(
@@ -133,9 +133,5 @@ class OrderListSerializer(serializers.ModelSerializer):
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
-                serializer = TicketSerializer(data=ticket_data)
-                if serializer.is_valid():
-                    serializer.save()
-                else:
-                    print(serializer.errors)
+                Ticket.objects.create(order=order, **ticket_data)
             return order
