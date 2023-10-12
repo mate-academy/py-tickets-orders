@@ -37,7 +37,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
+    queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
 
     @staticmethod
@@ -59,7 +59,6 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         if title:
-            title = title.lower()
             queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
@@ -79,8 +78,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
-        queryset.select_related("movie")
+        queryset = self.queryset.select_related("movie")
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
@@ -97,7 +95,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 tickets_available=F("cinema_hall__rows")
                 * F("cinema_hall__seats_in_row")
                 - Count("tickets")
-            )
+            ).select_related("cinema_hall")
 
         return queryset.distinct()
 
