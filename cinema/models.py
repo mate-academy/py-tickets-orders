@@ -52,7 +52,11 @@ class Movie(models.Model):
 class MovieSession(models.Model):
     show_time = models.DateTimeField()
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE, related_name="cinema_hall")
+    cinema_hall = models.ForeignKey(
+        CinemaHall,
+        on_delete=models.CASCADE,
+        related_name="cinema_hall"
+    )
 
     class Meta:
         ordering = ["-show_time"]
@@ -84,6 +88,7 @@ class Ticket(models.Model):
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="tickets"
     )
+
     def clean(self):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (self.row, "row", "rows"),
