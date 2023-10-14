@@ -133,23 +133,17 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
-
+    
     def get_queryset(self):
         queryset = self.queryset.filter(user_id=self.request.user.id)
         if self.action in ("list", "retrieve"):
             queryset = (
                 queryset
                 .prefetch_related(
-                    "tickets__movie_session__movie"
+                    "tickets__movie_session__movie",
+                    "tickets__movie_session__cinema_hall"
                 )
             )
-            if self.action == "list":
-                queryset = (
-                    queryset
-                    .prefetch_related(
-                        "tickets__movie_session__cinema_hall"
-                    )
-                )
 
         return queryset
 
