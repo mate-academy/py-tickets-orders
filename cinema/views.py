@@ -50,7 +50,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.prefetch_related("genres", "actors")
         actors = self.request.query_params.get("actors", "")
         genres = self.request.query_params.get("genres", "")
         title = self.request.query_params.get("title", "")
@@ -137,6 +137,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "tickets__movie_session__cinema_hall",
                 "tickets__movie_session__movie"
             )
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related("tickets")
 
         return queryset
 
