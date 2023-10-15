@@ -1,8 +1,9 @@
+from datetime import datetime
+
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
-
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -66,6 +67,15 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if date := self.request.query_params.get("date"):
+            date = datetime.strptime(date, "%Y-%m-%d").date()
+            queryset = queryset.filter(show_time__date=date)
+        if movie_id := self.request.query_params.get("movie"):
+            queryset = queryset.filter(movie__id=movie_id)
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
