@@ -46,7 +46,9 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Movie.objects.prefetch_related("genres", "actors")
         if self.request.query_params.get("title"):
-            queryset = queryset.filter(title__icontains=self.request.query_params.get("title"))
+            queryset = queryset.filter(
+                title__icontains=self.request.query_params.get("title")
+            )
         elif genres_ids := self.request.query_params.get("genres"):
             genres_ids = self._convert_params_to_ids(genres_ids)
             queryset = queryset.filter(genres__id__in=genres_ids)
@@ -70,21 +72,19 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
-        queryset = self.queryset.select_related("movie", "cinema_hall").prefetch_related("tickets")
+        queryset = self.queryset.select_related(
+            "movie", "cinema_hall"
+        ).prefetch_related("tickets")
         if date := self.request.query_params.get("date"):
             date = datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(show_time__date=date)
         if movie_id := self.request.query_params.get("movie"):
             queryset = queryset.filter(movie__id=movie_id)
         if self.action == "list":
-            queryset = (
-                queryset.annotate(
-                    tickets_available=F(
-                        "cinema_hall__rows"
-                    ) * F(
-                        "cinema_hall__seats_in_row"
-                    ) - Count("tickets")
-                )
+            queryset = queryset.annotate(
+                tickets_available=F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")
+                - Count("tickets")
             )
 
         return queryset.distinct()
@@ -115,7 +115,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return queryset.prefetch_related(
                 "tickets__movie_session__movie",
-                "tickets__movie_session__cinema_hall"
+                "tickets__movie_session__cinema_hall",
             )
         return queryset
 
