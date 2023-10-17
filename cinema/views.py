@@ -41,8 +41,8 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
 
-        queryset = self._filter_by_actor(queryset)
-        queryset = self._filter_by_genre(queryset)
+        queryset = self._filter_by_param(queryset, "actors")
+        queryset = self._filter_by_param(queryset, "genres")
         queryset = self._filter_by_title(queryset)
 
         return queryset.distinct()
@@ -56,21 +56,13 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
-    def _filter_by_actor(self, queryset):
-        actors = self.request.query_params.get("actors")
+    def _filter_by_param(self, queryset, param_name: str):
+        param_value = self.request.query_params.get(param_name)
 
-        if actors:
-            actors_ids = [int(actor_id) for actor_id in actors.split(",")]
-            queryset = queryset.filter(actors__id__in=actors_ids)
-
-        return queryset
-
-    def _filter_by_genre(self, queryset):
-        genres = self.request.query_params.get("genres")
-
-        if genres:
-            genres_ids = [int(genre_id) for genre_id in genres.split(",")]
-            queryset = queryset.filter(genres__id__in=genres_ids)
+        if param_value:
+            param_ids = [int(param_id) for param_id in param_value.split(",")]
+            filter_kwargs = {f"{param_name}__id__in": param_ids}
+            queryset = queryset.filter(**filter_kwargs)
 
         return queryset
 
