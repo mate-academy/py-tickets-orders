@@ -119,7 +119,7 @@ class Ticket(models.Model):
                 )
 
     def clean(self):
-        Ticket.validate_seat_and_row(
+        self.validate_seat_and_row(
             self.seat, self.row, self.movie_session, ValidationError
         )
 
