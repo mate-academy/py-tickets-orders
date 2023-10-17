@@ -2,14 +2,7 @@ from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import (
-    Genre,
-    Actor,
-    CinemaHall,
-    Movie,
-    MovieSession,
-    Order
-)
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -85,11 +78,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset.select_related(
             "cinema_hall", "movie"
-        ).annotate(tickets_available=(F("cinema_hall__seats_in_row")
-                                      * F("cinema_hall__rows")
-                                      - Count("tickets")
-                                      )
-                   )
+        ).annotate(
+            tickets_available=(
+                F("cinema_hall__seats_in_row") * F("cinema_hall__rows")
+                - Count("tickets")
+            )
+        )
 
         date = self.request.query_params.get("date")
         if date:
@@ -123,7 +117,15 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderPagination
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        queryset = self.queryset.filter(user=self.request.user)
+
+        if self.action == "list":
+            queryset = queryset.prefetch_related(
+                "tickets__movie_session__cinema_hall",
+                "tickets__movie_session__movie",
+            )
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
