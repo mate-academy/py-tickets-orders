@@ -130,4 +130,4 @@ class OrdersViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return OrdersListSerializer
-        return OrdersSerializer
+        return self.serializer_class
