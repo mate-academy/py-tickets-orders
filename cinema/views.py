@@ -1,5 +1,6 @@
-from django.db.models import Count, F, Prefetch
+from django.db.models import Count, F
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
 from cinema.models import (
     Genre,
@@ -146,6 +147,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
+    permission_classes = (IsAuthenticated, )
 
     def get_queryset(self):
         queryset = self.queryset
@@ -155,9 +157,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "tickets__movie_session__movie",
                 "tickets__movie_session__cinema_hall"
             )
-
-        if self.request.user.is_authenticated:
-            queryset = queryset.filter(user=self.request.user)
+        queryset = queryset.filter(user=self.request.user)
 
         return queryset
 
