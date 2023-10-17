@@ -91,11 +91,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie:
             queryset = queryset.filter(movie=movie)
         if date:
-            try:
-                date_object = datetime.strptime(date, "%Y-%m-%d")
-                queryset = queryset.filter(show_time__date=date_object)
-            except ValueError:
-                return queryset
+            queryset = queryset.filter(show_time__date=date)
         return queryset
 
     def get_serializer_class(self):
