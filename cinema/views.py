@@ -48,7 +48,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _params_to_ints(query: str) -> list:
-        return [int(id) for str_id in query.split(",")]
+        return [int(str_id) for str_id in query.split(",")]
 
     def get_queryset(self) -> queryset:
         queryset = self.queryset.prefetch_related("actors", "genres")
