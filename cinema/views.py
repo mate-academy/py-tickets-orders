@@ -43,6 +43,14 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
+    @staticmethod
+    def _params_to_ints(actors: str) -> list[int]:
+        return [
+            int(actor_id)
+            for actor_id in actors.split(",")
+            if actor_id.isnumeric()
+        ]
+
     def get_queryset(self) -> QuerySet[Movie]:
         queryset = self.queryset
 
@@ -50,20 +58,12 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(title__icontains=title)
 
         if actors := self.request.query_params.get("actors"):
-            actor_ids = [
-                int(actor_id)
-                for actor_id in actors.split(",")
-                if actor_id.isnumeric()
-            ]
+            actor_ids = self._params_to_ints(actors)
             if actor_ids:
                 queryset = queryset.filter(actors__id__in=actor_ids)
 
         if genres := self.request.query_params.get("genres"):
-            genre_ids = [
-                int(genre_id)
-                for genre_id in genres.split(",")
-                if genre_id.isnumeric()
-            ]
+            genre_ids = self._params_to_ints(genres)
             if genre_ids:
                 queryset = queryset.filter(genres__id__in=genre_ids)
 
@@ -76,7 +76,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieDetailSerializer
 
-        return MovieSerializer
+        return self.serializer_class
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -93,13 +93,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action in ("list", "retrieve"):
             queryset = queryset.select_related("movie", "cinema_hall")
 
-        if (
-            date_param := self.request.query_params.get("date")
-        ) and re.fullmatch(
-            r"^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$", date_param
+        if (date := self.request.query_params.get("date")) and re.fullmatch(
+            r"^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$", date
         ):
-            date_obj = make_aware(datetime.strptime(date_param, "%Y-%m-%d"))
-            queryset = queryset.filter(show_time__date=date_obj.date())
+            queryset = queryset.filter(show_time__date=date)
 
         if movie_param := self.request.query_params.get("movie"):
             queryset = queryset.filter(movie_id=movie_param)
@@ -113,12 +110,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return self.serializer_class
 
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     pagination_class = OrderPagination
+    serializer_class = OrderSerializer
 
     def get_queryset(self) -> QuerySet[Order]:
         queryset = self.queryset.filter(user=self.request.user)
@@ -134,7 +132,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self) -> type[BaseSerializer[Order]]:
         if self.action == "list":
             return OrderListSerializer
-        return OrderSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer: BaseSerializer[Order]) -> None:
         serializer.save(user=self.request.user)
