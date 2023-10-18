@@ -59,7 +59,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieDetailSerializer
 
-        return MovieSerializer
+        return self.serializer_class
 
     def get_queryset(self):
         queryset = self.queryset
@@ -157,6 +157,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "tickets__movie_session__movie",
                 "tickets__movie_session__cinema_hall"
             )
+
         queryset = queryset.filter(user=self.request.user)
 
         return queryset
