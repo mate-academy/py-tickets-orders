@@ -113,10 +113,6 @@ class TicketCreateSerializer(TicketSerializer):
         queryset=MovieSession.objects.all(), write_only=True
     )
 
-    class Meta:
-        model = Ticket
-        fields = ("id", "row", "seat", "movie_session")
-
 
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketCreateSerializer(many=True, read_only=False)
