@@ -59,15 +59,15 @@ class MovieViewSet(viewsets.ModelViewSet):
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
 
-        if actors is not None:
+        if actors:
             actors_ids = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
-        if genres is not None:
+        if genres:
             genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
-        if title is not None:
+        if title:
             queryset = queryset.filter(title__icontains=title)
 
         if self.action in ("list", "retrieve"):
@@ -82,15 +82,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
-        if date is not None:
-            date = datetime.strptime(date, "%Y-%m-%d")
+        if date:
             queryset = queryset.filter(show_time__date=date)
 
-        if movie is not None:
+        if movie:
             queryset = queryset.filter(movie_id=movie)
 
         if self.action == "list":
