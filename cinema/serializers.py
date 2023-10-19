@@ -1,6 +1,7 @@
 from typing import Any
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from django.db import transaction
 
@@ -107,6 +108,16 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
+
+    def validate(self, attrs: Any) -> Any:
+        data = super().validate(attrs)
+        self.Meta.model.validate_ticket(
+            attrs["row"],
+            attrs["seat"],
+            attrs["movie_session"],
+            ValidationError,
+        )
+        return data
 
 
 class TicketListSerializer(TicketSerializer):
