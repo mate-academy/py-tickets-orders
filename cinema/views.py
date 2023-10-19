@@ -14,7 +14,8 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderSerializer, OrderListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 
 
@@ -44,7 +45,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieDetailSerializer
 
-        return MovieSerializer
+        return self.serializer_class
 
     @staticmethod
     def _params_to_ints(query: str) -> list:
@@ -81,7 +82,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return self.serializer_class
 
     def get_queryset(self):
         queryset = self.queryset.select_related("movie", "cinema_hall")
