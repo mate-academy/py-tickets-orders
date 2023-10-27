@@ -86,7 +86,11 @@ class Ticket(models.Model):
 
     @staticmethod
     def validate_seat(
-        seat: int, max_seats: int, row: int, max_rows: int, error_to_raise
+        seat: int,
+        max_seats: int,
+        row: int,
+        max_rows: int,
+        error_to_raise: ValidationError
     ):
         if row not in range(1, max_rows + 1):
             raise error_to_raise(
@@ -101,7 +105,7 @@ class Ticket(models.Model):
             )
 
     def clean(self):
-        Ticket.validate_seat(
+        self.validate_seat(
             self.seat,
             self.movie_session.cinema_hall.seats_in_row,
             self.row,
