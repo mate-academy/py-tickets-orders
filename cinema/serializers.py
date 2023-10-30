@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Ticket, Order
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -59,6 +59,9 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
+    tickets_available = serializers.IntegerField(
+        source="taken_places.count"
+    )
 
     class Meta:
         model = MovieSession
@@ -68,13 +71,53 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
+            "tickets_available",
         )
+
+
+class TicketSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat", "movie_session")
+
+
+class TicketSeatSerializer(TicketSerializer):
+
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TicketSeatSerializer(many=True, read_only=True)
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
+
+
+class TicketDetailSerializer(TicketSerializer):
+    movie_session = MovieSessionListSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=False, read_only=False)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
+
+
+class OrderDetailSerializer(OrderSerializer):
+    tickets = TicketDetailSerializer(many=True, read_only=False)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
