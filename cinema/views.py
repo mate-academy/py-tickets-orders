@@ -99,8 +99,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = (
                 queryset
                 .select_related("cinema_hall", "movie")
-                .prefetch_related("taken_places")
-                .annotate(tickets_available=F("cinema_hall__capacity") - Count("taken_places"))
+                .annotate(
+                    tickets_available=(
+                        F("cinema_hall__rows")
+                        * F("cinema_hall__seats_in_row")
+                        - Count("tickets")
+                    )
+                )
             )
 
         return queryset
@@ -108,7 +113,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderPagination(PageNumberPagination):
     page_size = 2
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 10000
 
 
@@ -118,12 +123,9 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderPagination
 
     def get_serializer_class(self):
-    #     # if self.action == "list":
-    #     #     return MovieSessionListSerializer
-    #
         if self.action == "list":
             return OrderDetailSerializer
-    #
+
         return OrderSerializer
 
     def get_queryset(self):
