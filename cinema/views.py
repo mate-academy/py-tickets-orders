@@ -1,3 +1,4 @@
+from django.db.models import Count, F, Q
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -78,11 +79,24 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
-        if date:
+        if date and movie:
+            queryset = MovieSession.objects.filter(
+                Q(show_time__date=date) & Q(movie_id=movie)
+            )
+        elif date:
             queryset = MovieSession.objects.filter(show_time__date=date)
-
-        if movie:
+        elif movie:
             queryset = MovieSession.objects.filter(movie_id=movie)
+
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related("cinema_hall")
+                .annotate(
+                    tickets_available=F(
+                        "cinema_hall__rows"
+                    ) * F("cinema_hall__seats_in_row") - Count("tickets"))
+            ).order_by("id")
 
         return queryset.distinct()
 
@@ -111,7 +125,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action == "list":
-            queryset = queryset.prefetch_related("tickets__movie_session__cinema_hall")
+            queryset = queryset.prefetch_related(
+                "tickets__movie_session__cinema_hall"
+            )
 
         return queryset
 
