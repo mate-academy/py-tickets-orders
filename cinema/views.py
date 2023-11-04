@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from django_filters.rest_framework import DjangoFilterBackend
-from django_filters import rest_framework as filters
+from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -16,7 +15,8 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer,
+    MovieListSerializer,
+    OrderSerializer,
     OrderListSerializer,
 )
 
@@ -42,15 +42,20 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        genres = self.request.query_params.get("genres")
-        actors = self.request.query_params.get("actors")
-        title = self.request.query_params.get("title")
-        if genres is not None:
-            queryset = queryset.filter(genres=genres)
-        if actors is not None:
-            queryset = queryset.filter(actors=actors)
-        if title is not None:
-            queryset = queryset.filter(title__icontains=title)
+        if self.action == "list":
+            queryset = queryset.prefetch_related("genres", "actors")
+
+            genres = self.request.query_params.get("genres")
+            actors = self.request.query_params.get("actors")
+            title = self.request.query_params.get("title")
+
+            if genres is not None:
+                genres = genres.split(",")
+                queryset = queryset.filter(genres__in=genres)
+            if actors is not None:
+                queryset = queryset.filter(actors=actors)
+            if title is not None:
+                queryset = queryset.filter(title__icontains=title)
         return queryset
 
     def get_serializer_class(self):
@@ -69,17 +74,26 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        date_str = self.request.query_params.get("date")
-        movie = self.request.query_params.get("movie")
-        if date_str is not None:
-            date = datetime.strptime(date_str, "%Y-%m-%d")
-            queryset = queryset.filter(
-                show_time__year=date.year,
-                show_time__month=date.month,
-                show_time__day=date.day
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related("movie", "cinema_hall")
+                .annotate(tickets_available=(
+                    F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                    - Count("tickets"))
+                )
             )
-        if movie is not None:
-            queryset = queryset.filter(movie=movie)
+
+            date_str = self.request.query_params.get("date")
+            movie = self.request.query_params.get("movie")
+
+            if date_str is not None:
+                date = datetime.strptime(date_str, "%Y-%m-%d")
+                queryset = queryset.filter(
+                    show_time__date=date
+                )
+            if movie is not None:
+                queryset = queryset.filter(movie=movie)
 
         return queryset
 
