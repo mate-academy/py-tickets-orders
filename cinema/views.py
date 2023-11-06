@@ -37,6 +37,33 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
+    @staticmethod
+    def _params_to_ints(qs: str) -> list[int]:
+        return [int(str_id) for str_id in qs.split(",")]
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        if self.action == "list":
+            queryset = Movie.objects.prefetch_related("genres", "actors")
+
+            actors = self.request.query_params.get("actors")
+            genres = self.request.query_params.get("genres")
+            title = self.request.query_params.get("title")
+
+            if actors:
+                actors_id = self._params_to_ints(actors)
+                queryset = queryset.filter(actors__id__in=actors_id)
+
+            if genres:
+                genres_id = self._params_to_ints(genres)
+                queryset = queryset.filter(genres__id__in=genres_id)
+
+            if title:
+                queryset = queryset.filter(title__icontains=title)
+
+        return queryset
+
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
@@ -81,7 +108,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "tickets__movie_session__movie"
             )
 
-            return queryset
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
