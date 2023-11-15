@@ -55,10 +55,10 @@ class MovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieSession
         fields = (
-            "id", 
-            "show_time", 
-            "movie", 
-            "cinema_hall", 
+            "id",
+            "show_time",
+            "movie",
+            "cinema_hall",
             "taken_places",
             "tickets_available",
         )
