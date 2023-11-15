@@ -1,6 +1,9 @@
 from rest_framework import serializers
+from django.db import transaction
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import (
+    Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -46,9 +49,21 @@ class MovieDetailSerializer(MovieSerializer):
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
+    taken_places = serializers.SerializerMethodField()
+    tickets_available = serializers.SerializerMethodField()
+
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
+
+    def get_taken_places(self, obj):
+        tickets = Ticket.objects.filter(movie_session=obj)
+        return TicketSerializer(tickets, many=True).data
+
+    def get_tickets_available(self, obj):
+        taken_places = Ticket.objects.filter(movie_session=obj).count()
+        available_tickets = obj.capacity - taken_places
+        return available_tickets if available_tickets >= 0 else 0
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
@@ -78,3 +93,30 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    """movie_session = MovieSessionSerializer(
+        many=False, read_only=True, required=False, source='get_movie_session'
+    )
+    """
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets")
+
+    def create(self, validated_data):
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
+
+        for ticket_data in tickets_data:
+            Ticket.objects.create(order=order, **ticket_data)
+
+        return order
