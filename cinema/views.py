@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.db.models import Count
 from rest_framework import viewsets
 
 from cinema.models import (Genre, Actor, CinemaHall,
@@ -57,7 +58,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
