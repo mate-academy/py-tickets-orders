@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework import viewsets
 
 from cinema.models import (Genre, Actor, CinemaHall,
@@ -70,6 +72,20 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        movie = self.request.query_params.get("movie")
+        date = self.request.query_params.get("date")
+
+        if movie:
+            queryset = queryset.filter(movie_id=movie)
+
+        if date:
+            queryset = queryset.filter(show_time__date=datetime.strptime(date, "%Y-%m-%d").date())
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
