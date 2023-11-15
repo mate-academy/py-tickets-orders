@@ -54,7 +54,14 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = (
+            "id", 
+            "show_time", 
+            "movie", 
+            "cinema_hall", 
+            "taken_places",
+            "tickets_available",
+        )
 
     def get_taken_places(self, obj):
         tickets = Ticket.objects.filter(movie_session=obj)
@@ -62,7 +69,7 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 
     def get_tickets_available(self, obj):
         taken_places = Ticket.objects.filter(movie_session=obj).count()
-        available_tickets = obj.capacity - taken_places
+        available_tickets = obj.cinema_hall.capacity - taken_places
         return available_tickets if available_tickets >= 0 else 0
 
 
