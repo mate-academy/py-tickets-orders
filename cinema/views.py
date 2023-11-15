@@ -2,6 +2,7 @@ from rest_framework import viewsets
 
 from cinema.models import (Genre, Actor, CinemaHall,
                            Movie, MovieSession, Order)
+from cinema.pagination import OrderPagination
 
 from cinema.serializers import (
     GenreSerializer,
@@ -63,6 +64,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = OrderPagination
 
     def get_serializer_class(self):
         if self.action == "list":
