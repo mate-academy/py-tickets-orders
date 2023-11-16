@@ -114,7 +114,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def post(self, request, *args, **kwargs):
         serializer = OrderSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
