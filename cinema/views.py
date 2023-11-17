@@ -4,7 +4,14 @@ from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order
+)
 
 from cinema.serializers import (
     GenreSerializer,
