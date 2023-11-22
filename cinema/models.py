@@ -118,11 +118,11 @@ class Ticket(models.Model):
             force_update=False,
             using=None,
             update_fields=None,
-        ):
-            self.full_clean()
-            super(Ticket, self).save(
-                force_insert, force_update, using, update_fields
-            )
+    ):
+        self.full_clean()
+        super(Ticket, self).save(
+            force_insert, force_update, using, update_fields
+        )
 
     def __str__(self):
         return (
