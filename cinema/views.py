@@ -49,7 +49,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return OrderListSerializer
-        return OrderSerializer
+        return self.serializer_class
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -72,8 +72,8 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
+    def _params_to_ints(query):
+        return [int(str_id) for str_id in query.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -99,7 +99,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieDetailSerializer
 
-        return MovieSerializer
+        return self.serializer_class
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -137,4 +137,4 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return self.serializer_class
