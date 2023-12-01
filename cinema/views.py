@@ -90,7 +90,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
-        return queryset
+        return queryset.distinct()
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
