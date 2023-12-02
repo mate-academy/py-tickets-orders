@@ -59,7 +59,10 @@ class MovieViewSet(viewsets.ModelViewSet):
             genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
-        return queryset.distinct()
+        if self.action in ("list", "retrieve"):
+            return queryset.prefetch_related("actors", "genres").distinct()
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
