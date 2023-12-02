@@ -1,6 +1,7 @@
+from django.db import transaction
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -78,3 +79,39 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = (
+            "id",
+            "row",
+            "seat",
+            "movie_session"
+        )
+
+
+class TicketDetailSerializer(TicketSerializer):
+    movie_session = MovieSessionListSerializer(
+        many=False,
+        read_only=False
+    )
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = (
+            "id",
+            "tickets",
+            "created_at"
+        )
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketDetailSerializer(
+        many=True,
+        read_only=False,
+        allow_empty=False,
+    )
