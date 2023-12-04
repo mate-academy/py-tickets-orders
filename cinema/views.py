@@ -116,15 +116,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if movie:
             queryset = queryset.filter(
-                movie__id__in=[int(s) for s in movie.split(",")]
+                # movie__id__in=[int(s) for s in movie.split(",")]
+                movie__id=movie
             )
 
         if date_param:
-            date = datetime.strptime(date_param, "%Y-%m-%d")
-            date = timezone.make_aware(
-                timezone.datetime(date.year, date.month, date.day)
-            )
-            queryset = queryset.filter(show_time__date=date)
+            queryset = queryset.filter(show_time__date=date_param)
 
         return queryset.distinct()
 
