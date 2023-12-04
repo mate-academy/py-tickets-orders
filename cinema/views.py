@@ -77,9 +77,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             queryset = queryset.select_related("cinema_hall").annotate(
                 tickets_available=(
-                        F("cinema_hall__rows")
-                        * F("cinema_hall__seats_in_row")
-                        - Count("tickets")
+                    F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row")
+                    - Count("tickets")
                 )
             )
         date_filter = self.request.query_params.get("date")
