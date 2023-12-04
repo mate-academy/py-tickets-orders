@@ -148,6 +148,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "tickets__movie_session__cinema_hall",
                 "tickets__movie_session__movie"
             )
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
