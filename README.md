@@ -7,7 +7,7 @@ Read [the guideline](https://github.com/mate-academy/py-task-guideline/blob/main
  
 - After loading data from fixture you can use following superuser (or create another one by yourself):
   - Login: `admin.user`
-  - Password: `1qazcde3`
+  - Password: `'1qazcde3'`
 
 `In this task you will add the functionality of working with orders.
 
@@ -68,7 +68,7 @@ It should support the following request structure:
             "row": 2,
             "seat": 2,
             "movie_session": 1
-        }
+        } 
     ]
 }
 ```
