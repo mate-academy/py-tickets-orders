@@ -54,6 +54,12 @@ class MovieSession(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE)
 
+    @property
+    def tickets_available(self) -> int:
+        return (self.cinema_hall.rows
+                * self.cinema_hall.seats_in_row
+                - self.tickets.count())
+
     class Meta:
         ordering = ["-show_time"]
 
