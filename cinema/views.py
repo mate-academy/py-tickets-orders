@@ -1,4 +1,3 @@
-from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -121,7 +120,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderPagination
 
     def get_queryset(self):
-        queryset = self.queryset.filter(user=self.request.user)
+        queryset = self.queryset.filter(user=self.request.user.id)
         if self.action == "list":
             queryset = queryset.prefetch_related(
                 "tickets__movie_session__cinema_hall",
