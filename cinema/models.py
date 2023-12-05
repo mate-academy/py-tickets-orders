@@ -57,6 +57,10 @@ class MovieSession(models.Model):
     class Meta:
         ordering = ["-show_time"]
 
+    @property
+    def tickets_available(self):
+        return self.cinema_hall.capacity * self.tickets.count() - 1
+
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
