@@ -1,5 +1,7 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from cinema.models import (
     Genre,
@@ -133,10 +135,13 @@ class OrderPagination(PageNumberPagination):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     pagination_class = OrderPagination
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = self.queryset.filter(user=self.request.user)
-        return queryset
+        if self.request.user:
+            queryset = self.queryset.filter(user=self.request.user)
+            return queryset
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
