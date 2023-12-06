@@ -95,9 +95,9 @@ class TakenPlacesSerializer(serializers.ModelSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = TakenPlacesSerializer(source="tickets",
-                                         many=True,
-                                         read_only=True)
+    taken_places = TakenPlacesSerializer(
+        source="tickets", many=True, read_only=True
+    )
 
     class Meta:
         model = MovieSession
