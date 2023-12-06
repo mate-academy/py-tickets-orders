@@ -83,16 +83,9 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    def validate(self, attrs):
-        data = super(TicketSerializer, self).validate(attrs=attrs)
-        Ticket.validate_ticket(
-            attrs["row"], attrs["seat"], attrs["movie_session"]
-        )
-        return data
-
     class Meta:
         model = Ticket
-        fields = ("id", "row", "seat", "movie_session")
+        fields = ("id", "row", "seat", "movie_session",)
 
 
 class TicketListSerializer(TicketSerializer):
@@ -102,7 +95,7 @@ class TicketListSerializer(TicketSerializer):
 class TicketSeatsSerializer(TicketSerializer):
     class Meta:
         model = Ticket
-        fields = ("row", "seat")
+        fields = ("row", "seat",)
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
@@ -119,7 +112,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
             "show_time",
             "movie",
             "cinema_hall",
-            "taken_places"
+            "taken_places",
         )
 
 
@@ -132,15 +125,20 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ["id", "tickets", "created_at"]
+        fields = ("id", "tickets", "created_at",)
 
+    @transaction.atomic
     def create(self, validated_data):
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
-            for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
+
+        tickets_objects = [
+            Ticket(order=order, **ticket_data)
+            for ticket_data in tickets_data
+        ]
+        Ticket.objects.bulk_create(tickets_objects)
+
+        return order
 
 
 class OrderListSerializer(OrderSerializer):
