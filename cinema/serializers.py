@@ -111,12 +111,6 @@ class TicketSerializer(serializers.ModelSerializer):
 class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer(many=False, read_only=True)
 
-    validators = [
-        UniqueTogetherValidator(
-            queryset=Ticket.objects.all, fields=["row", "seat", "cinema_hall"]
-        )
-    ]
-
 
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
