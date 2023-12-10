@@ -1,4 +1,4 @@
-from django.db.models import F, Count
+from django.db.models import F, Q, Count
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -12,7 +12,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 from rest_framework.pagination import PageNumberPagination
 
@@ -48,21 +50,27 @@ class MovieViewSet(viewsets.ModelViewSet):
     def _params_to_ints(queryset):
         return [int(str_id) for str_id in queryset.split(",")]
 
+    from django.db.models import Q
+
     def get_queryset(self):
         queryset = self.queryset
+
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
+
         if actors:
             actors_ids = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
+
         if genres:
             genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
+
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        return queryset.distinct()
+        return queryset
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
