@@ -50,8 +50,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     def _params_to_ints(queryset):
         return [int(str_id) for str_id in queryset.split(",")]
 
-    from django.db.models import Q
-
     def get_queryset(self):
         queryset = self.queryset
 
