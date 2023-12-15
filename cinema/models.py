@@ -94,7 +94,7 @@ class Ticket(models.Model):
             seat_in_row: int,
             row: int,
             rows: int,
-            error_to_raise
+            error_to_raise: ValidationError
     ):
 
         if seat not in range(1, seat_in_row + 1):
