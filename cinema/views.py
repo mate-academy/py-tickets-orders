@@ -95,13 +95,17 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 "cinema_hall", "movie"
             ).annotate(
                 tickets_available=F("cinema_hall__rows")
-                                  * F("cinema_hall__seats_in_row")
-                                  - Count("tickets")
+                * F("cinema_hall__seats_in_row")
+                - Count("tickets")
             )
 
-        min_tickets_available = self.request.query_params.get("min_tickets_available")
+        min_tickets_available = (
+            self.request.query_params.get("min_tickets_available")
+        )
         if min_tickets_available:
-            queryset = queryset.filter(tickets_available__gte=min_tickets_available)
+            queryset = queryset.filter(
+                tickets_available__gte=min_tickets_available
+            )
 
         return queryset
 

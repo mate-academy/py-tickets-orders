@@ -97,7 +97,9 @@ class TicketSerializer(serializers.ModelSerializer):
         )
 
         if attrs["row"] == 0 and attrs["seat"] == 0:
-            raise serializers.ValidationError("Both 'row' and 'seat' cannot be zero.")
+            raise serializers.ValidationError(
+                "Both 'row' and 'seat' cannot be zero."
+            )
 
         return validate_data
 
@@ -145,7 +147,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         tickets_data = validated_data.pop("tickets")
 
         if not tickets_data:
-            raise serializers.ValidationError("Order must have at least one ticket.")
+            raise serializers.ValidationError(
+                "Order must have at least one ticket."
+            )
 
         order = Order.objects.create(**validated_data)
 
