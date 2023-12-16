@@ -54,12 +54,12 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if actors:
             actors_id = params_to_ints(actors)
-            queryset = queryset.filter(actors__overlap=actors_id)
+            queryset = queryset.filter(actors__id__in=actors_id)
         if genres:
             genres_id = params_to_ints(genres)
-            queryset = queryset.exclude(genres__overlap=genres_id)
+            queryset = queryset.filter(genres__id__in=genres_id)
         if title:
-            queryset = queryset.filter(title__search=title)
+            queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
 
