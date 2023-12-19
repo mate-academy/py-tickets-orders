@@ -87,7 +87,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             )
 
             for item in queryset:
-                item.tickets_available = item.cinema_hall.capacity - item.tickets_count
+                item.tickets_available = (item.cinema_hall.capacity
+                                          - item.tickets_count)
 
             date = self.request.query_params.get("date")
             movie = self.request.query_params.get("movie")
@@ -103,7 +104,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderPagination(PageNumberPagination):
     page_size = 5
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
 
 
