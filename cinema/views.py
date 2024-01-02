@@ -16,12 +16,12 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderSerializer, OrderListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 
 
 class ParamsIntoIntMixin:
-
     @staticmethod
     def _params_to_ints(qs: str) -> list[int]:
         return [int(str_id) for str_id in qs.split(",")]
@@ -57,10 +57,14 @@ class MovieViewSet(ParamsIntoIntMixin, viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            queryset = queryset.filter(actors__id__in=self._params_to_ints(actors))
+            queryset = queryset.filter(
+                actors__id__in=self._params_to_ints(actors)
+            )
 
         if genres:
-            queryset = queryset.filter(genres__id__in=self._params_to_ints(genres))
+            queryset = queryset.filter(
+                genres__id__in=self._params_to_ints(genres)
+            )
 
         if title:
             queryset = queryset.filter(title__icontains=title)
@@ -88,13 +92,19 @@ class MovieSessionViewSet(ParamsIntoIntMixin, viewsets.ModelViewSet):
             queryset = queryset.select_related("movie", "cinema_hall")
 
         if self.action == "list":
-            queryset = queryset.annotate(tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets"))
+            queryset = queryset.annotate(
+                tickets_available=F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")
+                - Count("tickets")
+            )
 
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
         if movie:
-            queryset = queryset.filter(movie__id__in=self._params_to_ints(movie))
+            queryset = queryset.filter(
+                movie__id__in=self._params_to_ints(movie)
+            )
         if date:
             date = datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(show_time__date=date)
@@ -125,11 +135,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action in ("list", "retrieve"):
-            queryset = (
-                queryset
-                .prefetch_related("tickets__movie_session__movie")
-                .prefetch_related("tickets__movie_session__cinema_hall")
-            )
+            queryset = queryset.prefetch_related(
+                "tickets__movie_session__movie"
+            ).prefetch_related("tickets__movie_session__cinema_hall")
         return queryset
 
     def perform_create(self, serializer):
