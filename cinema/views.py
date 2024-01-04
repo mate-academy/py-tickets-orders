@@ -21,7 +21,7 @@ from cinema.serializers import (
 )
 
 
-class ParamsConvMixin:
+class ParamsConverterMixin:
     @staticmethod
     def _params_to_ints(qs: str) -> list[int]:
         return [int(str_id) for str_id in qs.split(",")]
@@ -42,7 +42,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(ParamsConvMixin, viewsets.ModelViewSet):
+class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
@@ -57,14 +57,10 @@ class MovieViewSet(ParamsConvMixin, viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            queryset = queryset.filter(
-                actors__id__in=self._params_to_ints(actors)
-            )
+            queryset = queryset.filter(actors__id=actors)
 
         if genres:
-            queryset = queryset.filter(
-                genres__id__in=self._params_to_ints(genres)
-            )
+            queryset = queryset.filter(genres__id__in=genres.split(","))
 
         if title:
             queryset = queryset.filter(title__icontains=title)
@@ -81,7 +77,7 @@ class MovieViewSet(ParamsConvMixin, viewsets.ModelViewSet):
         return MovieSerializer
 
 
-class MovieSessionViewSet(ParamsConvMixin, viewsets.ModelViewSet):
+class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
