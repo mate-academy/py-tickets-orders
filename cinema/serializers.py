@@ -120,13 +120,20 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "tickets", "created_at")
 
+    @staticmethod
+    def atomic_transaction(func):
+        def wrapper(*args, **kwargs):
+            with transaction.atomic():
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    @atomic_transaction
     def create(self, validated_data):
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
-            for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
+        Ticket.objects.bulk_create([Ticket(order=order, **ticket_data) for ticket_data in tickets_data])
+        return order
 
 
 class OrderListSerializer(OrderSerializer):
