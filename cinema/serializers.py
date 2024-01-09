@@ -120,15 +120,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "tickets", "created_at")
 
-    @staticmethod
-    def atomic_transaction(func):
-        def wrapper(*args, **kwargs):
-            with transaction.atomic():
-                return func(*args, **kwargs)
-
-        return wrapper
-
-    @atomic_transaction
+    @transaction.atomic
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
         order = Order.objects.create(**validated_data)
