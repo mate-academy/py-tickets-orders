@@ -14,7 +14,7 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderSerializer, 
+    OrderSerializer,
     OrderListSerializer
 )
 
@@ -84,9 +84,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             movie_id = params_to_ints(movie)
             queryset = queryset.filter(movie__id__in=movie_id)
         if self.action == "list":
-            queryset = queryset.annotate(tickets_available=F("cinema_hall__rows")
-                                                           * F("cinema_hall__seats_in_row")
-                                                           - Count("tickets"))
+            queryset = queryset.annotate(
+                tickets_available=
+                F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")
+                - Count("tickets")
+            )
         return queryset
 
     def get_serializer_class(self):
@@ -112,7 +115,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
         return queryset
 
-
     def get_serializer_class(self):
         if self.action == "list":
             return OrderListSerializer
@@ -120,4 +122,3 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
