@@ -57,6 +57,7 @@ class OrderApiTests(TestCase):
         self.client.force_authenticate(user=self.user)
         orders_response = self.client.get("/api/cinema/orders/")
         self.assertEqual(orders_response.status_code, status.HTTP_200_OK)
+        breakpoint()
         self.assertEqual(orders_response.data["count"], 1)
         order = orders_response.data["results"][0]
         self.assertEqual(len(order["tickets"]), 1)
