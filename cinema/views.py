@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -82,20 +84,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    @staticmethod
-    def _make_date_valid(date_non_valid):
-        parts_of_date = date_non_valid.split("-")
-        if len(parts_of_date[1]) == 1:
-            parts_of_date[1] = "0" + parts_of_date[1]
-        if len(parts_of_date[2]) == 1:
-            parts_of_date[2] = "0" + parts_of_date[2]
-
-        return "-".join(parts_of_date)
-
-    @staticmethod
-    def _qs_to_list_int(qs):
-        return [int(current_id) for current_id in qs.split(",")]
-
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
@@ -114,15 +102,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         movies = self.request.query_params.get("movie")
         if movies:
-            movie_list = self._qs_to_list_int(movies)
-            queryset = queryset.filter(movie__id__in=movie_list)
+            queryset = queryset.filter(movie__id=movies)
 
         date = self.request.query_params.get("date")
         if date:
-            # Tests are failed because date in tests in format (2024-03-4),
-            # not (2024-03-04), so i make validation
-            date = self._make_date_valid(date)
-            queryset = queryset.filter(show_time__contains=date)
+            clear_date = (
+                datetime.strptime(date, "%Y-%m-%d").strftime("%Y-%m-%d")
+            )
+            queryset = queryset.filter(show_time__contains=clear_date)
         return queryset
 
 
