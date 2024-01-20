@@ -21,17 +21,17 @@ from cinema.serializers import (
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.order_by("id")
+    queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
-    queryset = Actor.objects.order_by("id")
+    queryset = Actor.objects.all()
     serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
-    queryset = CinemaHall.objects.order_by("id")
+    queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
 
 
@@ -39,14 +39,13 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = (
         Movie.objects
         .prefetch_related("genres", "actors")
-        .order_by("id")
     )
     serializer_class = MovieSerializer
 
     @staticmethod
-    def params_to_ints(qs) -> list:
+    def params_to_ints(ids_string) -> list:
         """Convert a list of string IDs to a list of integers"""
-        return [int(str_id) for str_id in qs.split(",")]
+        return [int(str_id) for str_id in ids_string.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -77,7 +76,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = (
         MovieSession.objects
         .select_related("movie", "cinema_hall")
-        .order_by("id")
     )
     serializer_class = MovieSessionSerializer
 
@@ -120,7 +118,7 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.order_by("id")
+    queryset = Order.objects.all()
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
@@ -135,10 +133,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "list":
-            return OrderListSerializer
+            self.serializer_class = OrderListSerializer
         if self.action == "create":
-            return OrderPostSerializer
-        return OrderSerializer
+            self.serializer_class = OrderPostSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer) -> None:
         serializer.save(user=self.request.user)
