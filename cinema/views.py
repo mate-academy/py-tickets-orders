@@ -74,6 +74,32 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
+    @staticmethod
+    def _params_to_ints(ids_str: str) -> list:
+        return [int(param_id) for param_id in ids_str.split(",")]
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        if self.action == "list":
+            queryset = queryset.select_related("movie", "cinema_hall")
+
+        date = self.request.query_params.get("date")
+        if date:
+            year, month, day = date.split("-")
+            queryset = queryset.filter(
+                show_time__year=year,
+                show_time__month=month,
+                show_time__day=day,
+            )
+
+        movie = self.request.query_params.get("movie")
+        if movie:
+            movies_ids = self._params_to_ints(movie)
+            queryset = queryset.filter(movie_id__in=movies_ids)
+
+        return queryset
+
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
