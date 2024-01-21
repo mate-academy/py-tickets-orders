@@ -44,6 +44,9 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
 
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related("actors", "genres")
+
         actors = self.request.query_params.get("actors")
         if actors:
             actors_ids = self._params_to_ints(actors)
