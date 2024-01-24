@@ -42,11 +42,11 @@ class Movie(models.Model):
     genres = models.ManyToManyField(Genre)
     actors = models.ManyToManyField(Actor)
 
-    class Meta:
-        ordering = ["title"]
-
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = ["title"]
 
 
 class MovieSession(models.Model):
@@ -54,11 +54,11 @@ class MovieSession(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE)
 
-    class Meta:
-        ordering = ["-show_time"]
-
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
+
+    class Meta:
+        ordering = ["-show_time"]
 
 
 class Order(models.Model):
@@ -85,22 +85,13 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        Ticket.validate_seat_and_rows(
+            self.seat,
+            self.row,
+            self.movie_session.cinema_hall.seats_in_row,
+            self.movie_session.cinema_hall.rows,
+            ValidationError
+        )
 
     def save(
         self,
@@ -118,6 +109,19 @@ class Ticket(models.Model):
         return (
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
+
+    @staticmethod
+    def validate_seat_and_rows(seat, row, num_seats, num_rows, error_to_raise):
+        if not (1 <= seat <= num_seats):
+            raise error_to_raise({
+                "row": f"Row number must be in the "
+                       f"range [1, {num_seats} , not {seat}]"
+            })
+        elif not (1 <= row <= num_rows):
+            raise error_to_raise({
+                "row": f"Row number must be in the "
+                       f"range [1, {num_rows} , not {row}]"
+            })
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
