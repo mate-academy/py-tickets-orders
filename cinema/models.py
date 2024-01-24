@@ -42,11 +42,11 @@ class Movie(models.Model):
     genres = models.ManyToManyField(Genre)
     actors = models.ManyToManyField(Actor)
 
-    class Meta:
-        ordering = ["title"]
-
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = ["title"]
 
 
 class MovieSession(models.Model):
@@ -54,11 +54,11 @@ class MovieSession(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE)
 
-    class Meta:
-        ordering = ["-show_time"]
-
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
+
+    class Meta:
+        ordering = ["-show_time"]
 
 
 class Order(models.Model):
@@ -110,9 +110,6 @@ class Ticket(models.Model):
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
 
-    class Meta:
-        unique_together = ("movie_session", "row", "seat")
-
     @staticmethod
     def validate_seat_and_rows(seat, row, num_seats, num_rows, error_to_raise):
         if not (1 <= seat <= num_seats):
@@ -125,3 +122,6 @@ class Ticket(models.Model):
                 "row": f"Row number must be in the "
                        f"range [1, {num_rows} , not {row}]"
             })
+
+    class Meta:
+        unique_together = ("movie_session", "row", "seat")
