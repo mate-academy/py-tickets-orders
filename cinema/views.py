@@ -58,19 +58,20 @@ class MovieViewSet(viewsets.ModelViewSet):
         return string.split(",")
 
     def get_queryset(self):
+        queryset = self.queryset
         if self.request.query_params:
             actors = self.request.query_params.get("actors")
             genres = self.request.query_params.get("genres")
             title = self.request.query_params.get("title")
             if actors:
                 actors = self.strtolist(actors)
-                self.queryset = self.queryset.filter(actors__in=actors)
+                queryset = queryset.filter(actors__in=actors)
             if genres:
                 genres = self.strtolist(genres)
-                self.queryset = self.queryset.filter(genres__in=genres)
+                queryset = queryset.filter(genres__in=genres)
             if title:
-                self.queryset = self.queryset.filter(title__icontains=title)
-        return self.queryset
+                queryset = queryset.filter(title__icontains=title)
+        return queryset
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -87,23 +88,21 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
     def get_queryset(self):
+        queryset = self.queryset
         if self.request.query_params:
             movie = self.request.query_params.get("movie")
             date = self.request.query_params.get("date")
-
             if movie:
-                self.queryset = self.queryset.filter(movie_id=movie)
+                queryset = queryset.filter(movie_id=movie)
             if date:
                 date = datetime.strptime(date, "%Y-%m-%d")
-                self.queryset = self.queryset.filter(
-                    show_time__year=date.year,
-                    show_time__month=date.month,
-                    show_time__day=date.day)
-        self.queryset = self.queryset.select_related("movie").annotate(
+                queryset = queryset.filter(
+                    show_time__date=date)
+        queryset = queryset.select_related("movie").annotate(
             tickets_available=(F("cinema_hall__rows")
                                * F("cinema_hall__seats_in_row")
                                - Count("tickets")))
-        return self.queryset
+        return queryset
 
 
 class OrderViewSet(viewsets.ModelViewSet):
