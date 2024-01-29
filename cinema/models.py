@@ -84,30 +84,36 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    @staticmethod
+    def validate_seats(
+            seat: int,
+            row: int,
+            hall_seat: int,
+            hall_row: int,
+            error_to_raise
+    ):
+        if not (1 <= seat <= hall_seat) or not (1 <= row <= hall_row):
+            raise error_to_raise(
+                f"Check seats and row: "
+                f"seats must be in range 1 to {hall_seat} and"
+                f"rows must ne in range 1 to {hall_row}"
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+
+    def clean(self):
+        Ticket.validate_seats(
+            seat=self.seat,
+            row=self.row,
+            hall_seat=self.movie_session.cinema_hall.seats_in_row,
+            hall_row=self.movie_session.cinema_hall.seats_in_row,
+            error_to_raise=ValidationError
+        )
 
     def save(
-        self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
     ):
         self.full_clean()
         super(Ticket, self).save(
