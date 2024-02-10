@@ -85,6 +85,7 @@ class MovieSessionViewSet(ParamsTo, viewsets.ModelViewSet):
         queryset = self.queryset
         if self.action == "list":
             date = self.request.query_params.get("date")
+            movie = self.request.query_params.get("movie")
             if date:
                 date = datetime.strptime(date, "%Y-%m-%d").date()
                 queryset = queryset.filter(show_time__date=date)
@@ -100,6 +101,8 @@ class MovieSessionViewSet(ParamsTo, viewsets.ModelViewSet):
                     )
                 )
             )
+            if movie:
+                queryset = queryset.filter(movie__id=int(movie))
 
         return queryset.distinct()
 
