@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Ticket, Order
@@ -86,11 +87,18 @@ class TicketSerializer(serializers.ModelSerializer):
     #     Ticket.validate_seat(attrs[])
     class Meta:
         model = Ticket
-        fields = ("id", "seat", "row", "movie_session")
+        fields = ("id", "row", "seat", "movie_session")
 
 
 class TicketListSerializer(TicketSerializer):
-    movie_session = MovieListSerializer(many=False, read_only=True)
+    movie_session = MovieSessionListSerializer(many=False, read_only=True)
+
+
+class TicketSeatSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -98,10 +106,18 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ("id", "tickets", )
+        fields = ("id", "tickets", "created_at")
+
+    @transaction.atomic
+    def create(self, validate_data):
+        tickets_data = validate_data.pop("tickets")
+        order = Order.pbjects.create(**validate_data)
+        Ticket.objects.bulk_create([Ticket(order=order, **ticket_data) for ticket_data in tickets_data])
+
+        return order
 
 
 class OrderListSerializer(OrderSerializer):
-    tickets = TicketSerializer(many=True, read_only=True)
+    tickets = TicketListSerializer(many=True, read_only=True)
 
 
