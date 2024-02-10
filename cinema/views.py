@@ -66,9 +66,6 @@ class MovieSessionViewSet(ParamsTo, viewsets.ModelViewSet):
         queryset = self.queryset
         if self.action == "list":
             date = self.request.query_params.get("date")
-            # movie = self.request.query_params.get("movie")
-            # if movie:
-            #     queryset = queryset.filter(movie__id=int(movie))
             if date:
                 date = datetime.strptime(date, "%Y-%m-%d").date()
                 queryset = queryset.filter(show_time__date=date)
@@ -99,7 +96,7 @@ class MovieSessionViewSet(ParamsTo, viewsets.ModelViewSet):
 
 class OrderPagination(PageNumberPagination):
     page_size = 1
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
 
 
@@ -112,7 +109,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action == "list":
-            queryset = queryset.perfetch_related("tickets__movie_session")
+            queryset = queryset.prefetch_related("tickets__movie_session")
             # queryset = queryset
 
         return queryset
