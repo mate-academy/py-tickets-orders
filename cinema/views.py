@@ -132,7 +132,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             queryset = queryset.prefetch_related("tickets__movie_session")
-            # queryset = queryset
 
         return queryset
 
