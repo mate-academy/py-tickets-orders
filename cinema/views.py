@@ -1,3 +1,4 @@
+
 from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -13,7 +14,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 
 
@@ -57,16 +60,16 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if actors:
             actor_id = self._param_to_int(actors)
-            queryset = queryset.filter(actor__id__in=actor_id)
+            queryset = queryset.filter(actors__id__in=actor_id)
 
         if genres:
             genre_id = self._param_to_int(genres)
-            queryset = queryset.filter(genre__id__in=genre_id)
+            queryset = queryset.filter(genres__id__in=genre_id)
 
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        if self.action == "list":
+        if self.action in ("retrieve", "list"):
             queryset = queryset.prefetch_related("genres", "actors")
 
         return queryset.distinct()
@@ -87,19 +90,19 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _param_id(query):
-        return [str(i_id) for i_id in query.split(",")]
+        return [int(i_id) for i_id in query.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
 
-        show_times = self.request.query_params.get("show_time")
-        movie = self.request.query_params.get("movie")
+        date = self.request.query_params.get("date")
+        movies = self.request.query_params.get("movie")
 
-        if show_times:
-            queryset = queryset.filter(show_times__date=show_times)
+        if date:
+            queryset = queryset.filter(show_time__date=date)
 
-        if movie:
-            movie_id = self._param_id(movie)
+        if movies:
+            movie_id = self._param_id(movies)
             queryset = queryset.filter(movie__id__in=movie_id)
 
         if self.action == "list":
