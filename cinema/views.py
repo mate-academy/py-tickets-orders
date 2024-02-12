@@ -23,7 +23,7 @@ from cinema.serializers import (
 )
 
 
-class ParamsTo:
+class ParamsToMixin:
     @staticmethod
     def _params_to_ints(params):
         return [int(param) for param in params.split(",")]
@@ -44,7 +44,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(ParamsTo, viewsets.ModelViewSet):
+class MovieViewSet(ParamsToMixin, viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
@@ -77,7 +77,8 @@ class MovieViewSet(ParamsTo, viewsets.ModelViewSet):
         return MovieSerializer
 
 
-class MovieSessionViewSet(ParamsTo, viewsets.ModelViewSet):
+class MovieSessionViewSet(viewsets.ModelViewSet):
+
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
