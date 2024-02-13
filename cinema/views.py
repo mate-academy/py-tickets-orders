@@ -1,6 +1,8 @@
+from django.contrib.auth.models import AnonymousUser
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -12,6 +14,8 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
+    OrderSerializer,
+    AnonymousUserOrderSerializer,
 )
 
 
@@ -56,3 +60,24 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+
+class OrderPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    pagination_class = OrderPagination
+
+    def get_queryset(self):
+        if isinstance(self.request.user, AnonymousUser):
+            return Order.objects.all()
+        return Order.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if isinstance(self.request.user, AnonymousUser):
+            return AnonymousUserOrderSerializer
+        return OrderSerializer
