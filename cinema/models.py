@@ -60,6 +60,18 @@ class MovieSession(models.Model):
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
+    @property
+    def taken_places(self):
+        return [{'row': ticket.row, 'seat': ticket.seat}
+                for ticket in self.tickets.all()]
+
+    @property
+    def tickets_available(self):
+        total_seats = self.cinema_hall.rows * self.cinema_hall.seats_in_row
+        booked_tickets_count = self.tickets.count()
+        available_tickets = total_seats - booked_tickets_count
+        return available_tickets
+
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -96,18 +108,18 @@ class Ticket(models.Model):
                 raise ValidationError(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
+                                          f"number must be in available range: "
+                                          f"(1, {cinema_hall_attr_name}): "
+                                          f"(1, {count_attrs})"
                     }
                 )
 
     def save(
-        self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
     ):
         self.full_clean()
         super(Ticket, self).save(
