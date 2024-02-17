@@ -2,7 +2,13 @@ from django.db import transaction
 from rest_framework import serializers
 
 from cinema.models import (
-    Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket,
 )
 
 
@@ -72,7 +78,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
-            "tickets_available"
+            "tickets_available",
         )
 
 
@@ -111,13 +117,15 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "tickets", "created_at")
 
+    @transaction.atomic
     def create(self, validated_data):
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
-            for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
+        tickets = [
+            Ticket(order=order, **ticket_data) for ticket_data in tickets_data
+        ]
+        Ticket.objects.bulk_create(tickets)
+        return order
 
 
 class OrderListSerializer(OrderSerializer):
