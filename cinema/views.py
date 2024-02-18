@@ -39,7 +39,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _params_to_ints(ids_str: str) -> list:
+    def _params_to_ints(ids_str: str) -> list[int]:
         return [int(param_id) for param_id in ids_str.split(",")]
 
     def get_queryset(self):
