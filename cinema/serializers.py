@@ -10,40 +10,44 @@ from cinema.models import (
     Movie,
     MovieSession,
     Order,
-    Ticket
+    Ticket,
 )
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ("id", "name")
+        fields = ("id", "name",)
 
 
 class ActorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Actor
-        fields = ("id", "first_name", "last_name", "full_name")
+        fields = ("id", "first_name", "last_name", "full_name",)
 
 
 class CinemaHallSerializer(serializers.ModelSerializer):
     class Meta:
         model = CinemaHall
-        fields = ("id", "name", "rows", "seats_in_row", "capacity")
+        fields = ("id", "name", "rows", "seats_in_row", "capacity",)
 
 
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors")
+        fields = ("id", "title", "description", "duration", "genres", "actors",)
 
 
 class MovieListSerializer(MovieSerializer):
     genres = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="name"
+        many=True,
+        read_only=True,
+        slug_field="name",
     )
     actors = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="full_name"
+        many=True,
+        read_only=True,
+        slug_field="full_name",
     )
 
 
@@ -65,10 +69,12 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 class MovieSessionListSerializer(MovieSessionSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
     cinema_hall_name = serializers.CharField(
-        source="cinema_hall.name", read_only=True
+        source="cinema_hall.name",
+        read_only=True,
     )
     cinema_hall_capacity = serializers.IntegerField(
-        source="cinema_hall.capacity", read_only=True
+        source="cinema_hall.capacity",
+        read_only=True,
     )
     tickets_available = serializers.IntegerField(read_only=True)
 
@@ -89,7 +95,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ("id", "row", "seat", "movie_session")
+        fields = ("id", "row", "seat", "movie_session",)
 
 
 class TicketForOrderCreateSerializer(TicketSerializer):
@@ -99,7 +105,7 @@ class TicketForOrderCreateSerializer(TicketSerializer):
 
     class Meta:
         model = Ticket
-        fields = ("row", "seat", "movie_session")
+        fields = ("row", "seat", "movie_session",)
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
@@ -115,11 +121,13 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
     def get_taken_places(obj):
         taken_places_data = []
         tickets = obj.tickets.all()
+
         for ticket in tickets:
             taken_places_data.append({
                 "row": ticket.row,
                 "seat": ticket.seat
             })
+
         return taken_places_data
 
 
@@ -163,11 +171,13 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
     def create_order(self, user, validated_data):
         order = Order.objects.create(user=user, **validated_data)
+
         self.create_tickets(
             validated_data.pop("tickets"),
             order
         )
         order.save()
+
         return order
 
     @staticmethod
@@ -187,6 +197,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                     self.context["request"].user,
                     validated_data
                 )
+
             return order
         else:
             raise serializers.ValidationError(
