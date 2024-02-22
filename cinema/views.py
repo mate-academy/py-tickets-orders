@@ -71,7 +71,7 @@ class MovieViewSet(viewsets.ModelViewSet, ParamsToIntMixin):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet, ParamsToIntMixin):
-    queryset = MovieSession.objects.all()
+    queryset = MovieSession.objects.select_related("movie", "cinema_hall")
     serializer_class = MovieSessionSerializer
 
     def get_serializer_class(self):
