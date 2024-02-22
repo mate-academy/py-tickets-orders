@@ -1,3 +1,5 @@
+from sqlite3 import IntegrityError
+
 from django.db import transaction
 from rest_framework import serializers
 
@@ -118,6 +120,21 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("tickets",)
 
+    def validate(self, attrs):
+        tickets = attrs["tickets"]
+        seats = set()
+
+        for ticket in tickets:
+            row = ticket.get('row')
+            seat = ticket.get('seat')
+
+            if (row, seat) in seats:
+                raise serializers.ValidationError("Duplicate row and seat combination detected.")
+            else:
+                seats.add((row, seat))
+
+        return attrs
+
     def create(self, validated_data):
         if self.context['request'].user.is_authenticated:
             with transaction.atomic():
@@ -125,7 +142,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 user = self.context['request'].user
                 order = Order.objects.create(user=user, **validated_data)
                 for ticket in tickets:
-                    Ticket.objects.create(order=order, **ticket)
+                    try:
+                        Ticket.objects.create(order=order, **ticket)
+                    except IntegrityError:
+                        raise serializers.ValidationError("Duplicate row and seat combination detected.")
                 order.save()
             return order
         else:
