@@ -2,6 +2,7 @@ from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
+from cinema.mixins import ParamsToIntMixin
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
@@ -35,13 +36,9 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
+class MovieViewSet(viewsets.ModelViewSet, ParamsToIntMixin):
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
-
-    @staticmethod
-    def _params_to_int(qs):
-        return [int(str_id) for str_id in qs.split(",")]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -73,7 +70,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(viewsets.ModelViewSet, ParamsToIntMixin):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
@@ -85,10 +82,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
-
-    @staticmethod
-    def _params_to_int(qs):
-        return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
