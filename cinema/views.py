@@ -87,6 +87,21 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+
+        movie_session_date = self.request.query_params.get("date")
+        movie = self.request.query_params.get("movie")
+
+        if movie_session_date is not None:
+            queryset = queryset.filter(show_time__date=movie_session_date)
+        if movie:
+            queryset = queryset.filter(movie_id__in=movie)
+
+        return queryset
+
+
+
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 1
