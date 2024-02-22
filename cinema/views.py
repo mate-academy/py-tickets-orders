@@ -87,7 +87,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet, ParamsToIntMixin):
         movie_session_date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
-        if movie_session_date is not None:
+        if movie_session_date:
             queryset = queryset.filter(show_time__date=movie_session_date)
         if movie:
             movie_ids = self._params_to_int(movie)

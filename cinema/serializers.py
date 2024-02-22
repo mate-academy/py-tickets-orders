@@ -2,6 +2,14 @@ from sqlite3 import IntegrityError
 
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.serializers import (
+    ModelSerializer,
+    PrimaryKeyRelatedField,
+    SlugRelatedField,
+    CharField,
+    IntegerField,
+    SerializerMethodField,
+)
 
 from cinema.models import (
     Genre,
@@ -14,25 +22,25 @@ from cinema.models import (
 )
 
 
-class GenreSerializer(serializers.ModelSerializer):
+class GenreSerializer(ModelSerializer):
     class Meta:
         model = Genre
         fields = ("id", "name",)
 
 
-class ActorSerializer(serializers.ModelSerializer):
+class ActorSerializer(ModelSerializer):
     class Meta:
         model = Actor
         fields = ("id", "first_name", "last_name", "full_name",)
 
 
-class CinemaHallSerializer(serializers.ModelSerializer):
+class CinemaHallSerializer(ModelSerializer):
     class Meta:
         model = CinemaHall
         fields = ("id", "name", "rows", "seats_in_row", "capacity",)
 
 
-class MovieSerializer(serializers.ModelSerializer):
+class MovieSerializer(ModelSerializer):
     class Meta:
         model = Movie
         fields = (
@@ -46,12 +54,12 @@ class MovieSerializer(serializers.ModelSerializer):
 
 
 class MovieListSerializer(MovieSerializer):
-    genres = serializers.SlugRelatedField(
+    genres = SlugRelatedField(
         many=True,
         read_only=True,
         slug_field="name",
     )
-    actors = serializers.SlugRelatedField(
+    actors = SlugRelatedField(
         many=True,
         read_only=True,
         slug_field="full_name",
@@ -67,23 +75,23 @@ class MovieDetailSerializer(MovieSerializer):
         fields = ("id", "title", "description", "duration", "genres", "actors")
 
 
-class MovieSessionSerializer(serializers.ModelSerializer):
+class MovieSessionSerializer(ModelSerializer):
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
-    movie_title = serializers.CharField(source="movie.title", read_only=True)
-    cinema_hall_name = serializers.CharField(
+    movie_title = CharField(source="movie.title", read_only=True)
+    cinema_hall_name = CharField(
         source="cinema_hall.name",
         read_only=True,
     )
-    cinema_hall_capacity = serializers.IntegerField(
+    cinema_hall_capacity = IntegerField(
         source="cinema_hall.capacity",
         read_only=True,
     )
-    tickets_available = serializers.IntegerField(read_only=True)
+    tickets_available = IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -97,7 +105,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
 
-class TicketSerializer(serializers.ModelSerializer):
+class TicketSerializer(ModelSerializer):
     movie_session = MovieSessionListSerializer(many=False, read_only=True)
 
     class Meta:
@@ -106,7 +114,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
 
 class TicketForOrderCreateSerializer(TicketSerializer):
-    movie_session = serializers.PrimaryKeyRelatedField(
+    movie_session = PrimaryKeyRelatedField(
         queryset=MovieSession.objects.all()
     )
 
@@ -118,7 +126,7 @@ class TicketForOrderCreateSerializer(TicketSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = serializers.SerializerMethodField()
+    taken_places = SerializerMethodField()
 
     class Meta:
         model = MovieSession
@@ -138,7 +146,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
         return taken_places_data
 
 
-class OrderSerializer(serializers.ModelSerializer):
+class OrderSerializer(ModelSerializer):
     class Meta:
         model = Order
         fields = "__all__"
@@ -152,7 +160,7 @@ class OrderListSerializer(OrderSerializer):
         fields = ("id", "tickets", "created_at",)
 
 
-class OrderCreateSerializer(serializers.ModelSerializer):
+class OrderCreateSerializer(ModelSerializer):
     tickets = TicketForOrderCreateSerializer(many=True, read_only=False)
 
     class Meta:
@@ -171,8 +179,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "Duplicate row and seat combination detected."
                 )
-            else:
-                seats.add((row, seat))
+
+            seats.add((row, seat))
 
         return attrs
 
@@ -197,16 +205,16 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                     "Duplicate row and seat combination detected."
                 )
 
+    @transaction.atomic
     def create(self, validated_data):
         if self.context["request"].user.is_authenticated:
-            with transaction.atomic():
-                order = self.create_order(
-                    self.context["request"].user,
-                    validated_data
-                )
+            order = self.create_order(
+                self.context["request"].user,
+                validated_data
+            )
 
             return order
-        else:
-            raise serializers.ValidationError(
-                "User must be authenticated to create an order."
-            )
+
+        raise serializers.ValidationError(
+            "User must be authenticated to create an order."
+        )
