@@ -1,7 +1,6 @@
 from sqlite3 import IntegrityError
 
 from django.db import transaction
-from rest_framework import serializers
 from rest_framework.serializers import (
     ModelSerializer,
     PrimaryKeyRelatedField,
@@ -9,6 +8,7 @@ from rest_framework.serializers import (
     CharField,
     IntegerField,
     SerializerMethodField,
+    ValidationError,
 )
 
 from cinema.models import (
@@ -176,7 +176,7 @@ class OrderCreateSerializer(ModelSerializer):
             seat = ticket.get("seat")
 
             if (row, seat) in seats:
-                raise serializers.ValidationError(
+                raise ValidationError(
                     "Duplicate row and seat combination detected."
                 )
 
@@ -201,7 +201,7 @@ class OrderCreateSerializer(ModelSerializer):
             try:
                 Ticket.objects.create(order=order, **ticket)
             except IntegrityError:
-                raise serializers.ValidationError(
+                raise ValidationError(
                     "Duplicate row and seat combination detected."
                 )
 
@@ -215,6 +215,6 @@ class OrderCreateSerializer(ModelSerializer):
 
             return order
 
-        raise serializers.ValidationError(
+        raise ValidationError(
             "User must be authenticated to create an order."
         )
