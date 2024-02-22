@@ -96,26 +96,27 @@ class MovieSessionViewSet(viewsets.ModelViewSet, ParamsToIntMixin):
             queryset = queryset.filter(movie_id__in=movie_ids)
 
         if self.action == "list":
-            return queryset.annotate(tickets_available=
-                                     F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
-                                     - Count("tickets"))
+            return queryset.annotate(
+                tickets_available=F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")
+                - Count("tickets")
+            )
 
         return queryset
 
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 1
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 5
 
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = (Order.objects.prefetch_related(
-                        "tickets__movie_session",
-                        "tickets__movie_session__movie",
-                        "tickets__movie_session__cinema_hall"
-                    )
-                )
+        "tickets__movie_session",
+        "tickets__movie_session__movie",
+        "tickets__movie_session__cinema_hall"
+    ))
     serializer_class = OrderSerializer
     pagination_class = StandardResultsSetPagination
 

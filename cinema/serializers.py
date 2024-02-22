@@ -3,7 +3,15 @@ from sqlite3 import IntegrityError
 from django.db import transaction
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -85,7 +93,9 @@ class TicketSerializer(serializers.ModelSerializer):
 
 
 class TicketForOrderCreateSerializer(TicketSerializer):
-    movie_session = serializers.PrimaryKeyRelatedField(queryset=MovieSession.objects.all())
+    movie_session = serializers.PrimaryKeyRelatedField(
+        queryset=MovieSession.objects.all()
+    )
 
     class Meta:
         model = Ticket
@@ -139,28 +149,43 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         seats = set()
 
         for ticket in tickets:
-            row = ticket.get('row')
-            seat = ticket.get('seat')
+            row = ticket.get("row")
+            seat = ticket.get("seat")
 
             if (row, seat) in seats:
-                raise serializers.ValidationError("Duplicate row and seat combination detected.")
+                raise serializers.ValidationError(
+                    "Duplicate row and seat combination detected."
+                )
             else:
                 seats.add((row, seat))
 
         return attrs
 
+    def create_order(self, user, validated_data):
+        order = Order.objects.create(user=user, **validated_data)
+        self.create_tickets(
+            validated_data.pop("tickets"),
+            order
+        )
+        order.save()
+        return order
+
+    @staticmethod
+    def create_tickets(ticket_data, order):
+        for ticket in ticket_data:
+            try:
+                Ticket.objects.create(order=order, **ticket)
+            except IntegrityError:
+                raise serializers.ValidationError(
+                    "Duplicate row and seat combination detected."
+                )
+
     def create(self, validated_data):
-        if self.context['request'].user.is_authenticated:
+        if self.context["request"].user.is_authenticated:
             with transaction.atomic():
-                tickets = validated_data.pop("tickets")
-                user = self.context['request'].user
-                order = Order.objects.create(user=user, **validated_data)
-                for ticket in tickets:
-                    try:
-                        Ticket.objects.create(order=order, **ticket)
-                    except IntegrityError:
-                        raise serializers.ValidationError("Duplicate row and seat combination detected.")
-                order.save()
+                order = self.create_order(self.context["request"].user, validated_data)
             return order
         else:
-            raise serializers.ValidationError("User must be authenticated to create an order.")
+            raise serializers.ValidationError(
+                "User must be authenticated to create an order."
+            )
