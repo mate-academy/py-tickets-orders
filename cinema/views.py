@@ -38,7 +38,6 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 class MovieViewSet(viewsets.ModelViewSet, ParamsToIntMixin):
     queryset = Movie.objects.prefetch_related("genres", "actors")
-    serializer_class = MovieSerializer
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -72,7 +71,6 @@ class MovieViewSet(viewsets.ModelViewSet, ParamsToIntMixin):
 
 class MovieSessionViewSet(viewsets.ModelViewSet, ParamsToIntMixin):
     queryset = MovieSession.objects.select_related("movie", "cinema_hall")
-    serializer_class = MovieSessionSerializer
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -117,7 +115,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         "tickets__movie_session__movie",
         "tickets__movie_session__cinema_hall"
     ))
-    serializer_class = OrderSerializer
     pagination_class = StandardResultsSetPagination
 
     def get_serializer_class(self):
