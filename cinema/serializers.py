@@ -72,7 +72,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionSerializer(many=False, read_only=True)
+    movie_session = MovieSessionListSerializer(many=False, read_only=True)
 
     class Meta:
         model = Ticket
@@ -99,4 +99,4 @@ class OrderListSerializer(OrderSerializer):
 
     class Meta:
         model = Order
-        fields = ("tickets",)
+        fields = ("id", "tickets", "created_at",)
