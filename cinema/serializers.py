@@ -183,7 +183,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         if self.context["request"].user.is_authenticated:
             with transaction.atomic():
-                order = self.create_order(self.context["request"].user, validated_data)
+                order = self.create_order(
+                    self.context["request"].user,
+                    validated_data
+                )
             return order
         else:
             raise serializers.ValidationError(
