@@ -1,3 +1,4 @@
+from django.db.models import Count, F
 from rest_framework import viewsets
 
 from datetime import datetime
@@ -60,8 +61,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
-
-
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
@@ -88,6 +87,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if movie:
             queryset = queryset.filter(movie__id=str(movie))
+
+        if self.action == "list":
+            queryset = queryset.annotate(
+                tickets_available=
+                F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")
+                - Count("tickets")
+            )
 
         return queryset.distinct()
 
