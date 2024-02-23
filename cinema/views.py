@@ -3,6 +3,8 @@ from rest_framework import viewsets
 
 from datetime import datetime
 
+from rest_framework.pagination import PageNumberPagination
+
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
@@ -42,7 +44,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return [int(str_id) for str_id in qs.split(",")]
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.prefetch_related("genres", "actors")
 
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
@@ -89,10 +91,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie__id=str(movie))
 
         if self.action == "list":
-            queryset = queryset.annotate(
-                tickets_available=F("cinema_hall__rows")
-                * F("cinema_hall__seats_in_row")
-                - Count("tickets")
+            queryset = (
+                queryset.
+                select_related("movie", "cinema_hall").
+                annotate(
+                    tickets_available=F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row")
+                    - Count("tickets")
+                )
             )
 
         return queryset.distinct()
@@ -107,14 +113,28 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
+class OrderPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = OrderPagination
 
     def get_queryset(self):
 
+        queryset = self.queryset.filter(user=self.request.user)
+
         if self.action == "list":
-            return self.queryset.filter(user=self.request.user)
+            return (
+                queryset.prefetch_related(
+                    "tickets__movie_session__movie",
+                    "tickets__movie_session__cinema_hall"
+                )
+            )
 
         return self.queryset
 
