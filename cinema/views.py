@@ -32,16 +32,6 @@ from cinema.serializers import (
 )
 
 
-def foo(date):
-    date = date.split("-")
-    result_from_list_to_str = str(date[2])
-    result_separate_day = result_from_list_to_str.split("T")
-    result_separate_day.pop(1)
-    date.pop(2)
-    result_day = "-".join(date) + "-" + result_separate_day[0]
-    return result_day
-
-
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -70,6 +60,10 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    @staticmethod
+    def implements_many_ids_for_requests(param):
+        return [str_id for str_id in param.split(",")]
+
     def get_queryset(self):
         queryset = super().get_queryset()
         genres = self.request.query_params.get("genres", None)
@@ -77,12 +71,10 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
-            queryset = Movie.objects.filter(genres__id__in=genres_ids)
+            queryset = Movie.objects.filter(genres__id__in=self.implements_many_ids_for_requests(genres))
 
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
-            queryset = Movie.objects.filter(actors__id__in=actors_ids)
+            queryset = Movie.objects.filter(actors__id__in=self.implements_many_ids_for_requests(actors))
 
         if title:
             queryset = Movie.objects.filter(title__icontains=title)
