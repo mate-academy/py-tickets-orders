@@ -62,7 +62,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def implements_many_ids_for_requests(param):
-        return [str_id for str_id in param.split(",")]
+        return [int(str_id) for str_id in param.split(",")]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -71,17 +71,17 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if genres:
-            queryset = Movie.objects.filter(
+            queryset = queryset.filter(
                 genres__id__in=self.implements_many_ids_for_requests(genres)
             )
 
         if actors:
-            queryset = Movie.objects.filter(
+            queryset = queryset.filter(
                 actors__id__in=self.implements_many_ids_for_requests(actors)
             )
 
         if title:
-            queryset = Movie.objects.filter(title__icontains=title)
+            queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
 
