@@ -90,10 +90,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    @staticmethod
-    def _params_to_ints(queryset_params):
-        return [int(id_in_str) for id_in_str in queryset_params.split(",")]
-
     def get_queryset(self):
         queryset = self.queryset
 
@@ -105,8 +101,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date)
 
         if movie:
-            movie_ids = self._params_to_ints(movie)
-            queryset = queryset.filter(movie__id__in=movie_ids)
+            queryset = queryset.filter(movie_id=int(movie))
 
         if self.action in "retrieve":
             queryset = queryset.select_related("movie")
