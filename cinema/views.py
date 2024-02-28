@@ -2,6 +2,7 @@ import datetime
 
 from django.db.models import F, Count
 from rest_framework import viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -63,17 +64,14 @@ class MovieViewSet(viewsets.ModelViewSet):
             try:
                 actors_ids = get_indexes(actors)
             except ValueError:
-                pass
-                # return rest_framework.exceptions.bad_request(
-                # request=self.request, exception=ValueError
-                # )
-                # HOW TO HANDLE IT????
+                raise ValidationError("ValueError")
+
             queryset = queryset.filter(actors__id__in=actors_ids)
         if genres:
             try:
-                genre_ids = [int(str_id) for str_id in genres.split(",")]
+                genre_ids = get_indexes(genres)
             except ValueError:
-                pass
+                raise ValidationError("ValueError")
             queryset = queryset.filter(genres__id__in=genre_ids)
 
         return queryset.distinct().prefetch_related(
@@ -117,8 +115,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             try:
                 date = datetime.datetime.strptime(date, "%Y-%m-%d")
             except AttributeError:
-                pass
-            # How to handle???
+                raise ValidationError("AttributeError")
 
             queryset = queryset.filter(
                 show_time__year=date.year,
