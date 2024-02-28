@@ -90,6 +90,7 @@ class Ticket(models.Model):
             raise error_to_raise({
                 "row": f"row must be in the range [1, {num_rows}]"
             })
+
     @staticmethod
     def validate_seat(seat: int, num_seats: int, error_to_raise):
         if not (1 <= seat <= num_seats):

@@ -64,7 +64,9 @@ class MovieViewSet(viewsets.ModelViewSet):
                 actors_ids = get_indexes(actors)
             except ValueError:
                 pass
-                # return rest_framework.exceptions.bad_request(request=self.request, exception=ValueError)
+                # return rest_framework.exceptions.bad_request(
+                # request=self.request, exception=ValueError
+                # )
                 # HOW TO HANDLE IT????
             queryset = queryset.filter(actors__id__in=actors_ids)
         if genres:
@@ -74,7 +76,9 @@ class MovieViewSet(viewsets.ModelViewSet):
                 pass
             queryset = queryset.filter(genres__id__in=genre_ids)
 
-        return queryset.distinct().prefetch_related("genres").prefetch_related("actors")
+        return queryset.distinct().prefetch_related(
+            "genres"
+        ).prefetch_related("actors")
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -121,11 +125,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 show_time__day=date.day,
                 show_time__month=date.month,
             )
-        return queryset.distinct().annotate(
-            tickets_available=(F("cinema_hall__rows") * F("cinema_hall__seats_in_row")) - Count(
-                "tickets")).select_related("cinema_hall").select_related("movie")
-
-
+        rows = "cinema_hall__rows"
+        seats_in_row = "cinema_hall__seats_in_row"
+        return (
+            queryset.distinct().annotate(
+                tickets_available=(
+                    F(rows) * F(seats_in_row)) - Count("tickets")
+            ).select_related("cinema_hall").select_related("movie"))
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -137,7 +143,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action == "list":
-            queryset = queryset.filter(user=self.request.user).prefetch_related(
+            queryset = queryset.filter(
+                user=self.request.user
+            ).prefetch_related(
                 "tickets__movie_session__movie"
             ).prefetch_related("tickets__movie_session__cinema_hall")
         return queryset
