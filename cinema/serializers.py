@@ -81,9 +81,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = serializers.PrimaryKeyRelatedField(
-        queryset=MovieSession.objects.all(), write_only=True
-    )
+    movie_session = MovieSessionListSerializer(many=False, read_only=True)
 
     def validate(self, attrs):
         data = super(TicketSerializer, self).validate(attrs)
