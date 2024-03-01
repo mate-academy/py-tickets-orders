@@ -3,7 +3,12 @@ from datetime import datetime
 from django.db.models import F, Count
 from rest_framework import viewsets
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import (Genre,
+                           Actor,
+                           CinemaHall,
+                           Movie,
+                           MovieSession,
+                           Order)
 from cinema.paginations import OrderPagination
 
 from cinema.serializers import (
@@ -99,9 +104,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .prefetch_related("tickets")
                 .annotate(
                     tickets_available=(
-                            (F("cinema_hall__rows") * F("cinema_hall__seats_in_row"))
-                            - Count("tickets")
-                    )
+                        (F(
+                            "cinema_hall__rows"
+                        ) * F(
+                            "cinema_hall__seats_in_row"
+                        )) - Count("tickets"))
                 )
             ).order_by("id")
 
