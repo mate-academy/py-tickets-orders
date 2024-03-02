@@ -4,6 +4,7 @@ from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.utils import ParamsToIntsMixin
 
 from cinema.serializers import (
     GenreSerializer,
@@ -57,12 +58,6 @@ class ActorViewSet(viewsets.ModelViewSet):
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
-
-
-class ParamsToIntsMixin:
-    @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
 
 
 class MovieViewSet(viewsets.ModelViewSet, ParamsToIntsMixin):
