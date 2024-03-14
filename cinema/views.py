@@ -1,4 +1,4 @@
-from django.db.models import F, Count, Q
+from django.db.models import F, Count
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
