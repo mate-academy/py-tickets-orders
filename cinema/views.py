@@ -1,6 +1,6 @@
 from typing import Type, Any
 
-from django.db.models import QuerySet, Q
+from django.db.models import QuerySet, Q, F, Count
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -81,7 +81,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all()
+    queryset = MovieSession.objects.select_related("movie")
     serializer_class = MovieSessionSerializer
 
     def get_serializer_class(self):
@@ -107,9 +107,24 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet:
         queryset = super().get_queryset()
+
         filters = self.get_filters()
         if filters:
             return queryset.filter(filters)
+
+        if self.action == "list":
+            queryset = (
+                queryset
+                .prefetch_related("cinema_hall", "tickets")
+                .annotate(
+                    tickets_available=(
+                            F("cinema_hall__seats_in_row")
+                            * F("cinema_hall__rows")
+                            - Count("tickets")
+                    )
+                )
+            )
+
         return queryset
 
 
