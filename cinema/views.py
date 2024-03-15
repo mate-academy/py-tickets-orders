@@ -93,12 +93,17 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    def get_filters(self) -> Q | None:
-
+    def get_filters(self) -> Q:
+        filters = Q()
         date = self.request.query_params.get("date")
+        if date:
+            filters &= Q(show_time__date=date)
+
         movie = self.request.query_params.get("movie")
-        if date and movie:
-            return Q(show_time__date=date, movie=movie)
+        if movie:
+            filters &= Q(movie=movie)
+
+        return filters
 
     def get_queryset(self) -> QuerySet:
         queryset = super().get_queryset()
