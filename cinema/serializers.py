@@ -1,5 +1,8 @@
+from typing import Any
+
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
@@ -91,9 +94,27 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class TicketCreateSerializer(serializers.ModelSerializer):
+
+    def validate(self, attrs) -> Any:
+        data = super().validate(attrs)
+        Ticket.validate_seat(
+            attrs["row"],
+            attrs["seat"],
+            attrs["movie_session"],
+            serializers.ValidationError
+        )
+        return data
+
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
+
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Ticket.objects.all(),
+                fields=["movie_session", "row", "seat"]
+            )
+        ]
 
 
 class TicketDetailSerializer(TicketCreateSerializer):
