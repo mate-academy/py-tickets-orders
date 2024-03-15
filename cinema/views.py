@@ -1,6 +1,6 @@
 from typing import Type, Any
 
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -49,6 +49,36 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    @staticmethod
+    def _transform_params_to_ids(params: str) -> list:
+        return [int(str_id) for str_id in params.split(",")]
+
+    def get_filters(self) -> Q:
+        filters = Q()
+
+        actors = self.request.query_params.get("actors")
+        if actors:
+            filters &= Q(actors__in=self._transform_params_to_ids(actors))
+
+        genres = self.request.query_params.get("genres")
+
+        if genres:
+            filters &= Q(genres__in=self._transform_params_to_ids(genres))
+
+        title = self.request.query_params.get("title")
+        if title:
+            filters &= Q(title__icontains=title)
+        return filters
+
+    def get_queryset(self) -> QuerySet:
+        queryset = super().get_queryset()
+        filters = self.get_filters()
+
+        if filters:
+            return queryset.filter(filters)
+
+        return queryset
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
@@ -62,6 +92,20 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_filters(self) -> Q | None:
+
+        date = self.request.query_params.get("date")
+        movie = self.request.query_params.get("movie")
+        if date and movie:
+            return Q(show_time__date=date, movie=movie)
+
+    def get_queryset(self) -> QuerySet:
+        queryset = super().get_queryset()
+        filters = self.get_filters()
+        if filters:
+            return queryset.filter(filters)
+        return queryset
 
 
 class OrderViewSet(viewsets.ModelViewSet):
