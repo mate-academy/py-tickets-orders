@@ -54,6 +54,10 @@ class MovieSession(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE)
 
+    @property
+    def taken_places(self):
+        return Ticket.objects.filter(movie_session=self)
+
     class Meta:
         ordering = ["-show_time"]
 
