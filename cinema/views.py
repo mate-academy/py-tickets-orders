@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -95,8 +93,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie_id=movie_ids)
 
         if date:
-            date = datetime.strptime(date, "%Y-%m-%d").date()
-            queryset = queryset.filter(show_time__contains=date)
+            queryset = queryset.filter(show_time__date=date)
 
         if self.action == "list":
             queryset = (
@@ -153,7 +150,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             return OrderCreateSerializer
 
-        return OrderSerializer
+        return self.serializer_class
 
 
 class TicketViewSet(viewsets.ModelViewSet):
