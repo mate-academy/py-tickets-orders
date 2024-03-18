@@ -19,6 +19,7 @@ from cinema.serializers import (
     OrderSerializer,
     OrderListSerializer,
 )
+from cinema.services import query_params_to_int_list
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -47,11 +48,11 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = queryset.prefetch_related("genres", "actors")
 
         if genres := self.request.query_params.get("genres"):
-            genres = [genre for genre in genres.split(",")]
+            genres = query_params_to_int_list(genres)
             queryset = queryset.filter(genres__in=genres)
 
         if actors := self.request.query_params.get("actors"):
-            actors = [actor for actor in actors.split(",")]
+            actors = query_params_to_int_list(actors)
             queryset = queryset.filter(actors__in=actors)
 
         if title := self.request.query_params.get("title"):
@@ -94,7 +95,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 ).order_by("id")
 
         if date := self.request.query_params.get("date"):
-            date = datetime.strptime(date, "%Y-%m-%d")
+            date = datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(show_time__date=date)
 
         if movie := self.request.query_params.get("movie"):
