@@ -15,7 +15,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 
 
@@ -44,19 +46,15 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action in ("list", "retrieve"):
             queryset = queryset.prefetch_related("genres", "actors")
 
-        genres = self.request.query_params.get("genres")
-        actors = self.request.query_params.get("actors")
-        title = self.request.query_params.get("title")
-
-        if genres:
+        if genres := self.request.query_params.get("genres"):
             genres = [genre for genre in genres.split(",")]
             queryset = queryset.filter(genres__in=genres)
 
-        if actors:
+        if actors := self.request.query_params.get("actors"):
             actors = [actor for actor in actors.split(",")]
             queryset = queryset.filter(actors__in=actors)
 
-        if title:
+        if title := self.request.query_params.get("title"):
             queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
@@ -79,12 +77,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = MovieSession.objects.all()
 
         if self.action in ("list", "retrieve"):
-            queryset = queryset.select_related("movie", "cinema_hall")
+            queryset = (
+                queryset.
+                select_related("movie", "cinema_hall").
+                prefetch_related("tickets")
+            )
 
             if self.action == "list":
                 queryset = (
                     queryset.
-                    prefetch_related("tickets").
                     annotate(tickets_available=(
                         F("cinema_hall__rows")
                         * F("cinema_hall__seats_in_row")
@@ -92,14 +93,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                     )
                 ).order_by("id")
 
-        date = self.request.query_params.get("date")
-        movie = self.request.query_params.get("movie")
-
-        if date:
+        if date := self.request.query_params.get("date"):
             date = datetime.strptime(date, "%Y-%m-%d")
             queryset = queryset.filter(show_time__date=date)
 
-        if movie:
+        if movie := self.request.query_params.get("movie"):
             queryset = queryset.filter(movie_id=movie)
 
         return queryset
