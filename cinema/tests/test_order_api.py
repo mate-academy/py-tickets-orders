@@ -47,7 +47,7 @@ class OrderApiTests(TestCase):
             cinema_hall=self.cinema_hall,
             show_time=datetime.now(),
         )
-        self.user = User.objects.create(username="admin")
+        self.user = User.objects.create()
         self.order = Order.objects.create(user=self.user)
         self.ticket = Ticket.objects.create(
             movie_session=self.movie_session, row=2, seat=12, order=self.order
