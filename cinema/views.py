@@ -57,17 +57,18 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
 
-        if self.request.query_params.get("actors"):
-            actors_id = self.request.query_params.get("actors").split(",")
+        if actors := self.request.query_params.get("actors"):
+            actors_id = actors.split(",")
             queryset = queryset.filter(actors__id__in=actors_id)
 
-        if self.request.query_params.get("genres"):
-            genres_id = self.request.query_params.get("genres").split(",")
+        if genres := self.request.query_params.get("genres"):
+            genres_id = genres.split(",")
             queryset = queryset.filter(genres__id__in=genres_id)
 
         if self.request.query_params.get("title"):
-            title = self.request.query_params.get("title")
-            queryset = queryset.filter(title__icontains=title)
+            queryset = queryset.filter(
+                title__icontains=self.request.query_params.get("title")
+            )
 
         if self.action == "list":
             queryset = queryset.prefetch_related("actors", "genres")
@@ -91,12 +92,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
 
-        if self.request.query_params.get("movie"):
-            movie_id = self.request.query_params.get("movie")
+        if movie_id := self.request.query_params.get("movie"):
             queryset = queryset.filter(movie_id=movie_id)
 
-        if self.request.query_params.get("date"):
-            date = self.request.query_params.get("date").strip("/")
+        if date := self.request.query_params.get("date"):
+            date = date.rstrip("/")
             queryset = queryset.filter(
                 show_time__date=datetime.strptime(date, "%Y-%m-%d").date()
             )
@@ -151,7 +151,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             return OrderCreateSerializer
 
-        return OrderSerializer
+        return self.serializer_class
 
 
 class TicketViewSet(viewsets.ModelViewSet):
