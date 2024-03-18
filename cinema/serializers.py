@@ -92,12 +92,6 @@ class TicketSeatListSerializer(serializers.ModelSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    # taken_places = serializers.SlugRelatedField(
-    #     many=True,
-    #     read_only=True,
-    #     source="tickets",
-    #     slug_field="seat"
-    # )
     taken_places = TicketSeatListSerializer(
         many=True,
         read_only=True,
