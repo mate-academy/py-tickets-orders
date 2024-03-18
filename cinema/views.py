@@ -39,6 +39,10 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
+    @staticmethod
+    def _params_to_ints(parameters):
+        return [int(str_id) for str_id in parameters.split(",")]
+
     def get_queryset(self):
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
@@ -47,10 +51,10 @@ class MovieViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
 
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
+            actors_ids = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
+            genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
         if title:
             queryset = queryset.filter(title__icontains=title)
