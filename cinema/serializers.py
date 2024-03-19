@@ -93,16 +93,6 @@ class TicketSerializer(serializers.ModelSerializer):
 class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer(many=False, read_only=True)
 
-    def get_movie_session(self, obj):
-        session = obj.movie_session
-        return {
-            "id": session.id,
-            "show_time": session.show_time,
-            "movie_title": session.movie.title,
-            "cinema_hall_name": session.cinema_hall.name,
-            "cinema_hall_capacity": session.cinema_hall.capacity,
-        }
-
 
 class TicketSeatsSerializer(TicketSerializer):
     class Meta:

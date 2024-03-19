@@ -46,6 +46,9 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
+    def get_int_ids(self, str_ids):
+        return [int(str_id) for str_id in str_ids.split(",")]
+
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
@@ -60,18 +63,18 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         actors = self.request.query_params.get("actors")
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
+            actors_ids = self.get_int_ids(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         genres = self.request.query_params.get("genres")
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
+            genres_ids = self.get_int_ids(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
-        string = self.request.query_params.get("title")
+        search_text = self.request.query_params.get("title")
 
-        if string:
-            queryset = Movie.objects.filter(title__icontains=string)
+        if search_text:
+            queryset = Movie.objects.filter(title__icontains=search_text)
 
         if self.action == "list":
             queryset = queryset.prefetch_related("actors", "genres")
@@ -109,7 +112,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 date = datetime.strptime(date_param, "%Y-%m-%d").date()
                 queryset = queryset.filter(show_time__date=date)
             except ValueError:
-                pass  # Handle invalid date format
+                raise ValueError("You have entered an invalid date")
 
         movie = self.request.query_params.get("movie")
         if movie:
