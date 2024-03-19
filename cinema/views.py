@@ -49,6 +49,10 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    def _parse_ids(self, qs):
+        """Parses a comma-separated string of ids into a list of integers."""
+        return [int(str_id) for str_id in qs.split(",")]
+
     def get_queryset(self):
         title = self.request.query_params.get("title")
         genres = self.request.query_params.get("genres")
@@ -97,7 +101,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         )
 
         if date:
-            date = datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(show_time__date=date)
 
         if movie_id_str:
@@ -128,7 +131,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return OrderListSerializer
 
-        return OrderSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
