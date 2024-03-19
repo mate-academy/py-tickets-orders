@@ -20,6 +20,9 @@ from cinema.serializers import (
 )
 
 
+
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -47,13 +50,13 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            actor_ids = [int(id_) for id_ in actors.split(",")]
+            actor_ids = self.get_ids_list(actors)
             queryset = queryset.filter(
                 actors__id__in=actor_ids
             )
 
         if genres:
-            genre_ids = [int(id_) for id_ in genres.split(",")]
+            genre_ids = self.get_ids_list(genres)
             queryset = queryset.filter(
                 genres__id__in=genre_ids
             )
@@ -71,6 +74,10 @@ class MovieViewSet(viewsets.ModelViewSet):
             return MovieDetailSerializer
 
         return MovieSerializer
+
+    @staticmethod
+    def get_ids_list(value) -> list:
+        return [int(id_) for id_ in value.split(",")]
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
