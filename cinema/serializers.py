@@ -96,7 +96,7 @@ class TicketSerializer(serializers.ModelSerializer):
         )
 
 
-class TicketSeatRowSerializer(TicketSerializer):
+class TicketSeatRowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = (

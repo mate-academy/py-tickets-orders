@@ -117,7 +117,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         "tickets__movie_session__cinema_hall",
         "tickets__movie_session__movie"
     )
-    serializer_class = OrderSerializer
     pagination_class = OrderSetPagination
 
     def get_queryset(self):
@@ -129,7 +128,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def get_serializer_class(self):
-        serializer_class = self.serializer_class
         if self.action == "create":
-            serializer_class = OrderCreateSerializer
-        return serializer_class
+            return OrderCreateSerializer
+        return OrderSerializer
