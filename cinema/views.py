@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -55,21 +53,16 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset.prefetch_related("genres", "actors")
-        actors = self.request.query_params.get("actors")
 
-        if actors:
+        if actors := self.request.query_params.get("actors"):
             actors_ids = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
-        genres = self.request.query_params.get("genres")
-
-        if genres:
+        if genres := self.request.query_params.get("genres"):
             genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
-        title = self.request.query_params.get("title")
-
-        if title:
+        if title := self.request.query_params.get("title"):
             queryset = queryset.filter(title__icontains=title)
         return queryset.distinct()
 
@@ -102,15 +95,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 )
             )
 
-        date = self.request.query_params.get("date")
-
-        if date:
-            date = datetime.strptime(date, "%Y-%m-%d")
+        if date := self.request.query_params.get("date"):
             queryset = queryset.filter(show_time__date=date)
 
-        movie = self.request.query_params.get("movie")
-
-        if movie:
+        if movie := self.request.query_params.get("movie"):
             queryset = queryset.filter(movie__id=int(movie))
 
         return queryset
