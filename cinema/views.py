@@ -57,8 +57,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             genres = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres)
 
-        title = self.request.query_params.get("title")
-        if title:
+        if title := self.request.query_params.get("title"):
             queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
@@ -122,12 +121,19 @@ class OrderSetPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.prefetch_related("tickets__movie_session")
+    queryset = Order.objects.all()
     serializer_class = OrderSerializer
     pagination_class = OrderSetPagination
 
     def get_queryset(self):
         queryset = self.queryset.filter(user=self.request.user)
+
+        if self.action == "list":
+            queryset = queryset.prefetch_related(
+                "tickets__movie_session__movie",
+                "tickets__movie_session__cinema_hall",
+            )
+
         return queryset
 
     def perform_create(self, serializer):
