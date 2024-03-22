@@ -53,7 +53,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         genres = self.request.query_params.get("genres")
         actors = self.request.query_params.get("actors")
-        title = self.request.query_params.get("title")
         queryset = self.queryset
 
         if genres and (genres_id := self._params_to_ints(genres)):
@@ -62,7 +61,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if actors and (actors_id := self._params_to_ints(actors)):
             queryset = queryset.filter(actors__id__in=actors_id)
 
-        if title:
+        if title := self.request.query_params.get("title", None):
             queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
