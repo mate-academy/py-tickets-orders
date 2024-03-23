@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from django.db.models import Count, F
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -80,6 +82,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related()
+                .annotate(tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets")))
+        if self.action == "retrieve":
+            queryset = queryset.select_related("")
+
         date = self.request.query_params.get("date")
         movie_id = self.request.query_params.get("movie")
         if date:
