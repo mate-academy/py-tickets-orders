@@ -99,7 +99,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = query_params.get("movie")
         date = query_params.get("date")
         start_time = query_params.get("start_time")
-        min_tickets_available = query_params.get("min_tickets_available")
 
         if movie:
             movie_ids = params_to_ints(movie)
@@ -119,12 +118,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                     * session.cinema_hall.seats_in_row
                     - session.tickets.count()
                 )
-
-        if min_tickets_available:
-            queryset = [
-                session for session in queryset
-                if session.tickets_available >= int(min_tickets_available)
-            ]
 
         return queryset
 

@@ -90,11 +90,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             serializers.ValidationError,
         )
 
-        if attrs["row"] == 0 and attrs["seat"] == 0:
-            raise serializers.ValidationError(
-                "Row and seat cannot be zero."
-            )
-
         return validate_data
 
 
@@ -111,11 +106,6 @@ class TicketSerializer(serializers.ModelSerializer):
             attrs["movie_session"],
             serializers.ValidationError,
         )
-
-        if attrs["row"] == 0 and attrs["seat"] == 0:
-            raise serializers.ValidationError(
-                "Both 'row' and 'seat' cannot be zero."
-            )
 
         return validate_data
 
@@ -164,11 +154,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
-
-        if not tickets_data:
-            raise serializers.ValidationError(
-                "Order must have at least one ticket."
-            )
 
         order = Order.objects.create(**validated_data)
 
