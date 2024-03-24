@@ -103,9 +103,9 @@ class TicketInOrderSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 "seat or row":
                     f"seat must be in range "
-                    f"{attrs["movie_session"].cinema_hall.seats_in_row} and"
+                    f"{attrs['movie_session'].cinema_hall.seats_in_row} and "
                     f"row must be in range "
-                    f"{attrs["movie_session"].cinema_hall.rows}"
+                    f"{attrs['movie_session'].cinema_hall.rows}"
             })
 
 
