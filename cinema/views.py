@@ -1,21 +1,30 @@
+from datetime import datetime
+
 from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.models import (
+    Actor,
+    CinemaHall,
+    Genre,
+    Movie,
+    MovieSession,
+    Order
+)
 
 from cinema.serializers import (
-    GenreSerializer,
     ActorSerializer,
     CinemaHallSerializer,
-    MovieSerializer,
-    MovieSessionSerializer,
-    MovieSessionListSerializer,
+    GenreSerializer,
     MovieDetailSerializer,
-    MovieSessionDetailSerializer,
     MovieListSerializer,
+    MovieSerializer,
+    MovieSessionDetailSerializer,
+    MovieSessionListSerializer,
+    MovieSessionSerializer,
+    OrderListSerializer,
     OrderSerializer,
-    OrderListSerializer
 )
 
 
@@ -47,6 +56,9 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    def parse_ids(self, id_list):
+        return [int(id_) for id_ in id_list]
+
     def get_queryset(self):
         queryset = self.queryset
         actors = self.request.query_params.getlist("actors")
@@ -56,10 +68,10 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
         if actors:
-            actor_ids = [int(id_) for id_ in actors]
+            actor_ids = self.parse_ids(actors)
             queryset = queryset.filter(actors__in=actor_ids)
         if genres:
-            genre_ids = [int(id_) for id_ in genres.split(",")]
+            genre_ids = self.parse_ids(genres.split(","))
             queryset = queryset.filter(genres__in=genre_ids)
 
         return queryset
@@ -90,20 +102,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 movie_id__in=[int(n) for n in movie_ids.split(",")]
             )
         if show_time:
-            year = show_time.split("-")[0]
-            month = show_time.split("-")[1]
-            day = show_time.split("-")[2]
-
-            queryset = queryset.filter(
-                show_time__year=year,
-                show_time__day=day,
-                show_time__month=month
-            )
+            queryset = queryset.filter(show_time__date=show_time)
 
         if self.action == "list":
             queryset = (
                 queryset
-                .select_related()
+                .select_related("cinema_hall")
                 .annotate(
                     tickets_available=(
                         F("cinema_hall__rows")
