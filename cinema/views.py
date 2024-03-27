@@ -41,18 +41,18 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(",")]
+    def params_string_to_int_list(query: str) -> list[int]:
+        return [int(str_id) for str_id in query.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset
 
         if actors := self.request.query_params.get("actors"):
-            actors_ids = self._params_to_ints(actors)
+            actors_ids = self.params_string_to_int_list(actors)
             queryset = queryset.filter(actors__id__in=actors_ids)
 
         if genres := self.request.query_params.get("genres"):
-            genres_ids = self._params_to_ints(genres)
+            genres_ids = self.params_string_to_int_list(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         if title := self.request.query_params.get("title"):
@@ -88,7 +88,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if date_param := self.request.query_params.get("date"):
             date = datetime.strptime(date_param, "%Y-%m-%d").date()
-            queryset = queryset.filter(show_time__contains=date)
+            queryset = queryset.filter(show_time__date=date)
 
         if movie_id := self.request.query_params.get("movie"):
             queryset = queryset.filter(movie_id=int(movie_id))
@@ -134,4 +134,4 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return OrderListSerializer
 
-        return OrderSerializer
+        return self.serializer_class
