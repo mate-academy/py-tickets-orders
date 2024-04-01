@@ -98,6 +98,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
     cinema_hall = CinemaHallSerializer(read_only=True)
     taken_places = TicketSerializer(
         source="tickets",
+        many=True,
         read_only=True
     )
 
@@ -107,7 +108,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(read_only=False)
+    tickets = TicketSerializer(many=True, read_only=False)
 
     class Meta:
         model = Order
@@ -123,4 +124,4 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(OrderSerializer):
-    tickets = TicketListSerializer(read_only=True)
+    tickets = TicketListSerializer(many=True, read_only=True)
