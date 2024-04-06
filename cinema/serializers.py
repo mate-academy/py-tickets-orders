@@ -130,4 +130,3 @@ class TicketListSerializer(TicketSerializer):
 
 class OrderListSerializer(OrderSerializer):
     tickets = TicketListSerializer(many=True, read_only=True)
-
