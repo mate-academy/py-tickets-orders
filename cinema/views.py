@@ -1,4 +1,5 @@
 from django.db.models.functions import Concat
+from django.utils.dateparse import parse_datetime
 from django.forms import CharField
 from rest_framework import viewsets
 from rest_framework.generics import get_object_or_404
@@ -91,6 +92,21 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        movie_id = self.request.query_params.get("movie")
+        date = self.request.query_params.get("date")
+
+        if movie_id:
+            queryset = queryset.filter(id=movie_id)
+        if date:
+            date = parse_datetime(date)
+            queryset = queryset.filter(show_time__date=date)
+        print(date)
+
+        return queryset
 
 
 class OrderViewSet(viewsets.ModelViewSet):
