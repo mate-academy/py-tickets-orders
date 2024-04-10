@@ -1,10 +1,17 @@
+from datetime import datetime
+
 from django.db.models.functions import Concat
 from django.utils.dateparse import parse_datetime
 from django.forms import CharField
 from rest_framework import viewsets
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Q, F, CharField, Value
+from django.db.models import (
+    F,
+    Count,
+    ExpressionWrapper,
+    IntegerField
+)
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -68,13 +75,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            queryset = queryset.annotate(
-                actor_full_name=Concat('actors__first_name', Value(' '), 'actors__last_name', output_field=CharField())
-            ).filter(
-                actor_full_name__icontains=actors
-            )
+            actors = Movie.convert_str_to_int(actors)
+            queryset = queryset.filter(actors__id__in=actors)
         if genres:
-            queryset = queryset.filter(genres__name=genres)
+            genres = Movie.convert_str_to_int(genres)
+            queryset = queryset.filter(genres__in=genres)
         if title:
             queryset = queryset.filter(title__icontains=title)
         return queryset
@@ -94,7 +99,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+
+        queryset = self.queryset.prefetch_related(
+            "movie",
+            "cinema_hall",
+            "tickets"
+        )
 
         movie_id = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
@@ -102,18 +112,27 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie_id:
             queryset = queryset.filter(id=movie_id)
         if date:
-            date = parse_datetime(date)
+            date = datetime.strptime(date, "%Y-%m-%d")
             queryset = queryset.filter(show_time__date=date)
-        print(date)
+
+        if self.action == "list":
+            queryset = queryset.annotate(
+                tickets_available=ExpressionWrapper(
+                    F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row")
+                    - Count("tickets"),
+                    output_field=IntegerField()
+                )
+            )
 
         return queryset
 
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.prefetch_related(
-                "tickets__movie_session__cinema_hall",
-                "tickets__movie_session__movie"
-            )
+        "tickets__movie_session__cinema_hall",
+        "tickets__movie_session__movie"
+    )
     serializer_class = OrderSerializerList
     pagination_class = OrderSetPagination
 
