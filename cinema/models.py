@@ -42,10 +42,6 @@ class Movie(models.Model):
     genres = models.ManyToManyField(Genre)
     actors = models.ManyToManyField(Actor)
 
-    @staticmethod
-    def convert_str_to_int(query_str: str) -> [int]:
-        return [int(str_id) for str_id in query_str.split(",")]
-
     class Meta:
         ordering = ["title"]
 
