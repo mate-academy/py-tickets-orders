@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cinema', '0004_alter_genre_name'),
+        ("cinema", "0004_alter_genre_name"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='ticket',
+            name="ticket",
             unique_together=set(),
         ),
     ]

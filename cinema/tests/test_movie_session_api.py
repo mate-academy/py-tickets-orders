@@ -5,7 +5,14 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from cinema.models import Movie, Genre, Actor, MovieSession, CinemaHall, Ticket
+from cinema.models import (
+    Movie,
+    Genre,
+    Actor,
+    MovieSession,
+    CinemaHall,
+    Ticket,
+)
 
 
 class MovieSessionApiTests(TestCase):
@@ -34,12 +41,7 @@ class MovieSessionApiTests(TestCase):
         self.movie_session = MovieSession.objects.create(
             movie=self.movie,
             cinema_hall=self.cinema_hall,
-            show_time=datetime.datetime(
-                year=2022,
-                month=9,
-                day=2,
-                hour=9
-            ),
+            show_time=datetime.datetime(year=2022, month=9, day=2, hour=9),
         )
 
     def test_get_movie_sessions(self):
@@ -121,7 +123,9 @@ class MovieSessionApiTests(TestCase):
             response.data["movie"]["description"], "Titanic description"
         )
         self.assertEqual(response.data["movie"]["duration"], 123)
-        self.assertEqual(response.data["movie"]["genres"], ["Drama", "Comedy"])
+        self.assertEqual(
+            response.data["movie"]["genres"], ["Drama", "Comedy"]
+        )
         self.assertEqual(response.data["movie"]["actors"], ["Kate Winslet"])
         self.assertEqual(response.data["cinema_hall"]["capacity"], 140)
         self.assertEqual(response.data["cinema_hall"]["rows"], 10)
