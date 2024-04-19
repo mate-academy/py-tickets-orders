@@ -104,9 +104,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset = queryset.select_related().annotate(
                     tickets_sold=Count("tickets"),
                     cinema_hall_capacity=F("cinema_hall__rows")
-                                         * F("cinema_hall__seats_in_row"),
+                    * F("cinema_hall__seats_in_row"),
                     tickets_available=F("cinema_hall_capacity")
-                                      - Count("tickets"),
+                    - Count("tickets"),
                 )
 
         return queryset.order_by("id")
