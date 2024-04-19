@@ -123,12 +123,6 @@ class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer()
 
 
-class TicketDetailSerializer(TicketSerializer):
-    class Meta:
-        model = Ticket
-        fields = ("id", "row", "seat", "movie_session")
-
-
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False)
 
@@ -144,7 +138,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
 
-class OrderListSerializer(serializers.ModelSerializer):
+class OrderListSerializer(OrderSerializer):
     tickets = TicketListSerializer(many=True, read_only=False)
 
     class Meta:
