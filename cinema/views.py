@@ -35,7 +35,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 def _params_to_int(query_string: str):
-    return [ int(param) for param in query_string.split(",")]
+    return [int(param) for param in query_string.split(",")]
 
 
 class MovieViewSet(viewsets.ModelViewSet):
@@ -112,7 +112,8 @@ class OrderListPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = (Order.objects.prefetch_related("tickets__movie_session__cinema_hall")
+    queryset = (Order.objects
+                .prefetch_related("tickets__movie_session__cinema_hall")
                 .prefetch_related("tickets__movie_session__movie"))
     serializer_class = OrderListSerializer
     pagination_class = OrderListPagination
