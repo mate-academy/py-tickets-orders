@@ -1,3 +1,4 @@
+from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -97,6 +98,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if date:
             queryset = queryset.filter(show_time__date=date)
+
+        if self.action == "list":
+            queryset = queryset.annotate(
+                tickets_available=(
+                        F("cinema_hall__rows")
+                        * F("cinema_hall__seats_in_row")
+                        - Count("tickets")
+                )
+            )
         return queryset
 
 
