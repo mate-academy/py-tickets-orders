@@ -1,3 +1,5 @@
+from typing import Type
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -84,30 +86,44 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    @staticmethod
+    def validate_seat_and_rows(
+            seat: int,
+            num_seats: int,
+            row: int,
+            num_rows: int,
+            error_to_raise: Type[Exception]
+    ):
+        if not (1 <= seat <= num_seats):
+            raise error_to_raise(
+                {
+                    "seat": f"seat must be in a range of "
+                            f"[1,{num_seats}],not [{seat}]"
+                }
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        elif not (1 <= row <= num_rows):
+            raise error_to_raise(
+                {
+                    "row": f"row must be in a range of "
+                           f"[1,{num_rows}],not [{row}]"
+                }
+            )
+
+    def clean(self):
+        Ticket.validate_seat_and_rows(
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row,
+            self.row,
+            self.movie_session.cinema_hall.rows,
+            ValueError
+        )
 
     def save(
-        self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
     ):
         self.full_clean()
         super(Ticket, self).save(
