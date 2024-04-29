@@ -88,7 +88,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def params_to_ints(query_str):
-        return [int(str_id) for str_id in query_str.split(",")]
+        return int(query_str)
 
     def get_queryset(self):
         queryset = self.queryset.select_related()
@@ -112,7 +112,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if movie:
             movie_id = self.params_to_ints(movie)
-            queryset = queryset.filter(movie__in=movie_id)
+            queryset = queryset.filter(movie__id=movie_id)
         if date:
             date = datetime.strptime(date, "%Y-%m-%d")
             queryset = queryset.filter(show_time__date=date)
@@ -145,7 +145,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             return OrderListSerializer
         return OrderSerializer
 
-    #
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
 
