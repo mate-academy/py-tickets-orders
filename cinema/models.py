@@ -49,7 +49,7 @@ class Movie(models.Model):
 
 
 class MovieSession(models.Model):
-    show_time = models.DateTimeField(auto_now_add=True)
+    show_time = models.DateTimeField()
     movie = models.ForeignKey(
         Movie, on_delete=models.CASCADE, related_name="movies"
     )
@@ -94,10 +94,8 @@ class Ticket(models.Model):
         if not (1 <= seat <= seats_in_row):
             raise error_to_raise(
                 {
-
                     f"seat number must be"
                     f" in available range 1 to {seats_in_row}"
-
                 }
             )
 
