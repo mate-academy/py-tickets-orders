@@ -2,13 +2,15 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from .models import (Genre,
-                     Actor,
-                     CinemaHall,
-                     Movie,
-                     MovieSession,
-                     Order,
-                     Ticket)
+from .models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
