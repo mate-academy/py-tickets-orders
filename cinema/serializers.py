@@ -54,7 +54,6 @@ class MovieDetailSerializer(MovieSerializer):
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
-    # tickets_available = TicketSerializer(many=True, read_only=True)
 
     class Meta:
         model = MovieSession
@@ -123,7 +122,6 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        # fields = "__all__"
         fields = ("id", "created_at", "tickets")
 
     def create(self, validated_data):
