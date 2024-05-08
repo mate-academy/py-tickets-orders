@@ -50,10 +50,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     def _params_to_ints(query_string):
         return [int(str_id) for str_id in query_string.split(",")]
 
-    @staticmethod
-    def _params_to_ints1(query_string):
-        return [int(str_id) for str_id in query_string.split(",")]
-
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
@@ -98,10 +94,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
-
-    @staticmethod
-    def _params_to_ints(query_string):
-        return [int(str_id) for str_id in query_string.split(",")]
 
     def get_queryset(self):
         date = self.request.query_params.get("date")
