@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -73,6 +74,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
+    @staticmethod
+    def _params_to_ints(query_string):
+        return [int(str_id) for str_id in query_string.split(",")]
+
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
@@ -81,6 +86,20 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        date = self.request.query_params.get("date")
+        movie = self.request.query_params.get("movie")
+
+        if date and movie:
+            date_filter = Q(show_time__icontains=date)
+
+            # movie = self._params_to_ints(movie)
+            movie_filter = Q(movie__id=movie)
+            queryset = queryset.filter(date_filter & movie_filter)
+
+        return queryset
 
 
 class OrderViewSet(viewsets.ModelViewSet):
