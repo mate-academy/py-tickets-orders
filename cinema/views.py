@@ -1,5 +1,6 @@
-from django.db.models import Q
+from django.db.models import Q, Count, F
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -72,7 +73,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
-    serializer_class = MovieSessionSerializer
+    # serializer_class = MovieSessionSerializer
 
     @staticmethod
     def _params_to_ints(query_string):
@@ -89,22 +90,44 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
+
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related()
+                .annotate(
+                    tickets_available=
+                    (F("cinema_hall__rows") * F("cinema_hall__seats_in_row")) - Count("tickets")
+                )
+            )
+
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
         if date and movie:
             date_filter = Q(show_time__icontains=date)
 
-            # movie = self._params_to_ints(movie)
             movie_filter = Q(movie__id=movie)
-            queryset = queryset.filter(date_filter & movie_filter)
+            queryset = queryset.filter(date_filter, movie_filter)
+        elif date:
+            date_filter = Q(show_time__icontains=date)
+            queryset = queryset.filter(date_filter)
+        elif movie:
+            movie_filter = Q(movie__id=movie)
+            queryset = queryset.filter(movie_filter)
 
         return queryset
 
 
+class OrderSetPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "page_size"
+    max_page_size = 20
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
-    # serializer_class = OrderListSerializer
+    pagination_class = OrderSetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
