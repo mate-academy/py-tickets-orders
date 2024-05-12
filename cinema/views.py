@@ -22,22 +22,22 @@ from cinema.serializers import (
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
-    queryset = Actor.objects.all()
+    queryset = Actor.objects
     serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
-    queryset = CinemaHall.objects.all()
+    queryset = CinemaHall.objects
     serializer_class = CinemaHallSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all().prefetch_related("actors", "genres")
+    queryset = Movie.objects.prefetch_related("actors", "genres")
     serializer_class = MovieSerializer
 
     @staticmethod
@@ -72,7 +72,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all().select_related(
+    queryset = MovieSession.objects.select_related(
         "movie", "cinema_hall"
     )
     serializer_class = MovieSessionSerializer
@@ -92,13 +92,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             )
 
         if date_param:
-            try:
-                date = datetime.strptime(date_param, "%Y-%m-%d")
-                queryset = queryset.filter(show_time__date=date)
-            except ValueError:
-                return HttpResponseBadRequest(
-                    "Invalid date. Use format YYYY-MM-DD."
-                )
+            queryset = queryset.filter(show_time__date=date_param)
 
         if movie_id_param:
             queryset = queryset.filter(movie_id=movie_id_param)
@@ -122,7 +116,7 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().prefetch_related(
+    queryset = Order.objects.prefetch_related(
         "tickets__movie_session__movie",
         "tickets__movie_session__cinema_hall"
     )
