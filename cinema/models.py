@@ -84,6 +84,7 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
+
     def clean(self):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (self.row, "row", "rows"),
