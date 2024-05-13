@@ -74,7 +74,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
-    # serializer_class = MovieSessionSerializer
 
     @staticmethod
     def _params_to_ints(query_string):
