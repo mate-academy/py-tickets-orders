@@ -1,7 +1,9 @@
+from datetime import datetime
+
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
 from cinema.serializers import (
     GenreSerializer,
@@ -12,7 +14,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer,
+    MovieListSerializer, OrderSerializer, OrderListSerializer, TicketSerializer,
 )
 
 
@@ -29,6 +31,11 @@ class ActorViewSet(viewsets.ModelViewSet):
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return CinemaHallSerializer
+        return CinemaHallSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
@@ -73,6 +80,25 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        date = self.request.query_params.get("date")
+        movie = self.request.query_params.get("movie")
+        if date:
+            date_obj = datetime.strptime(date, "%Y-%m-%d")
+            queryset = queryset.filter(
+                show_time__year=date_obj.year,
+                show_time__day=date_obj.day,
+                show_time__month=date_obj.month
+            )
+        if movie:
+            queryset = queryset.filter(movie_id=movie)
+        if self.action == "list":
+            queryset = queryset.select_related().prefetch_related("tickets")
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related("cinema_hall").select_related()
+        return queryset
 
 
 class OrderViewPaginator(PageNumberPagination):
