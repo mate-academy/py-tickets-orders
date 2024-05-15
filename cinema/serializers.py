@@ -1,7 +1,15 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -30,16 +38,23 @@ class CinemaHallSerializer(serializers.ModelSerializer):
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "genres",
+            "actors"
+        )
 
 
 class MovieListSerializer(MovieSerializer):
     genres = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="name"
+        many=True,
+        read_only=True,
+        slug_field="name"
     )
-    actors = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="full_name"
-    )
+    actors = serializers.StringRelatedField(many=True)
 
 
 class MovieDetailSerializer(MovieSerializer):
@@ -60,7 +75,8 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 class MovieSessionListSerializer(MovieSessionSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
     cinema_hall_name = serializers.CharField(
-        source="cinema_hall.name", read_only=True
+        source="cinema_hall.name",
+        read_only=True
     )
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
@@ -79,7 +95,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
     def get_tickets_available(self, obj):
-        return obj.tickets.count()
+        return obj.cinema_hall.capacity - obj.tickets.count()
 
 
 class TakenPlaceSerializer(serializers.ModelSerializer):
@@ -91,15 +107,25 @@ class TakenPlaceSerializer(serializers.ModelSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = TakenPlaceSerializer(many=True, read_only=True, source="tickets")
+    taken_places = TakenPlaceSerializer(
+        many=True,
+        read_only=True,
+        source="tickets"
+    )
     tickets_available = serializers.SerializerMethodField()
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places", "tickets_available")
+        fields = (
+            "id",
+            "show_time",
+            "movie",
+            "cinema_hall",
+            "taken_places",
+            "tickets_available",
+        )
 
     def get_tickets_available(self, obj):
-        # Calculate available tickets based on cinema hall capacity and sold tickets
         return obj.cinema_hall.capacity - obj.tickets.count()
 
 
@@ -122,7 +148,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ("id", "created_at", "tickets",)
+        fields = (
+            "id",
+            "created_at",
+            "tickets",
+        )
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -132,12 +162,17 @@ class OrderSerializer(serializers.ModelSerializer):
                 Ticket.objects.create(order=order, **ticket)
             return order
 
-    def validate_tickets(self, tickets): # validate for tickets
+    def validate_tickets(self, tickets):  # validate for tickets
         for ticket in tickets:
-            row = ticket.get('row')
-            seat = ticket.get('seat')
-            movie_session = ticket.get('movie_session')
-            Ticket.validate_seat(row, seat, movie_session, serializers.ValidationError)
+            row = ticket.get("row")
+            seat = ticket.get("seat")
+            movie_session = ticket.get("movie_session")
+            Ticket.validate_seat(
+                row,
+                seat,
+                movie_session,
+                serializers.ValidationError
+            )
         return tickets
 
 
