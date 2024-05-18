@@ -89,6 +89,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
         if movie:
             queryset = queryset.filter(movie=movie)
+
+
         return queryset
 
 
