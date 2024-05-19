@@ -97,7 +97,6 @@ class MovieSessionListNoTicketSerializer(MovieSessionListSerializer):
         )
 
 
-
 class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
