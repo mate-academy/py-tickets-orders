@@ -12,6 +12,12 @@ class CinemaHall(models.Model):
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
 
+    @property
+    def tickets_available(self) -> int:
+        print(self)
+        tickets = MovieSession.objects.filter(cinema_hall=self)
+        return self.capacity - tickets.count()
+
     def __str__(self):
         return self.name
 
