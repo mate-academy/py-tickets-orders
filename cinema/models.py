@@ -8,6 +8,9 @@ class CinemaHall(models.Model):
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
 
+    # class Meta:
+    #     ordering = ["name"]
+
     @property
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
