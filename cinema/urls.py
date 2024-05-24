@@ -5,8 +5,7 @@ from cinema.views import (
     ActorViewSet,
     CinemaHallViewSet,
     MovieViewSet,
-    MovieSessionViewSet,
-    OrderViewSet,
+    MovieSessionViewSet, OrderViewSet,
 )
 
 router = routers.DefaultRouter()
