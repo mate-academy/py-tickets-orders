@@ -28,7 +28,6 @@ class CinemaHallApiTests(TestCase):
             "seats_in_row": 20,
             "capacity": 300,
         }
-        print(response.data[0]["name"])
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]["name"], blue_hall["name"])
         self.assertEqual(response.data[0]["rows"], blue_hall["rows"])
