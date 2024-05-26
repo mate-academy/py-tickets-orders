@@ -2,13 +2,15 @@ from django.db import transaction
 from django.db.models import F, Count
 from rest_framework import serializers
 
-from cinema.models import (Genre,
-                           Actor,
-                           CinemaHall,
-                           Movie,
-                           MovieSession,
-                           Order,
-                           Ticket)
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -101,7 +103,15 @@ class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ["row", "seat"]
+        fields = ["row", "seat", "movie_session"]
+
+    def validate(self, attrs):
+        cinema_hall = attrs.get("movie_session").cinema_hall
+        Ticket.is_seat_available(attrs.get("row"),
+                      attrs.get("seat"),
+                      cinema_hall)
+        return attrs
+
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
@@ -136,6 +146,7 @@ class OrderSerializer(serializers.ModelSerializer):
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
             return order
+
 
 
 class OrderListSerializer(serializers.ModelSerializer):
