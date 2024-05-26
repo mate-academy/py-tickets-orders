@@ -84,7 +84,6 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-
     @staticmethod
     def is_seat_available(row, seat, cinema_hall):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
@@ -104,9 +103,12 @@ class Ticket(models.Model):
                     }
                 )
 
-
     def clean(self):
-        Ticket.is_seat_available(self.row, self.seat, self.movie_session.cinema_hall)
+        Ticket.is_seat_available(
+            self.row,
+            self.seat,
+            self.movie_session.cinema_hall
+        )
 
     def save(
         self,

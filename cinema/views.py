@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from django.db.models import F
 from rest_framework import viewsets, generics
@@ -46,8 +46,12 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if self.action == "retrieve":
             return MovieDetailSerializer
-
         return MovieSerializer
+
+    @staticmethod
+    def str_list_to_int_list(str_list):
+        int_list = [int(str_id) for str_id in str_list.split(",")]
+        return int_list
 
     def get_queryset(self):
         queryset = self.queryset
@@ -57,12 +61,12 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         actors = self.request.query_params.get("actors")
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
+            actors_ids = MovieViewSet.str_list_to_int_list(actors)
             queryset = queryset.filter(actors__in=actors_ids)
 
         genres = self.request.query_params.get("genres")
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
+            genres_ids = MovieViewSet.str_list_to_int_list(genres)
             queryset = queryset.filter(genres__in=genres_ids)
         return queryset.distinct()
 
@@ -83,14 +87,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
 
-        _date = self.request.query_params.get("date")
-        if _date:
-            year, month, day = (int(_) for _ in _date.split("-"))
-            queryset = queryset.filter(
-                show_time__year=year,
-                show_time__month=month,
-                show_time__day=day
-            )
+        date_str = self.request.query_params.get("date")
+        if date_str:
+            _date = datetime.strptime(date_str, "%Y-%m-%d")
+            queryset = queryset.filter(show_time__date=_date)
 
         movie = self.request.query_params.get("movie")
         if movie:
