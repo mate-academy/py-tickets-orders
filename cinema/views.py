@@ -1,11 +1,9 @@
-from datetime import datetime, date
+from datetime import datetime
 
-from django.db.models import F
-from rest_framework import viewsets, generics
+from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
-
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -118,7 +116,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).prefetch_related(
             "tickets__movie_session__cinema_hall",
-            "tickets__movie_session__movie"
+            "tickets__movie_session__movie",
         )
 
     def get_serializer_class(self):

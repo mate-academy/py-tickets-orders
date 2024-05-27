@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.conf import settings
 
 
 class CinemaHall(models.Model):
@@ -90,9 +90,7 @@ class Ticket(models.Model):
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
         ]:
-            count_attrs = getattr(
-                cinema_hall, cinema_hall_attr_name
-            )
+            count_attrs = getattr(cinema_hall, cinema_hall_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise ValidationError(
                     {
@@ -105,9 +103,7 @@ class Ticket(models.Model):
 
     def clean(self):
         Ticket.is_seat_available(
-            self.row,
-            self.seat,
-            self.movie_session.cinema_hall
+            self.row, self.seat, self.movie_session.cinema_hall
         )
 
     def save(
