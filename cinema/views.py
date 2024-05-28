@@ -1,5 +1,6 @@
 from django.db.models import F, Count
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
     Genre,
@@ -10,7 +11,6 @@ from cinema.models import (
     Order,
     Ticket,
 )
-from cinema.paginations import OrderSetPagination
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -25,6 +25,16 @@ from cinema.serializers import (
     TicketSerializer,
     OrderListSerializer,
 )
+
+
+def get_list_int_from_str(string_: str) -> list[int]:
+    return [int(item_id) for item_id in string_.split(",")]
+
+
+class OrderSetPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = "page_size"
+    max_page_size = 50
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -64,10 +74,10 @@ class MovieViewSet(viewsets.ModelViewSet):
             self.queryset = self.queryset.filter(title__icontains=title)
 
         if actors:
-            actors = [int(actor) for actor in actors.split(",")]
+            actors = get_list_int_from_str(actors)
             self.queryset = self.queryset.filter(actors__id__in=actors)
         if genres:
-            genres = [int(genre) for genre in genres.split(",")]
+            genres = get_list_int_from_str(genres)
             self.queryset = self.queryset.filter(genres__id__in=genres)
 
         if self.action == "list":
