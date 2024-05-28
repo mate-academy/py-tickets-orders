@@ -66,28 +66,29 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
     def get_queryset(self):
+        queryset = self.queryset
         genres = self.request.query_params.get("genres")
         actors = self.request.query_params.get("actors")
         title = self.request.query_params.get("title")
 
         if title:
-            self.queryset = self.queryset.filter(title__icontains=title)
+            queryset = queryset.filter(title__icontains=title)
 
         if actors:
             actors = get_list_int_from_str(actors)
-            self.queryset = self.queryset.filter(actors__id__in=actors)
+            queryset = queryset.filter(actors__id__in=actors)
         if genres:
             genres = get_list_int_from_str(genres)
-            self.queryset = self.queryset.filter(genres__id__in=genres)
+            queryset = queryset.filter(genres__id__in=genres)
 
         if self.action == "list":
-            return self.queryset.prefetch_related(
+            return queryset.prefetch_related(
                 "genres", "actors"
             ).distinct()
         elif self.action == "retrieve":
-            return self.queryset.prefetch_related("genres", "actors")
+            return queryset.prefetch_related("genres", "actors")
 
-        return self.queryset.distinct()
+        return queryset.distinct()
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -104,25 +105,25 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
     def get_queryset(self):
+        queryset = self.queryset
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
         if date:
-            self.queryset = self.queryset.filter(show_time__date=date)
+            queryset = queryset.filter(show_time__date=date)
         if movie:
-            self.queryset = self.queryset.filter(movie=movie)
+            queryset = queryset.filter(movie=movie)
 
         if self.action == "list":
-            query_set = self.queryset.prefetch_related(
+            return queryset.prefetch_related(
                 "movie", "cinema_hall"
             ).annotate(
                 tickets_available=F("cinema_hall__rows")
                 * F("cinema_hall__seats_in_row")
                 - Count("tickets")
             )
-            return query_set
 
-        return self.queryset
+        return queryset
 
 
 class TicketViewSet(viewsets.ModelViewSet):
