@@ -12,7 +12,8 @@ from cinema.models import (
     Movie,
     MovieSession,
     Order,
-    Ticket)
+    Ticket
+)
 
 from cinema.serializers import (
     GenreSerializer,
