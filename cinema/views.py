@@ -7,7 +7,8 @@ from cinema.models import (
     CinemaHall,
     Movie,
     MovieSession,
-    Order
+    Order,
+    Ticket
 )
 from cinema.serializers import (
     GenreSerializer,
@@ -20,6 +21,7 @@ from cinema.serializers import (
     MovieSessionDetailSerializer,
     MovieListSerializer,
     OrderSerializer,
+    TicketListSerializer, TicketSerializer, OrderListSerializer
 )
 
 
@@ -83,3 +85,23 @@ class OrderViewSet(viewsets.ModelViewSet):
         if user_id:
             return queryset.filter(user_id=user_id)
         return queryset
+
+    def get_serializer_class(self):
+        serializer = self.serializer_class
+        if self.action == "create":
+            serializer = OrderListSerializer
+        return serializer
+
+
+class TicketViewSet(viewsets.ModelViewSet):
+    queryset = Ticket.objects.all()
+    serializer_class = TicketSerializer
+
+    def get_serializer_class(self):
+        serializer = self.serializer_class
+        if self.action == "create":
+            serializer = TicketListSerializer
+        elif self.action == "list":
+            serializer = TicketSerializer
+        return serializer
+
