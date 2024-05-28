@@ -1,3 +1,4 @@
+from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -85,6 +86,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
+    @staticmethod
+    def _param_to_ints(query_string):
+        """Convert a string of format '1,2,3' to a list of integers [1, 2, 3]"""
+        return [int(str_id) for str_id in query_string.split(",")]
+
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
@@ -93,6 +99,20 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        date = self.request.query_params.get("date")
+        movie = self.request.query_params.get("movie")
+
+        if date:
+            queryset = queryset.filter(show_time__date=date)
+
+        if movie:
+            movie = self._param_to_ints(movie)
+            queryset = queryset.filter(movie__id__in=movie)
+
+        return queryset.distinct()
 
 
 class OrderSetPagination(PageNumberPagination):
