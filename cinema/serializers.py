@@ -88,7 +88,6 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ["id", "row", "seat", "movie_session"]
 
     def validate(self, attrs):
-        print(attrs)
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (attrs["row"], "row", "rows"),
             (attrs["seat"], "seat", "seats_in_row"),
@@ -139,16 +138,16 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ["id", "created_at", "tickets"]
 
+    @transaction.atomic
     def create(self, validated_data: dict) -> Order:
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
+        tickets_data = validated_data.pop("tickets")
 
-            order = Order.objects.create(**validated_data)
+        order = Order.objects.create(**validated_data)
 
-            for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
+        for ticket_data in tickets_data:
+            Ticket.objects.create(order=order, **ticket_data)
 
-            return order
+        return order
 
 
 class OrderListSerializer(OrderSerializer):
