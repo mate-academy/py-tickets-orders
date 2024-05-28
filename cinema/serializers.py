@@ -2,7 +2,6 @@ from typing import Any, Dict, List
 
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
     Genre,
@@ -59,13 +58,13 @@ class MovieDetailSerializer(MovieSerializer):
         fields = ("id", "title", "description", "duration", "genres", "actors")
 
 
-class MovieSessionSerializer(serializers.ModelSerializer):
+class MovieSessionGeneralSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
 
 
-class MovieSessionListSerializer(MovieSessionSerializer):
+class MovieSessionSerializer(MovieSessionGeneralSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
     cinema_hall_name = serializers.CharField(
         source="cinema_hall.name",
@@ -74,7 +73,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
-    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -84,8 +82,15 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
-            "tickets_available",
         )
+
+
+class MovieSessionListSerializer(MovieSessionSerializer):
+    tickets_available = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = MovieSession
+        fields = MovieSessionSerializer.Meta.fields + ("tickets_available",)
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -94,35 +99,32 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ["id", "row", "seat", "movie_session"]
 
 
+class TicketSeatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ["row", "seat"]
+
+
 class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    movie = MovieListSerializer(read_only=True)
+    cinema_hall = CinemaHallSerializer(read_only=True)
     taken_places = serializers.SerializerMethodField()
 
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
 
-    def get_taken_places(self, obj: MovieSession) -> List[Dict[str, Any]]:
-        return [
-            {"row": ticket.row,
-             "seat": ticket.seat}
-            for ticket in obj.tickets.all()
-        ]
+    def get_taken_places(self, obj: MovieSession):
+        tickets = obj.tickets.all()
+        return TicketSeatSerializer(tickets, many=True).data
 
 
 class TicketCreateSerializer(TicketSerializer):
-    movie_session = MovieSessionListSerializer(many=False, read_only=True)
+    movie_session = MovieSessionSerializer(read_only=True)
 
     class Meta:
         model = Ticket
         fields = ["id", "row", "seat", "movie_session"]
-
-
-class OrderSetPagination(PageNumberPagination):
-    page_size = 1
-    page_size_query_param = "page_size"
-    max_page_size = 10
 
 
 class OrderSerializer(serializers.ModelSerializer):

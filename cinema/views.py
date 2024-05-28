@@ -12,11 +12,13 @@ from django.utils.dateparse import parse_date
 from rest_framework import viewsets, serializers
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.pagination import OrderSetPagination
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
     CinemaHallSerializer,
     MovieSerializer,
+    MovieSessionGeneralSerializer,
     MovieSessionSerializer,
     MovieSessionListSerializer,
     MovieDetailSerializer,
@@ -24,7 +26,6 @@ from cinema.serializers import (
     MovieListSerializer,
     OrderSerializer,
     OrderCreateSerializer,
-    OrderSetPagination,
 )
 
 
@@ -51,10 +52,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     def params_to_int(query_string: str) -> List[int]:
         return [int(param) for param in query_string.split(",")]
 
-    @staticmethod
-    def params_to_str(query_string: str) -> List[str]:
-        return [param for param in query_string.split(",")]
-
     def get_queryset(self) -> QuerySet[Movie]:
         queryset = self.queryset
 
@@ -64,16 +61,12 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if actors:
             actors = self.params_to_int(actors)
-            queryset = queryset.filter(actors__id__in=actors)
+            queryset = queryset.filter(actors__in=actors)
         if genres:
             genres = self.params_to_int(genres)
-            queryset = queryset.filter(genres__id__in=genres)
+            queryset = queryset.filter(genres__in=genres)
         if title:
-            titles = self.params_to_str(title)
-            title_query = Q()
-            for title in titles:
-                title_query |= Q(title__icontains=title)
-            queryset = queryset.filter(title_query)
+            queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
 
@@ -89,7 +82,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
-    serializer_class = MovieSessionSerializer
+    serializer_class = MovieSessionGeneralSerializer
 
     def get_queryset(self) -> QuerySet[MovieSession]:
         queryset = self.queryset
@@ -132,7 +125,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return MovieSessionGeneralSerializer
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -148,6 +141,5 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self) -> Type[serializers.ModelSerializer]:
         if self.action == "list":
-            return OrderSerializer
-        else:
-            return OrderCreateSerializer
+            return self.serializer_class
+        return OrderCreateSerializer
