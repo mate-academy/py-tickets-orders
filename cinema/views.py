@@ -1,8 +1,18 @@
+from typing import Type
+
 from django.db.models import Count, ExpressionWrapper, F, IntegerField
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.serializers import Serializer
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket)
 
 from cinema.serializers import (
     GenreSerializer,
@@ -38,7 +48,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieListSerializer
         if self.action == "retrieve":
@@ -49,7 +59,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     def _params_to_ints(query_string: str) -> list:
         return [int(str_id) for str_id in query_string.split(",")]
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         queryset = self.queryset
         title = self.request.query_params.get("title")
         genres = self.request.query_params.get("genres")
@@ -71,7 +81,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieSessionListSerializer
         if self.action == "retrieve":
@@ -82,7 +92,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def _params_to_ints(query_string: str) -> list:
         return [int(str_id) for str_id in query_string.split(",")]
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         queryset = self.queryset
         movie = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
@@ -93,10 +103,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if date:
             queryset = queryset.filter(show_time__date=date)
         if self.action == "list":
-            queryset = queryset.select_related("movie",
-                                               "cinema_hall").annotate(
-                capacity=F("cinema_hall__rows")
-                         * F("cinema_hall__seats_in_row"),
+            queryset = queryset.select_related(
+                "movie", "cinema_hall"
+            ).annotate(
+                capacity=F(
+                    "cinema_hall__rows"
+                ) * F(
+                    "cinema_hall__seats_in_row"
+                ),
                 tickets_count=Count("tickets"),
                 tickets_available=ExpressionWrapper(
                     F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
@@ -115,21 +129,21 @@ class OrderSetPagination(PageNumberPagination):
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.prefetch_related(
-                "tickets__movie_session__cinema_hall",
-                "tickets__movie_session__movie"
-            )
+        "tickets__movie_session__cinema_hall",
+        "tickets__movie_session__movie"
+    )
     serializer_class = OrderSerializer
     pagination_class = OrderSetPagination
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action in ("list", "retrieve"):
             return OrderListSerializer
         return OrderSerializer
 
-    def get_queryset(self):
+    def get_queryset(self) -> queryset:
         return self.queryset.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer) -> None:
         serializer.save(user=self.request.user)
 
 
@@ -137,7 +151,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action in ("list", "retrieve"):
             return TicketListSerializer
         return TicketSerializer
