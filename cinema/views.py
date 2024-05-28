@@ -1,3 +1,4 @@
+from django.db.models import F, Count
 from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -112,6 +113,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             movie = self._param_to_ints(movie)
             queryset = queryset.filter(movie__id__in=movie)
 
+        if self.action == "list":
+            return (
+                queryset
+                .select_related("cinema_hall", "movie")
+                .annotate(
+                    cinema_hall_capacity=F("cinema_hall__rows") * F("cinema_hall__seats_in_row"),
+                )
+                .annotate(tickets_available=F("cinema_hall_capacity") - Count("tickets"))
+            )
+
         return queryset.distinct()
 
 
@@ -151,4 +162,3 @@ class TicketViewSet(viewsets.ModelViewSet):
         elif self.action == "list":
             serializer = TicketSerializer
         return serializer
-
