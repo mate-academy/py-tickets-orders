@@ -102,7 +102,7 @@ class TicketListSerializer(TicketSerializer):
 class TicketSeatsSerializer(TicketSerializer):
     class Meta:
         model = Ticket
-        fields = '__all__'
+        fields = "__all__"
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):

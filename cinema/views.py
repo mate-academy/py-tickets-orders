@@ -89,13 +89,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
 
         if self.action == "list":
-            queryset = (
-                queryset
-                .select_related("movie", "cinema_hall")
-                .annotate(
-                    tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
-                    - Count("tickets")
-                )
+            queryset = queryset.select_related(
+                "movie", "cinema_hall"
+            ).annotate(
+                tickets_available=F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")
+                - Count("tickets")
             )
         elif self.action == "retrieve":
             queryset = queryset.select_related("movie", "cinema_hall")
