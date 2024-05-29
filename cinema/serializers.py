@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from cinema.models import (
     Genre,
@@ -61,7 +62,10 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
-    movie_title = serializers.CharField(source="movie.title", read_only=True)
+    movie_title = serializers.CharField(
+        source="movie.title",
+        read_only=True
+    )
     cinema_hall_name = serializers.CharField(
         source="cinema_hall.name", read_only=True
     )
@@ -83,7 +87,10 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(many=False, read_only=False)
+    movie_session = MovieSessionListSerializer(
+        many=False,
+        read_only=False
+    )
 
     class Meta:
         model = Ticket
@@ -93,10 +100,18 @@ class TicketSerializer(serializers.ModelSerializer):
             "seat",
             "movie_session"
         ]
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Ticket.objects.all(),
+                fields=["seat", "row"]
+            )
+        ]
 
 
 class TicketListSerializer(TicketSerializer):
-    movie_session = serializers.PrimaryKeyRelatedField(queryset=MovieSession.objects.all())
+    movie_session = serializers.PrimaryKeyRelatedField(
+        queryset=MovieSession.objects.all()
+    )
 
     class Meta:
         model = Ticket
@@ -117,7 +132,11 @@ class TicketRetrieveSerializer(serializers.ModelSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = TicketRetrieveSerializer(many=True, read_only=True, source="tickets")
+    taken_places = TicketRetrieveSerializer(
+        many=True,
+        read_only=True,
+        source="tickets"
+    )
 
     class Meta:
         model = MovieSession

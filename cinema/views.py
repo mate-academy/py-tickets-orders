@@ -1,5 +1,4 @@
 from django.db.models import F, Count
-from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -23,7 +22,9 @@ from cinema.serializers import (
     MovieSessionDetailSerializer,
     MovieListSerializer,
     OrderSerializer,
-    TicketListSerializer, TicketSerializer, OrderListSerializer
+    TicketListSerializer,
+    TicketSerializer,
+    OrderListSerializer
 )
 
 
@@ -48,7 +49,10 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _param_to_ints(query_string):
-        """Convert a string of format '1,2,3' to a list of integers [1, 2, 3]"""
+        """
+        Convert a string of format '1,2,3'
+        to a list of integers [1, 2, 3]
+        """
         return [int(str_id) for str_id in query_string.split(",")]
 
     def get_serializer_class(self):
@@ -89,7 +93,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _param_to_ints(query_string):
-        """Convert a string of format '1,2,3' to a list of integers [1, 2, 3]"""
+        """
+        Convert a string of format '1,2,3'
+        to a list of integers [1, 2, 3]
+        """
         return [int(str_id) for str_id in query_string.split(",")]
 
     def get_serializer_class(self):
@@ -118,9 +125,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset
                 .select_related("cinema_hall", "movie")
                 .annotate(
-                    cinema_hall_capacity=F("cinema_hall__rows") * F("cinema_hall__seats_in_row"),
+                    cinema_hall_capacity=(
+                        F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                    ),
                 )
-                .annotate(tickets_available=F("cinema_hall_capacity") - Count("tickets"))
+                .annotate(tickets_available=(
+                    F("cinema_hall_capacity") - Count("tickets"))
+                )
             )
 
         return queryset.distinct()
