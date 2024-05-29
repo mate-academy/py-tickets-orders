@@ -100,7 +100,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.select_related().annotate(
                 tickets_available=(total_seats - sold_tickets)
             )
-            
+
         elif self.action in "retrieve":
             queryset = queryset.select_related().annotate(
                 taken_places=Count("tickets")
