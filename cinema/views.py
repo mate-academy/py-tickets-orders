@@ -89,13 +89,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date)
 
         if self.action == "list":
-            queryset = queryset.select_related().annotate(
+            queryset = queryset.annotate(
                 tickets_available=(
-                        F("cinema_hall__rows")
-                        * F("cinema_hall__seats_in_row")
-                        - Count("tickets"))
+                    F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row")
+                    - Count("tickets")
+                )
             )
-
         return queryset.distinct()
 
     def get_serializer_class(self):
