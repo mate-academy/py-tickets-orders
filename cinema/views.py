@@ -21,7 +21,9 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderSerializer, TicketSerializer, OrderListSerializer
+    OrderSerializer,
+    TicketSerializer,
+    OrderListSerializer
 )
 
 
