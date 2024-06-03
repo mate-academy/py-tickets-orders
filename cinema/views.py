@@ -81,6 +81,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
+
+        if date:
+            queryset = queryset.filter(show_time__date=date)
+        if movie:
+            queryset = queryset.filter(movie_id=movie)
+
         if self.action == "list":
             queryset = (
                 queryset
@@ -93,10 +99,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                     )
                 )
             )
-        if date:
-            queryset = queryset.filter(show_time__date=date)
-        if movie:
-            queryset = queryset.filter(movie_id=movie)
+
         return queryset.distinct()
 
     def get_serializer_class(self):
