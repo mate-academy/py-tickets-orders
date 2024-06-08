@@ -87,6 +87,9 @@ class TicketSerializer(serializers.ModelSerializer):
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
 
+    def validate(self, attrs):
+        Ticket.va
+
 
 class TakenPlaceSerializer(serializers.ModelSerializer):
     class Meta:
