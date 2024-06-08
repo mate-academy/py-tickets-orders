@@ -1,7 +1,7 @@
-from django.utils.dateparse import parse_date
+from django.db.models import F, Count
 from rest_framework import viewsets
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -56,6 +56,9 @@ class MovieViewSet(viewsets.ModelViewSet):
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
 
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related("actors", "genres")
+
         if actors:
             actors = self._params_to_ints(actors)
             queryset = queryset.filter(actors__id_in=actors)
@@ -88,8 +91,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related()
+                .annotate(
+                    tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets")
+                )
+            )
+
         if date:
-            # date_show = parse_date(date)
             queryset = queryset.filter(show_time__date=date)
 
         if movie:
@@ -109,8 +120,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset.filter(user=self.request.user)
+
+        if self.action == "list":
+            queryset = queryset.prefetch_related(
+                "tickets__movie_session__cinema_hall",
+                "tickets__movie_session__movie",
+            )
+
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related("tickets")
+
         return queryset
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
