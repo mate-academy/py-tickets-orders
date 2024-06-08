@@ -93,8 +93,8 @@ class TicketSerializer(serializers.ModelSerializer):
                 {
                     "seat":
                         f"row must be in range "
-                        f"[1, {attrs["movie_session"].cinema_hall.rows}], "
-                        f"not {attrs["row"]}"
+                        f"[1, {attrs['movie_session'].cinema_hall.rows}], "
+                        f"not {attrs['row']}"
                 }
             )
         if not (
