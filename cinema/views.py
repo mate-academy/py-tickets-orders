@@ -1,5 +1,6 @@
 from django.db.models import F, Count
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -56,12 +57,9 @@ class MovieViewSet(viewsets.ModelViewSet):
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
 
-        if self.action in ("list", "retrieve"):
-            queryset = queryset.prefetch_related("actors", "genres")
-
         if actors:
             actors = self._params_to_ints(actors)
-            queryset = queryset.filter(actors__id_in=actors)
+            queryset = queryset.filter(actors__id__in=actors)
 
         if genres:
             genres = self._params_to_ints(genres)
@@ -69,6 +67,9 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if title:
             queryset = queryset.filter(title__icontains=title)
+
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related("actors", "genres")
 
         return queryset.distinct()
 
@@ -96,7 +97,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset
                 .select_related()
                 .annotate(
-                    tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets")
+                    tickets_available=F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row")
+                    - Count("tickets")
                 )
             )
 
@@ -109,9 +112,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return queryset.distinct()
 
 
+class OrderSetPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "page_size"
+    max_page_size = 30
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = OrderSetPagination
 
     def get_serializer_class(self):
         serializer = self.serializer_class

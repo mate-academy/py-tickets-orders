@@ -88,7 +88,27 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("id", "row", "seat", "movie_session")
 
     def validate(self, attrs):
-        Ticket.va
+        if not (1 <= attrs["row"] <= attrs["movie_session"].cinema_hall.rows):
+            raise serializers.ValidationError(
+                {
+                    "seat":
+                        f"row must be in range "
+                        f"[1, {attrs["movie_session"].cinema_hall.rows}], "
+                        f"not {attrs["row"]}"
+                }
+            )
+        if not (
+                1 <= attrs["seat"] <= attrs["movie_session"]
+                .cinema_hall.seats_in_row
+        ):
+            raise serializers.ValidationError(
+                {
+                    "seat":
+                        f"seat must be in range "
+                        f"[1, {attrs["movie_session"].cinema_hall.rows}], "
+                        f"not {attrs["seat"]}"
+                }
+            )
 
 
 class TakenPlaceSerializer(serializers.ModelSerializer):
