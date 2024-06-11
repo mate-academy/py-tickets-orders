@@ -1,5 +1,6 @@
 from django.db.models import F, Count, ExpressionWrapper, IntegerField
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -96,7 +97,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset
                 .annotate(
                     capacity=ExpressionWrapper(
-                        F("cinema_hall__rows") * F("cinema_hall__seats_in_row"),
+                        F("cinema_hall__rows")
+                        * F("cinema_hall__seats_in_row"),
                         output_field=IntegerField()
                     ),
                 )
@@ -109,9 +111,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 1000
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
