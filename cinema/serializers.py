@@ -19,18 +19,6 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
-class TicketSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Ticket
-        fields = ("id", "movie_session", "row", "seat")
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Ticket.objects.all(),
-                fields=["order", "seat"]
-            )
-        ]
-
-
 class ActorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Actor
@@ -103,32 +91,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
 
-class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = TicketSerializer(many=True, source="tickets")
-
-    class Meta:
-        model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
-
-
-class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True)
-
-    class Meta:
-        model = Order
-        fields = ["id", "tickets", "created_at"]
-
-    def create(self, validated_data):
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
-            for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
-
-
 class MovieRetrieveSerializer(MovieSerializer):
     movie = MovieSerializer(many=False, read_only=True)
     taken_seats = serializers.SlugRelatedField(
@@ -149,3 +111,46 @@ class MovieRetrieveSerializer(MovieSerializer):
             "actors",
             "taken_seats"
         )
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionListSerializer(
+        read_only=True,
+        many=False
+    )
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "movie_session", "row", "seat")
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Ticket.objects.all(),
+                fields=["order", "seat"]
+            )
+        ]
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ["id", "tickets", "created_at"]
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tickets_data = validated_data.pop("tickets")
+            order = Order.objects.create(**validated_data)
+            for ticket_data in tickets_data:
+                Ticket.objects.create(order=order, **ticket_data)
+            return order
+
+
+class MovieSessionDetailSerializer(MovieSessionSerializer):
+    movie = MovieListSerializer(many=False, read_only=True)
+    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TicketSerializer(many=True, source="tickets")
+
+    class Meta:
+        model = MovieSession
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
