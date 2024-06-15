@@ -1,6 +1,9 @@
-from rest_framework import viewsets
+from django.db.models import F, Count
+from django.utils.dateparse import parse_date
+from rest_framework import viewsets, permissions
+from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -11,7 +14,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer,
+    MovieListSerializer, OrderSerializer,
 )
 
 
@@ -43,6 +46,31 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    def _params_to_ints(self, parameters):
+        return [int(param) for param in parameters.split(",")]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
+
+        if actors:
+            actors = self._params_to_ints(actors)
+            queryset = queryset.filter(actors__id__in=actors)
+
+        if genres:
+            genres = self._params_to_ints(genres)
+            queryset = queryset.filter(genres__id__in=genres)
+
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related("actors", "genres")
+
+        return queryset
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
@@ -56,3 +84,75 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        date = self.request.query_params.get("date")
+        movie_id = self.request.query_params.get("movie")
+
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related("cinema_hall", "movie")
+                .annotate(
+                    tickets_available=F("cinema_hall__"
+                                        "rows") * F("cinema_hall__"
+                                                    "seats_in_row") - Count(
+                        "tickets"
+                    ))
+                .order_by("id")
+            )
+
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related(
+                "tickets",
+                "movie",
+                "cinema_hall"
+            )
+
+        if date:
+            try:
+                date_obj = parse_date(date)
+                if date_obj:
+                    queryset = queryset.filter(show_time__date=date_obj)
+                else:
+                    return queryset.none()
+            except ValueError:
+                return queryset.none()
+
+        if movie_id:
+            queryset = queryset.filter(movie_id=movie_id)
+
+        return queryset
+
+
+class OrderPagination(PageNumberPagination):
+    page_size = 4
+    page_size_query_param = "page_size"
+    max_page_size = 20
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    pagination_class = OrderPagination
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(user=self.request.user)
+
+        if self.action in ("list", "retrieve"):
+            return queryset.prefetch_related(
+                "tickets__movie_session__movie",
+                "tickets__movie_session__cinema_hall"
+            )
+
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return OrderSerializer
+        return OrderSerializer
