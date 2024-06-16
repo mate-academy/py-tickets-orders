@@ -14,7 +14,8 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer,
+    MovieListSerializer,
+    OrderSerializer
 )
 
 
@@ -111,14 +112,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             )
 
         if date:
-            try:
-                date_obj = parse_date(date)
-                if date_obj:
-                    queryset = queryset.filter(show_time__date=date_obj)
-                else:
-                    return queryset.none()
-            except ValueError:
-                return queryset.none()
+            queryset = queryset.filter(show_time__date=date)
 
         if movie_id:
             queryset = queryset.filter(movie_id=movie_id)
@@ -153,6 +147,4 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return OrderSerializer
         return OrderSerializer
