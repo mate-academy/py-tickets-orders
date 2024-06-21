@@ -2,6 +2,7 @@ import datetime
 
 from django.db.models import Count, F
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -14,7 +15,10 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer, OrderCreateSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
+    OrderCreateSerializer,
 )
 
 
@@ -62,17 +66,16 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all()
+    queryset = MovieSession.objects.all().select_related("movie")
     serializer_class = MovieSessionSerializer
 
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
-
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
-
         return MovieSessionSerializer
 
     def get_queryset(self):
@@ -80,27 +83,35 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
         if date:
-            queryset=queryset.filter(show_time__date=date)
+            queryset = queryset.filter(show_time__date=date)
         if movie:
-            movie_id = int("movie")
-            queryset=queryset.filter(movie__id=movie_id)
+            queryset = queryset.filter(movie__id=movie)
         if self.action == "list":
-            queryset=(
+            queryset = (
                 queryset
-                .select_related("cinema_hall")
+                .select_related("cinema_hall", "movie")
                 .annotate(
-                    holded = Count("tickets"),
-                    total = F("cinema_hall__rows") * F("cinema_hall__seats_in_row"),
-                    tickets_available = F("total")-F("holded"),
+                    holded=Count("tickets"),
+                    total=F(
+                        "cinema_hall__rows") * F("cinema_hall__seats_in_row"
+                                                 ),
+                    tickets_available=F("total") - F("holded"),
                 )
 
             )
         return queryset
 
 
+class OrderPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
+    queryset = Order.objects.all().select_related("user")
     serializer_class = OrderSerializer
+    pagination_class = OrderPagination
 
     def get_serializer_class(self):
         if self.action == "list":
