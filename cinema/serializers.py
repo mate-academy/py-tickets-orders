@@ -57,26 +57,7 @@ class MovieDetailSerializer(MovieSerializer):
 class MovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieSession
-        fields = ('id', 'movie', 'cinema_hall', 'show_time')
-
-    def create(self, validated_data):
-        cinema_hall_id = validated_data.get("cinema_hall_id")
-        if not cinema_hall_id:
-            raise serializers.ValidationError(
-                {"cinema_hall_id": "This field is required."}
-            )
-        movie_id = validated_data.get("movie_id")
-        if not movie_id:
-            raise serializers.ValidationError(
-                {"movie_id": "This field is required."}
-            )
-
-        movie_session = MovieSession.objects.create(
-            cinema_hall_id=cinema_hall_id,
-            movie_id=movie_id,
-            show_time=validated_data.get("show_time")
-        )
-        return movie_session
+        fields = ("id", "movie", "cinema_hall", "show_time")
 
 
 class MovieSessionListSerializer(serializers.ModelSerializer):

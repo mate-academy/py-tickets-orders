@@ -106,7 +106,7 @@ class MovieSessionFilter(DjangoFilterBackend):
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
-    filter_backends = [SearchFilter]  # Видалено MovieSessionFilter
+    filter_backends = [SearchFilter]
     filterset_fields = ["show_time", "movie"]
 
     def get_serializer_class(self):
