@@ -45,7 +45,7 @@ class MovieListSerializer(MovieSerializer):
     )
 
 
-class MovieDetailSerializer(MovieSerializer):
+class MovieDetailSerializer(serializers.ModelSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     actors = ActorSerializer(many=True, read_only=True)
 
@@ -55,9 +55,14 @@ class MovieDetailSerializer(MovieSerializer):
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+
     class Meta:
         model = MovieSession
-        fields = ("id", "movie", "cinema_hall", "show_time")
+        fields = ("id", "movie", "title", "cinema_hall", "show_time")
+
+    def get_title(self, obj):
+        return obj.movie.title
 
 
 class MovieSessionListSerializer(serializers.ModelSerializer):
@@ -96,8 +101,8 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
         source="cinema_hall.capacity", read_only=True
     )
     movie_title = serializers.CharField(source="movie.title", read_only=True)
-    movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    movie = MovieSerializer(read_only=True)
+    cinema_hall = CinemaHallSerializer(read_only=True)
     taken_places = serializers.SerializerMethodField()
 
     class Meta:
@@ -129,10 +134,22 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
+    taken_place = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ("id", "created_at", "tickets")
+        fields = ("id", "created_at", "tickets", "taken_place")
+
+    def get_taken_place(self, obj):
+        tickets = obj.tickets.all()
+        taken_places = []
+        for ticket in tickets:
+            taken_places.append({
+                "row": ticket.row,
+                "seat": ticket.seat,
+                # Add any other fields you need from Ticket model
+            })
+        return taken_places
 
     def create(self, validated_data):
         with transaction.atomic():

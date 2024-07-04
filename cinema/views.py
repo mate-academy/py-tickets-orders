@@ -112,7 +112,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
-        return MovieSessionDetailSerializer
+        return MovieSessionSerializer
 
     def get_queryset(self):
         queryset = self.queryset
@@ -125,6 +125,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie__id=movie_param)
 
         return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class MovieSessionDetailViewSet(viewsets.ReadOnlyModelViewSet):
