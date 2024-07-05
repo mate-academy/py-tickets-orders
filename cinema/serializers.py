@@ -12,6 +12,12 @@ from cinema.models import (
 )
 
 
+class TicketTakenSeatsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
+
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
@@ -89,16 +95,9 @@ class MovieSessionListSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
-    cinema_hall_name = serializers.CharField(
-        source="cinema_hall.name", read_only=True
-    )
-    cinema_hall_capacity = serializers.IntegerField(
-        source="cinema_hall.capacity", read_only=True
-    )
-    movie_title = serializers.CharField(source="movie.title", read_only=True)
-    movie = MovieSerializer(read_only=True)
-    cinema_hall = CinemaHallSerializer(read_only=True)
-    taken_places = serializers.SerializerMethodField()
+    movie = MovieListSerializer(many=False, read_only=True)
+    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TicketTakenSeatsSerializer(many=True, source="tickets")
 
     class Meta:
         model = MovieSession
@@ -109,11 +108,6 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
             "cinema_hall",
             "taken_places",
         )
-
-    @staticmethod
-    def get_taken_places(obj):
-        tickets = Ticket.objects.filter(movie_session=obj)
-        return [{"row": ticket.row, "seat": ticket.seat} for ticket in tickets]
 
 
 class TicketSerializer(serializers.ModelSerializer):
