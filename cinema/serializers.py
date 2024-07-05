@@ -55,14 +55,9 @@ class MovieDetailSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
-    title = serializers.SerializerMethodField()
-
     class Meta:
         model = MovieSession
-        fields = ("id", "movie", "title", "cinema_hall", "show_time")
-
-    def get_title(self, obj):
-        return obj.movie.title
+        fields = ("id", "show_time", "movie", "cinema_hall")
 
 
 class MovieSessionListSerializer(serializers.ModelSerializer):
@@ -110,11 +105,8 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
         fields = (
             "id",
             "show_time",
-            "movie_title",
             "movie",
             "cinema_hall",
-            "cinema_hall_name",
-            "cinema_hall_capacity",
             "taken_places",
         )
 
@@ -125,7 +117,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionDetailSerializer(many=False, read_only=True)
+    movie_session = MovieSessionListSerializer(many=False, read_only=False)
 
     class Meta:
         model = Ticket
@@ -140,14 +132,14 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "created_at", "tickets", "taken_place")
 
-    def get_taken_place(self, obj):
+    @staticmethod
+    def get_taken_place(obj):
         tickets = obj.tickets.all()
         taken_places = []
         for ticket in tickets:
             taken_places.append({
                 "row": ticket.row,
                 "seat": ticket.seat,
-                # Add any other fields you need from Ticket model
             })
         return taken_places
 
