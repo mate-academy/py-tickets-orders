@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -56,6 +57,13 @@ class MovieSession(models.Model):
 
     class Meta:
         ordering = ["-show_time"]
+
+    def save(self, *args, **kwargs):
+        if not self.show_time.tzinfo:
+            self.show_time = timezone.make_aware(
+                self.show_time, timezone.get_current_timezone()
+            )
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
@@ -121,3 +129,13 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+
+    @staticmethod
+    def validate_seat(seat: int, num_seats: int, error_to_raise):
+        if not (1 <= seat <= num_seats):
+            raise error_to_raise(
+                {
+                    "seat": f"{seat} is not in available range"
+                    f" [1, {num_seats}], not {seat}"
+                }
+            )
