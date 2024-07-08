@@ -48,13 +48,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
         if genres:
-            queryset = queryset.filter(genres__name__icontains=genres)
+            genres_ids = [int(str_id) for str_id in genres.split(",")]
+            queryset = Movie.objects.filter(genres__in=genres_ids)
         if actors:
-            queryset = queryset.annotate(
-                full_name=Concat(
-                    "actors__first_name",
-                    Value(" "), "actors__last_name"
-                )).filter(full_name__icontains=actors)
+            actors_ids = [int(str_id) for str_id in actors.split(",")]
+            queryset = Movie.objects.filter(actors__in=actors_ids)
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -88,19 +86,19 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .select_related("cinema_hall")
                 .annotate(
                     tickets_available=(
-                        F("cinema_hall__seats_in_row") - Count("tickets")
+                        F("cinema_hall__seats_in_row")
+                        * F("cinema_hall__rows")
+                        - Count("tickets")
                     )
                 )).order_by("id")
-        date_str = self.request.query_params.get("date")
+        date = self.request.query_params.get("date")
         movie_id = self.request.query_params.get("movie")
-        if date_str:
-            date = parse_date(date_str)
-            print(date)
-            if date:
-                queryset = queryset.filter(show_time=date)
+
+        if date:
+            queryset = queryset.filter(show_time__date=date)
 
         if movie_id:
-            queryset = queryset.filter(movie_id=movie_id)
+            queryset = queryset.filter(movie=int(movie_id))
 
         return queryset.distinct()
 
