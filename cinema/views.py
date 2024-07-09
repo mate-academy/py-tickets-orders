@@ -99,7 +99,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie_id = self.request.query_params.get("movie")
 
         if self.action in ["list", "retrieve"]:
-            queryset = queryset.select_related("movie").select_related("cinema_hall")
+            queryset = (queryset
+                        .select_related("movie")
+                        .select_related("cinema_hall"))
 
         if date:
             date_list = date.split("-")
