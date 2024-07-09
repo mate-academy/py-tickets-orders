@@ -68,6 +68,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -77,13 +78,24 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
+            "tickets_available",
         )
 
 
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
-        fields = ("row", "seat")
+        fields = ("row", "seat", "movie_session")
+
+    def validate(self, attrs: dict):
+        data = super(TicketSerializer, self).validate(attrs)
+        Ticket.validate_seat(
+            attrs["row"],
+            attrs["seat"],
+            attrs["movie_session"].cinema_hall,
+            serializers.ValidationError
+        )
+        return data
 
 
 class TicketListSerializer(serializers.ModelSerializer):
