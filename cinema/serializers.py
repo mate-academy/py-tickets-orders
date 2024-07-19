@@ -1,8 +1,14 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from cinema.models import (Genre, Actor, CinemaHall,
-                           Movie, MovieSession, Order, Ticket)
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -109,13 +115,13 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "tickets", "created_at")
 
+    @transaction.atomic
     def create(self, validated_data):
-        with transaction.atomic():
-            tickets = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
-            for ticket_data in tickets:
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
+        tickets = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
+        for ticket_data in tickets:
+            Ticket.objects.create(order=order, **ticket_data)
+        return order
 
 
 class OrderListSerializer(serializers.ModelSerializer):
