@@ -79,6 +79,10 @@ class TicketSerializer(serializers.ModelSerializer):
         model = Ticket
         fields = ("id", "row", "seat", "movie_session",)
 
+    def validate(self, attrs):
+        ticket = Ticket(**attrs)
+        ticket.clean()
+
 
 class TicketListSerializer(serializers.ModelSerializer):
     class Meta:
