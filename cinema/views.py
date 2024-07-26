@@ -11,7 +11,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, TicketSerializer, OrderPostSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderPostSerializer,
 )
 
 
@@ -33,6 +35,25 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        genres = self.request.query_params.get("genres")
+        if genres:
+            genre_ids = genres.split(",")
+            queryset = queryset.filter(genres__id__in=genre_ids)
+
+        actors = self.request.query_params.get("actors")
+        if actors:
+            actor_ids = actors.split(",")
+            queryset = queryset.filter(actors__id__in=actor_ids)
+
+        title = self.request.query_params.get("title")
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
