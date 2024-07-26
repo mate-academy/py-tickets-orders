@@ -53,7 +53,9 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        return queryset
+        if self.action in ["list", "retrieve"]:
+            queryset = queryset.prefetch_related("genres", "actors")
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
