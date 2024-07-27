@@ -1,5 +1,8 @@
+from datetime import datetime
+
 from django.db.models import Count, F
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
     Genre,
@@ -23,6 +26,12 @@ from cinema.serializers import (
     OrderSerializer,
     OrderPostSerializer,
 )
+
+
+class OrdersSetPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = "page_size"
+    max_page_size = 20
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -101,9 +110,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 )
             )
 
-        data = self.request.query_params.get("data")
-        if data:
-            queryset = queryset.filter(show_time=data)
+        date = self.request.query_params.get("date")
+        if date:
+            queryset = queryset.filter(
+                show_time__date=datetime.strptime(date, "%Y-%m-%d").date()
+            )
 
         movie = self.request.query_params.get("movie")
         if movie:
@@ -116,6 +127,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
+    pagination_class = OrdersSetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
