@@ -8,7 +8,6 @@ from cinema.models import (
     Movie,
     MovieSession,
     Order,
-    Ticket
 )
 
 from cinema.serializers import (
@@ -108,8 +107,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         movie = self.request.query_params.get("movie")
         if movie:
-            movie_ids = movie.split(",")
-            queryset = queryset.filter(movie__id__in=movie_ids)
+            queryset = queryset.filter(movie_id=movie)
 
         if self.action in ["list", "retrieve"]:
             queryset = queryset.prefetch_related("movie", "cinema_hall")
