@@ -100,6 +100,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
         date = self.request.query_params.get("date")
 
+        if self.action in ("list", "retrieve"):
+            self.queryset = self.queryset.select_related("movie",
+                                                         "cinema_hall")
+
         if movie:
             self.queryset = self.queryset.filter(movie__id=movie)
 
@@ -108,10 +112,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 show_time__date=datetime.datetime
                 .strptime(date, "%Y-%m-%d").date()
             )
-
-        if self.action in ("list", "retrieve"):
-            self.queryset = self.queryset.select_related("movie",
-                                                         "cinema_hall")
 
         if self.action == "list":
             self.queryset = self.queryset.annotate(
