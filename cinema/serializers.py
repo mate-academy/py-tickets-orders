@@ -21,12 +21,7 @@ class GenreSerializer(serializers.ModelSerializer):
 class ActorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Actor
-        fields = (
-            "id",
-            "first_name",
-            "last_name",
-            "full_name"
-        )
+        fields = ("id", "first_name", "last_name", "full_name")
 
 
 class CinemaHallSerializer(serializers.ModelSerializer):
@@ -90,11 +85,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
-        fields = [
-            "movie_session",
-            "row",
-            "seat"
-        ]
+        fields = ("movie_session", "row", "seat")
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
@@ -108,13 +99,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
     class Meta:
         model = MovieSession
-        fields = (
-            "id",
-            "show_time",
-            "movie",
-            "cinema_hall",
-            "taken_places",
-        )
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
 
 
 class TicketListSerializer(TicketSerializer):
@@ -122,12 +107,7 @@ class TicketListSerializer(TicketSerializer):
 
     class Meta:
         model = Ticket
-        fields = [
-            "order",
-            "row",
-            "seat",
-            "movie_session",
-        ]
+        fields = ("order", "row", "seat", "movie_session")
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -135,11 +115,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = [
-            "id",
-            "tickets",
-            "created_at"
-        ]
+        fields = ("id", "tickets", "created_at")
 
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
