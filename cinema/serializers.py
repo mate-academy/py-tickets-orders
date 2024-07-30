@@ -155,4 +155,3 @@ class OrderListSerializer(serializers.ModelSerializer):
             Ticket.objects.create(**ticket, order=order)
 
         return order
-
