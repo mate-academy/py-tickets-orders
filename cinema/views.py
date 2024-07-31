@@ -1,7 +1,16 @@
+from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 from cinema.serializers import (
     GenreSerializer,
@@ -12,7 +21,11 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderCreateSerializer, TicketSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderCreateSerializer,
+    TicketListSerializer,
+    OrderListSerializer,
 )
 
 
@@ -76,10 +89,21 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if date:
             queryset = queryset.filter(show_time__date=date)
         if movie:
-            queryset = queryset.filter(movie__id__in=movie)
+            queryset = queryset.filter(movie__id=movie)
 
-        if self.action in ("list", "retrieve"):
-            queryset.prefetch_related("movie")
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related("movie", "cinema_hall").annotate(
+                    tickets_available=(F("cinema_hall__rows"
+                                         ) * F("cinema_hall__seats_in_row"
+                                               ) - Count("tickets"))))
+
+        elif self.action == "retrieve":
+            queryset = (
+                queryset
+                .select_related("movie", "cinema_hall")
+                .prefetch_related("tickets"))
 
         return queryset.distinct()
 
@@ -113,8 +137,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        if self.action in ("list", "retrieve"):
-            return OrderSerializer
+        if self.action == "list":
+            return OrderListSerializer
         if self.action == "create":
             return OrderCreateSerializer
         return OrderSerializer
@@ -125,4 +149,4 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
-    serializer_class = TicketSerializer
+    serializer_class = TicketListSerializer
