@@ -89,13 +89,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        return queryset.annotate(
+        queryset = queryset.annotate(
             tickets_available=(
                     F("cinema_hall__rows")
                     * F("cinema_hall__seats_in_row")
                     - Count("tickets")
             )
         )
+        return queryset
 
 
 class OrderSetPagination(PageNumberPagination):
