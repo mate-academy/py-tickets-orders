@@ -94,7 +94,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                     F("cinema_hall__rows")
                     * F("cinema_hall__seats_in_row")
                     - Count("tickets")
-            )
+            )  # noqa: E126
         )
         return queryset
 
