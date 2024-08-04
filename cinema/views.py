@@ -72,7 +72,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all().select_related("movie")
+    queryset = MovieSession.objects.select_related("movie")
     serializer_class = MovieSessionSerializer
 
     def get_serializer_class(self):
@@ -98,9 +98,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .select_related("cinema_hall", "movie")
                 .annotate(
                     holded=Count("tickets"),
-                    total=F(
-                        "cinema_hall__rows") * F("cinema_hall__seats_in_row"
-                                                 ),
+                    total=(F("cinema_hall__rows") *
+                           F("cinema_hall__seats_in_row")),
                     tickets_available=F("total") - F("holded"),
                 )
 
@@ -115,7 +114,7 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().select_related("user")
+    queryset = Order.objects.select_related("user")
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
