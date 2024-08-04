@@ -86,10 +86,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    @staticmethod
-    def _param_to_date(query_string):
-        return datetime.datetime.strptime(query_string, "%Y-%m-%d")
-
     def get_queryset(self):
         queryset = self.queryset
         if self.action == "list":
@@ -113,6 +109,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         date = self.request.query_params.get("date")
         if date:
+            date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(
                 show_time__date=date
             )
