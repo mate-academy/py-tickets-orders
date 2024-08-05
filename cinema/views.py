@@ -1,10 +1,9 @@
 import datetime
 
 from django.core.exceptions import ValidationError
-from django.db.models import F, Count, Func
+from django.db.models import F, Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
-
 
 from cinema.models import (
     Genre,
@@ -104,8 +103,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .select_related("movie", "cinema_hall")
                 .annotate(
                     tickets_available=(
-                            F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
-                            - Count("tickets")
+                        F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                        - Count("tickets")
                     )
                 )
             )
@@ -119,7 +118,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         date = self.request.query_params.get("date")
         if date:
-            queryset = queryset.filter(show_time__date=date)
+            try:
+                date = self._param_to_date(date)
+                queryset = queryset.filter(show_time__date=date)
+            except ValidationError:
+                queryset = queryset.none()
 
         movie = self.request.query_params.get("movie")
         if movie:
@@ -136,7 +139,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionListSerializer
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
-
         return MovieSessionSerializer
 
 
