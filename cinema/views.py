@@ -118,10 +118,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             try:
                 date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
             except ValueError:
-                raise ValidationError({"date": "Invalid date format. Please use YYYY-MM-DD."})
+                raise ValidationError(
+                    {"date": "Invalid date format. Please use YYYY-MM-DD."}
+                )
 
             self.queryset = self.queryset.filter(show_time__date=date)
-
 
         if self.action == "list":
             self.queryset = self.queryset.annotate(
