@@ -44,9 +44,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all().prefetch_related(
-        "actors", "genres"
-    ).select_related("cinema_hall")
+    queryset = Movie.objects.all().prefetch_related("actors", "genres")
     serializer_class = MovieSerializer
 
     @staticmethod
@@ -79,9 +77,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all().select_related(
-        "movie", "cinema_hall"
-    ).prefetch_related("tickets")
+    queryset = MovieSession.objects.all().select_related("movie", "cinema_hall")
     serializer_class = MovieSessionSerializer
 
     def _params_to_ints(self, query_string):
@@ -129,11 +125,7 @@ class OrderPagination(PageNumberPagination):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().select_related(
-        "user"
-    ).prefetch_related(
-        "tickets__movie_session__movie", "tickets__movie_session__cinema_hall"
-    )
+    queryset = Order.objects.all().select_related()
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
 
@@ -145,7 +137,5 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
 class TicketViewSet(viewsets.ModelViewSet):
-    queryset = Ticket.objects.all().select_related(
-        "movie_session__movie", "movie_session__cinema_hall", "order"
-    )
+    queryset = Ticket.objects.all().select_related("movie_session", "order")
     serializer_class = TicketSerializer
