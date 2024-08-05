@@ -109,7 +109,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                     )
                 )
             )
-        elif self.action == "retrieve":
+
+        if self.action == "retrieve":
             queryset = (
                 queryset
                 .select_related("movie", "cinema_hall")
@@ -118,11 +119,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         date = self.request.query_params.get("date")
         if date:
-            try:
-                date_obj = self._param_to_date(date)
-                queryset = queryset.filter(show_time__date=date_obj)
-            except ValueError:
-                raise ValidationError("Invalid date format. Expected YYYY-MM-DD.")
+            queryset = queryset.filter(show_time__date=date)
 
         movie = self.request.query_params.get("movie")
         if movie:
@@ -130,7 +127,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 movie_id = int(movie)
                 queryset = queryset.filter(movie_id=movie_id)
             except ValueError:
-                raise ValidationError("Invalid movie ID format. Expected an integer.")
+                queryset = queryset.none()
 
         return queryset.distinct()
 
