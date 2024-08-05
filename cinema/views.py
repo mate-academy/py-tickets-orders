@@ -2,6 +2,7 @@ import datetime
 
 from django.db.models import Count, F
 from rest_framework import viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
@@ -61,6 +62,10 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    @staticmethod
+    def get_list_int_from_list_str(string: list[str]) -> list[int]:
+        return [int(str_id) for str_id in string]
+
     def get_queryset(self):
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
@@ -70,11 +75,11 @@ class MovieViewSet(viewsets.ModelViewSet):
             self.queryset.prefetch_related("actors", "genres")
 
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
+            actors_ids = self.get_list_int_from_list_str(actors.split(","))
             self.queryset = self.queryset.filter(actors__in=actors_ids)
 
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
+            genres_ids = self.get_list_int_from_list_str(genres.split(","))
             self.queryset = self.queryset.filter(genres__in=genres_ids)
 
         if title:
@@ -101,17 +106,22 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
 
         if self.action in ("list", "retrieve"):
-            self.queryset = self.queryset.select_related("movie",
-                                                         "cinema_hall")
+            self.queryset = self.queryset.select_related(
+                "movie",
+                "cinema_hall"
+            )
 
         if movie:
             self.queryset = self.queryset.filter(movie__id=movie)
 
         if date:
-            self.queryset = self.queryset.filter(
-                show_time__date=datetime.datetime
-                .strptime(date, "%Y-%m-%d").date()
-            )
+            try:
+                date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+            except ValueError:
+                raise ValidationError({"date": "Invalid date format. Please use YYYY-MM-DD."})
+
+            self.queryset = self.queryset.filter(show_time__date=date)
+
 
         if self.action == "list":
             self.queryset = self.queryset.annotate(
