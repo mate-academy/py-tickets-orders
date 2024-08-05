@@ -121,8 +121,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             try:
                 date_obj = self._param_to_date(date)
                 queryset = queryset.filter(show_time__date=date_obj)
-            except ValidationError as e:
-                raise ValidationError(e)
+            except ValueError:
+                raise ValidationError("Invalid date format. Expected YYYY-MM-DD.")
 
         movie = self.request.query_params.get("movie")
         if movie:
@@ -130,9 +130,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 movie_id = int(movie)
                 queryset = queryset.filter(movie_id=movie_id)
             except ValueError:
-                raise ValidationError(
-                    "Invalid movie ID format. Expected an integer."
-                )
+                raise ValidationError("Invalid movie ID format. Expected an integer.")
 
         return queryset.distinct()
 
