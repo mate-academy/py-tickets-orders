@@ -2,8 +2,11 @@ import datetime
 
 from django.db.models import Count, F
 from rest_framework import viewsets
+from rest_framework import mixins
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 from cinema.models import (
     Genre,
@@ -134,14 +137,22 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return self.queryset.distinct()
 
 
-class OrderViewSet(viewsets.ModelViewSet):
+class OrderViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin
+):
     serializer_class = OrderSerializer
     queryset = Order.objects.all()
     pagination_class = OrderPagination
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
     def get_queryset(self):
-        return (Order.objects.filter(user=self.request.user)
-                .prefetch_related("tickets"))
+        return (
+            Order.objects.filter(user=self.request.user)
+            .prefetch_related("tickets")
+        )
