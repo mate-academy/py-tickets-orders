@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 from django.db.models import F, Count, Func
 from rest_framework import viewsets
@@ -105,14 +105,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .prefetch_related("tickets")
             )
 
-        date = self.request.query_params.get("date")
-        if date:
-            year, month, day = date.split("-")
-            queryset = queryset.filter(
-                show_time__year=year,
-                show_time__month=month,
-                show_time__day=day
-            )
+        date_str = self.request.query_params.get("date")
+        if date_str:
+            date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            queryset = queryset.filter(show_time__date=date)
 
         movie = self.request.query_params.get("movie")
         if movie:
