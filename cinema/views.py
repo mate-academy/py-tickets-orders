@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.db.models import Count, F
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
@@ -53,10 +54,10 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
         if genres:
             genre_ids = [int(str_id) for str_id in genres.split(",")]
-            queryset = queryset.filter(genres__id__in=genre_ids)
+            queryset = queryset.filter(genres__id_in=genre_ids)
         if actors:
             actor_ids = [int(str_id) for str_id in actors.split(",")]
-            queryset = queryset.filter(actors__id__in=actor_ids)
+            queryset = queryset.filter(actors__id_in=actor_ids)
         if title:
             queryset = queryset.filter(title__icontains=title)
         if self.action in ("list", "retrieve"):
@@ -86,6 +87,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(show_time__date=date)
             except ValueError:
                 raise ValueError("The date should be provided in year-month-day format")
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related("movie")
+                .annotate(tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets"))
+            ).order_by("id")
         return queryset
 
 
