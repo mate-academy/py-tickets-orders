@@ -77,15 +77,19 @@ class MoviesSessionViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(show_time__date=date)
 
             except ValueError:
-                raise ValueError("The date should be provided in year-month-day format")
+                raise ValueError(
+                    "The date should be provided in year-month-day format"
+                )
         if movie:
             movie_ids = [int(movie_id) for movie_id in movie.split(",")]
             queryset = queryset.filter(movie__id__in=movie_ids)
         if self.action == "list":
+            capasity = F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
             queryset = (
                 queryset
                 .select_related("movie")
-                .annotate(tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets"))
+                .annotate(
+                    tickets_available=capasity - Count("tickets"))
             ).order_by("id")
         return queryset
 
