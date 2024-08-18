@@ -81,7 +81,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(many=False, read_only=True)  # it has effect to create ticket
+    # movie_session = MovieSessionListSerializer(many=False, read_only=True)
 
     class Meta:
         model = Ticket
@@ -89,7 +89,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=True)   # set read_only=True
+    tickets = TicketSerializer(many=True, read_only=False)
 
     class Meta:
         model = Order
