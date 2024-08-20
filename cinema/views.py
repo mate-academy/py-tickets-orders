@@ -39,11 +39,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _params_to_ints(qs):
-        return [int(str_id) for str_id in qs.split(',')]
-
-    @staticmethod
-    def _params(qs):
-        return [str_contain for str_contain in qs.split(',')]
+        return [int(str_id) for str_id in qs.split(",")]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -107,7 +103,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             queryset = (queryset.select_related("movie", "cinema_hall")
                         .annotate(
-                tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets")
+                tickets_available=(F("cinema_hall"
+                                     "__rows") * F("cinema_hall__"
+                                                   "seats_in_row")
+                                   - Count("tickets")
+                                   )
             ))
 
         return queryset.distinct()
@@ -123,7 +123,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return (queryset
                     .prefetch_related("tickets__movie_session__cinema_hall",
-                                      "tickets__movie_session__movie",))
+                                      "tickets__movie_session__movie", ))
 
         return queryset
 

@@ -84,7 +84,11 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     def clean(self):
-        Ticket.validate_seat(self.seat, self.movie_session.cinema_hall.seats_in_row, ValueError)
+        Ticket.validate_seat(
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row,
+            ValueError
+        )
 
     def save(
         self,
@@ -111,6 +115,7 @@ class Ticket(models.Model):
         if not (1 <= seat <= seats_in_row):
             raise error_to_raise(
                 {
-                    "seat": f"seat must be in range [1, {seats_in_row}], not {seat}"
+                    "seat": f"seat must be in range "
+                            f"[1, {seats_in_row}], not {seat}"
                 }
             )
