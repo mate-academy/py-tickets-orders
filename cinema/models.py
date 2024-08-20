@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 
@@ -28,7 +27,7 @@ class Actor(models.Model):
     last_name = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.first_name + " " + self.last_name
+        return self.full_name
 
     @property
     def full_name(self):
@@ -85,22 +84,7 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        Ticket.validate_seat(self.seat, self.movie_session.cinema_hall.seats_in_row, ValueError)
 
     def save(
         self,
@@ -121,3 +105,12 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+
+    @staticmethod
+    def validate_seat(seat: int, seats_in_row: int, error_to_raise):
+        if not (1 <= seat <= seats_in_row):
+            raise error_to_raise(
+                {
+                    "seat": f"seat must be in range [1, {seats_in_row}], not {seat}"
+                }
+            )
