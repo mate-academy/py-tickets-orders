@@ -3,13 +3,14 @@ from datetime import datetime
 from django.db.models import F, Count
 from rest_framework import viewsets
 
-from cinema.models import (Genre,
-                           Actor,
-                           CinemaHall,
-                           Movie,
-                           MovieSession,
-                           Order
-                           )
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order
+)
 from cinema.pagination import OrderPagination
 
 from cinema.serializers import (
@@ -94,9 +95,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-    @staticmethod
-    def _param_to_date(query_string):
-        return datetime.datetime.strptime(query_string, "%Y-%m-%d")
 
     def get_queryset(self):
         queryset = self.queryset
@@ -121,8 +119,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         date = self.request.query_params.get("date")
         if date:
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(
-                show_time__date=date
+                show_time__date=date_obj
             )
 
         movie = self.request.query_params.get("movie")

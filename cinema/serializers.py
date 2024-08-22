@@ -57,7 +57,7 @@ class MovieDetailSerializer(MovieSerializer):
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
-        fields = ("id", "row", "seat", "movie_session")
+        fields = ("row", "seat")
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
