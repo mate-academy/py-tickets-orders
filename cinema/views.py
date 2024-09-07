@@ -37,6 +37,17 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
+
+        if actors:
+            queryset = queryset.filter(actors__last_name=actors)
+        if genres:
+            queryset = queryset.filter(genres__name=genres)
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+
         if self.action in ("list", "retrieve"):
             return queryset.prefetch_related("actors", "genres")
         return queryset
@@ -60,10 +71,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
         if date:
-            queryset = MovieSession.objects.filter(show_time__date=date)
+            queryset = queryset.filter(show_time__date=date)
 
         if movie:
-            queryset = MovieSession.objects.filter(id=movie)
+            queryset = queryset.filter(id=movie)
 
         if self.action == "list":
             queryset = (
