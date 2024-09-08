@@ -1,5 +1,6 @@
 from django.db.models import F, Count
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -12,7 +13,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer,
+    MovieListSerializer, OrderSerializer, OrderCreateSerializer,
 )
 
 
@@ -42,9 +43,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            queryset = queryset.filter(actors__last_name=actors)
+            actors_ids = [int(str_id) for str_id in actors.split(",")]
+            queryset = Movie.objects.filter(actors__in=actors_ids)
         if genres:
-            queryset = queryset.filter(genres__name=genres)
+            genres_ids = [int(str_id) for str_id in genres.split(",")]
+            queryset = Movie.objects.filter(genres__in=genres_ids)
         if title:
             queryset = queryset.filter(title__icontains=title)
 
@@ -102,12 +105,31 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
+class OrderSetPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 20
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = OrderSetPagination
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        queryset = self.queryset.filter(user=self.request.user)
+        if self.action == "list":
+            queryset = (
+                queryset
+                .prefetch_related("tickets__movie_session__cinema_hall",
+                                  "tickets__movie_session__movie")
+            )
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return OrderCreateSerializer
+        return OrderSerializer
