@@ -85,7 +85,8 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     @staticmethod
-    def validate_value(value: int, limit: int, field_name: str, error_to_raise):
+    def validate_value(value: int, limit: int,
+                       field_name: str, error_to_raise):
         if not (1 <= value <= limit):
             raise error_to_raise({
                 field_name: f"{field_name} must be in the range [1, {limit}]"
