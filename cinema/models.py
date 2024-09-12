@@ -121,3 +121,13 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+
+    @staticmethod
+    def validate_seat(seat: int, seat_in_row: int, error_to_raise):
+        if not (1 <= seat <= seat_in_row):
+            raise error_to_raise(
+                {
+                    "seat": f"seat must be in range "
+                            f"[1, {seat_in_row}], not {seat}"
+                }
+            )
