@@ -67,8 +67,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = self.queryset.filter(actors__id__in=actors)
 
         if title:
-            title = self._params_to_int(title)
-            queryset = self.queryset.filter(title__in=title)
+            queryset = self.queryset.filter(title__icontaints=title)
 
         return queryset.distinct()
 
