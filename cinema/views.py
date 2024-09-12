@@ -105,7 +105,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 "cinema_hall",
 
             ).annotate(tickets_available=F(
-                "cinema_hall__capacity") - Count("tickets)"))
+                "cinema_hall__rows"
+            ) * F("cinema_hall_seats_in_row") - Count("tickets)"))
         return queryset.distinct()
 
 
