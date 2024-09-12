@@ -92,7 +92,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
-        fields = ("movie_session", "order", "row", "seat")
+        fields = ("movie_session", "row", "seat")
 
     def validate(self, attrs):
         Ticket.validate_seat(
