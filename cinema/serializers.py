@@ -131,7 +131,6 @@ class TicketListSerializer(TicketSerializer):
         fields = ("id", "row", "seat", "movie_session")
 
 
-
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
 
