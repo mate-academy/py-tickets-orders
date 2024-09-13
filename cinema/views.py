@@ -20,6 +20,12 @@ from cinema.serializers import (
 )
 
 
+class ParamsToIntMixin:
+    @staticmethod
+    def _params_to_int(params):
+        return [int(str_id) for str_id in params.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -35,13 +41,10 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
+class MovieViewSet(ParamsToIntMixin, viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    @staticmethod
-    def _params_to_int(params):
-        return [int(str_id) for str_id in params.split(",")]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -72,7 +75,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return queryset.distinct()
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(ParamsToIntMixin, viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
@@ -91,8 +94,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         date = self.request.query_params.get("date")
 
         if movie:
-            movie_ids = [int(str_id) for str_id in movie.split(",")]
-            queryset = queryset.filter(movie__id__in=movie_ids)
+            movie = self._params_to_int(movie)
+            queryset = queryset.filter(movie__id__in=movie)
 
         if date:
             date = datetime.strptime(date, "%Y-%m-%d")
@@ -102,7 +105,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.select_related(
                 "movie",
                 "cinema_hall",
-
             ).annotate(tickets_available=F(
                 "cinema_hall__rows"
             ) * F("cinema_hall__seats_in_row") - Count("tickets"))
