@@ -1,3 +1,7 @@
+from operator import ior
+from functools import reduce
+
+from django.db.models import Q
 from rest_framework import viewsets, pagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -35,6 +39,35 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        actors = self.request.GET.get("actors")
+        genres = self.request.GET.get("genres")
+        title = self.request.GET.get("title")
+
+        if actors:
+            queryset = queryset.filter(
+                reduce(
+                    ior,
+                    [
+                        Q(
+                            actors__first_name=first_name,
+                            actors__last_name=last_name,
+                        )
+                        for first_name, last_name in map(
+                            str.split, actors.split(",")
+                        )
+                    ],
+                )
+            )
+        if genres:
+            queryset = queryset.filter(genres__name__in=genres.split(","))
+        if title:
+            queryset = queryset.filter(title__contains=title)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
