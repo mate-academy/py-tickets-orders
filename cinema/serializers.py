@@ -97,6 +97,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(slug_field="id", read_only=True)
     tickets = TicketSerializer(many=True, read_only=True)
 
     class Meta:
