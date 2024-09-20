@@ -70,9 +70,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset.prefetch_related(
+            "tickets__movie_session__movie",
             "tickets__movie_session__cinema_hall",
-            "tickets__movie_session__movie__genres",
-            "tickets__movie_session__movie__actors",
         )
         if not self.request.user.is_authenticated:
             return queryset.none()
