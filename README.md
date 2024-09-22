@@ -14,7 +14,7 @@ Read [the guideline](https://github.com/mate-academy/py-task-guideline/blob/main
 1. Create serializers and views to support the following endpoints:
 
 * `GET api/cinema/orders/` - should return a list of the all orders that filtered by the authenticated user.
-Add detail information about movie session and implement pagination.
+Add detail information about movie session and implement pagination. Note, to implement pagination don't forget to place config in the `settings.py`.
 
 Example:
 ```
