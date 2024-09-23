@@ -63,7 +63,7 @@ class MovieViewSet(viewsets.ModelViewSet):
                 )
             )
         if genres:
-            queryset = queryset.filter(genres__name__in=genres.split(","))
+            queryset = queryset.filter(genres__id__in=genres.split(","))
         if title:
             queryset = queryset.filter(title__contains=title)
 
