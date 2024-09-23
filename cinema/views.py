@@ -1,7 +1,4 @@
-from operator import ior
-from functools import reduce
-
-from django.db.models import Q, F
+from django.db.models import F
 from rest_framework import viewsets, pagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -48,20 +45,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.GET.get("title")
 
         if actors:
-            queryset = queryset.filter(
-                reduce(
-                    ior,
-                    [
-                        Q(
-                            actors__first_name=first_name,
-                            actors__last_name=last_name,
-                        )
-                        for first_name, last_name in map(
-                            str.split, actors.split(",")
-                        )
-                    ],
-                )
-            )
+            queryset = queryset.filter(actors__id__in=actors.split(","))
         if genres:
             queryset = queryset.filter(genres__id__in=genres.split(","))
         if title:
