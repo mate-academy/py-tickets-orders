@@ -153,3 +153,4 @@ class MovieApiTests(TestCase):
             "/api/cinema/movies/1000/",
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    
