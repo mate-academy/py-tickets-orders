@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 
+from cinema.validations import validate_seats_and_rows
+
 
 class CinemaHall(models.Model):
     name = models.CharField(max_length=255)
@@ -76,7 +78,7 @@ class Order(models.Model):
 
 class Ticket(models.Model):
     movie_session = models.ForeignKey(
-        MovieSession, on_delete=models.CASCADE, related_name="tickets"
+        MovieSession, on_delete=models.CASCADE, related_name="taken_places"
     )
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="tickets"
@@ -85,22 +87,12 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        validate_seats_and_rows(
+            self.row,
+            self.seat,
+            self.movie_session.cinema_hall,
+            ValidationError
+        )
 
     def save(
         self,
@@ -110,7 +102,7 @@ class Ticket(models.Model):
         update_fields=None,
     ):
         self.full_clean()
-        super(Ticket, self).save(
+        return super(Ticket, self).save(
             force_insert, force_update, using, update_fields
         )
 
