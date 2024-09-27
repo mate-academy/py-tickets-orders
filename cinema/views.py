@@ -27,6 +27,10 @@ from cinema.serializers import (
 )
 
 
+def params_to_ints(query_string):
+    return [int(str_id) for str_id in query_string.split(",")]
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -55,13 +59,13 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         actors = self.request.query_params.get("actors")
         if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
-            queryset = queryset.filter(actors__id__in=actors_ids)
+            actors = params_to_ints(actors)
+            queryset = queryset.filter(actors__id__in=actors)
 
         genres = self.request.query_params.get("genres")
         if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
-            queryset = queryset.filter(genres__id__in=genres_ids)
+            genres = params_to_ints(genres)
+            queryset = queryset.filter(genres__id__in=genres)
 
         return queryset.distinct()
 
@@ -94,10 +98,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date)
 
         movie = self.request.query_params.get("movie")
-
         if movie:
-            movies_ids = [int(str_id) for str_id in movie.split(",")]
-            queryset = queryset.filter(movie__id__in=movies_ids)
+            movie = params_to_ints(movie)
+            queryset = queryset.filter(movie__id__in=movie)
 
         return queryset.distinct()
 
