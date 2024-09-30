@@ -1,6 +1,14 @@
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -46,6 +54,7 @@ class MovieDetailSerializer(MovieSerializer):
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
@@ -68,13 +77,68 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
+            "tickets_available"
         )
+
+
+class TicketsForMovieSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TicketsForMovieSessionSerializer(source="tickets",
+                                                    many=True,
+                                                    read_only=True)
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = (
+            "id",
+            "show_time",
+            "movie",
+            "cinema_hall",
+            "taken_places"
+        )
+
+
+class TicketsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class TicketsListSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionListSerializer(read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class OrderListSerializer(serializers.ModelSerializer):
+    tickets = TicketsListSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketsSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
+
+    def create(self, validated_data):
+        tickets = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
+        for ticket in tickets:
+            Ticket.objects.create(order=order, **ticket)
+
+        return order
