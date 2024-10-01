@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+from django.db.models import UniqueConstraint
 
 
 class CinemaHall(models.Model):
@@ -85,22 +86,12 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        Ticket.validate_seat(
+            self.seat,
+            self.row,
+            self.movie_session,
+            ValidationError
+        )
 
     def save(
         self,
@@ -119,5 +110,31 @@ class Ticket(models.Model):
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
 
+    @staticmethod
+    def validate_seat(seat: int, row: int, movie_session, error_to_raise):
+        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row"),
+        ]:
+            count_attrs = getattr(
+                movie_session.cinema_hall,
+                cinema_hall_attr_name
+            )
+            if not (1 <= ticket_attr_value <= count_attrs):
+                raise error_to_raise(
+                    {
+                        ticket_attr_name:
+                            f"{ticket_attr_name} "
+                            f"number must be in available range: "
+                            f"(1, {cinema_hall_attr_name}): "
+                            f"(1, {count_attrs})"
+                    }
+                )
+
     class Meta:
-        unique_together = ("movie_session", "row", "seat")
+        constraints = [
+            UniqueConstraint(
+                fields=["movie_session", "row", "seat"],
+                name="unique_ticket"
+            )
+        ]
