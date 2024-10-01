@@ -1,12 +1,14 @@
 from django.urls import path, include
 from rest_framework import routers
 
+from cinema.serializers import OrderSerializer
 from cinema.views import (
     GenreViewSet,
     ActorViewSet,
     CinemaHallViewSet,
     MovieViewSet,
     MovieSessionViewSet,
+    OrdersViewSet
 )
 
 router = routers.DefaultRouter()
@@ -15,6 +17,7 @@ router.register("actors", ActorViewSet)
 router.register("cinema_halls", CinemaHallViewSet)
 router.register("movies", MovieViewSet)
 router.register("movie_sessions", MovieSessionViewSet)
+router.register("orders", OrdersViewSet)
 
 urlpatterns = [path("", include(router.urls))]
 
