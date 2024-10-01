@@ -1,3 +1,4 @@
+from django.core.serializers import serialize
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -11,7 +12,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer,
+    MovieListSerializer, OrderSerializer, OrderListSerializer,
 )
 
 
@@ -68,3 +69,9 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        serializer = self.serializer_class
+        if self.action == "list":
+            serializer = OrderListSerializer
+        return serializer
