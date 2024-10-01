@@ -140,33 +140,6 @@ class TicketCreateSerializer(TicketSerializer):
         queryset=MovieSession.objects.all()
     )
 
-    def validate(self, validate_data: dict):
-        movie_session = validate_data.pop("movie_session")
-        row = validate_data.pop("row")
-        seat = validate_data.pop("seat")
-
-        if Ticket.objects.filter(
-                movie_session=movie_session, row=row, seat=seat
-        ).exists():
-            raise serializers.ValidationError(
-                f"Seat {seat} in row {row} is already taken "
-                f"for this movie session."
-            )
-
-        cinema_hall = movie_session.cinema_hall
-        if row < 1 or row > cinema_hall.rows:
-            raise serializers.ValidationError(
-                f"Row {row} is not valid for this cinema hall."
-                f"Must be in range [1, {cinema_hall.rows}]"
-            )
-        if seat < 1 or seat > cinema_hall.seats_in_row:
-            raise serializers.ValidationError(
-                f"Seat {seat} is not valid for this cinema hall."
-                f"Must be in range [1, {cinema_hall.seats_in_row}]"
-            )
-
-        return validate_data
-
 
 class OrderCreateSerializer(OrderSerializer):
     tickets = TicketCreateSerializer(
