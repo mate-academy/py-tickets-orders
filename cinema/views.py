@@ -62,6 +62,13 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
 
+        if self.action == ("list", "retrieve"):
+            queryset = Movie.objects.prefetch_related(
+                "genres",
+                "actors",
+                "title",
+            )
+
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -94,10 +101,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.select_related(
                 "cinema_hall"
             ).annotate(
-                tickets_available=F(
-                    "cinema_hall__seats_in_row"
-                ) - Count(
-                    "tickets"
+                tickets_available=(
+                    F(
+                        "cinema_hall__rows"
+                    ) * F(
+                        "cinema_hall__seats_in_row"
+                    )) - Count(
+                        "tickets"
                 )
             ).order_by("id")
 

@@ -28,11 +28,14 @@ class CinemaHallApiTests(TestCase):
             "seats_in_row": 20,
             "capacity": 300,
         }
+        print(response.data)
+        results = response.data["results"]
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["name"], blue_hall["name"])
-        self.assertEqual(response.data[0]["rows"], blue_hall["rows"])
+        self.assertEqual(results[0]["name"], blue_hall["name"])
+        self.assertEqual(results[0]["rows"], blue_hall["rows"])
         self.assertEqual(
-            response.data[0]["seats_in_row"], blue_hall["seats_in_row"]
+            results[0]["seats_in_row"], blue_hall["seats_in_row"]
         )
         vip_hall = {
             "name": "VIP",
@@ -41,10 +44,10 @@ class CinemaHallApiTests(TestCase):
             "capacity": 48,
         }
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[1]["name"], vip_hall["name"])
-        self.assertEqual(response.data[1]["rows"], vip_hall["rows"])
+        self.assertEqual(results[1]["name"], vip_hall["name"])
+        self.assertEqual(results[1]["rows"], vip_hall["rows"])
         self.assertEqual(
-            response.data[1]["seats_in_row"], vip_hall["seats_in_row"]
+            results[1]["seats_in_row"], vip_hall["seats_in_row"]
         )
 
     def test_post_cinema_halls(self):
@@ -128,3 +131,4 @@ class CinemaHallApiTests(TestCase):
             "/api/cinema/cinema_halls/1000/",
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
