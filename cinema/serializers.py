@@ -1,3 +1,5 @@
+from os import supports_effective_ids
+
 from django.db import transaction
 
 from rest_framework import serializers
@@ -62,10 +64,18 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ["id", "row", "seat", "movie_session"]
         validators = [
             UniqueTogetherValidator(
-                queryset=Order.objects.all(),
+                queryset=Ticket.objects.all(),
                 fields=["movie_session", "row", "seat"]
             )
         ]
+
+        def validate(self, attrs):
+            Ticket.validate_seat(
+                row=attrs["row"],
+                seat=attrs["seat"],
+                movie_session=attrs["movie_session"]
+            )
+            return attrs
 
 
 class TicketListSerializer(TicketSerializer):
@@ -123,21 +133,13 @@ class TicketRetrieveSerializer(TicketSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketRetrieveSerializer(
+    tickets = TicketSerializer(
         many=True, read_only=False, allow_empty=False
     )
 
     class Meta:
         model = Order
         fields = ["id", "created_at", "tickets"]
-
-
-class OrderCreateSerializer(OrderSerializer):
-    tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
-
-    class Meta:
-        model = Order
-        fields = ["id", "tickets", "created_at"]
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -149,3 +151,7 @@ class OrderCreateSerializer(OrderSerializer):
                     **ticket_data
                 )
             return order
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketRetrieveSerializer(many=True, read_only=False)
