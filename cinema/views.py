@@ -1,4 +1,4 @@
-from django.db.models import F
+from django.db.models import F, Count, IntegerField
 from rest_framework import viewsets, pagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -86,10 +86,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset.select_related("movie", "cinema_hall")
 
-        queryset = queryset.annotate(
+        queryset = queryset.annotate(tickets_taken=Count("tickets")).annotate(
             tickets_available=F("cinema_hall__rows")
             * F("cinema_hall__seats_in_row")
-            - queryset.first().tickets.count()
+            - F("tickets_taken")
         )
 
         date = self.request.GET.get("date")
