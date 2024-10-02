@@ -20,7 +20,7 @@ from cinema.serializers import (
 
 
 def _params_to_ints(query_str: str) -> list[int]:
-    return [int(param_id) for param_id in query_str.split(',')]
+    return [int(param_id) for param_id in query_str.split(",")]
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -101,8 +101,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset
             .select_related()
             .annotate(
-                tickets_available=
-                F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets")
+                tickets_available=(
+                        F("cinema_hall__rows") *
+                        F("cinema_hall__seats_in_row") -
+                        Count("tickets")
+                )
             )
         ).order_by("id")
 
