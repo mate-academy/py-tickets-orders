@@ -1,5 +1,7 @@
 from rest_framework import viewsets
 from django.db.models import Count, F
+import datetime
+import re
 
 from cinema.models import (
     Genre,
@@ -26,21 +28,25 @@ from cinema.serializers import (
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
+    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -58,13 +64,23 @@ class MovieViewSet(viewsets.ModelViewSet):
         actors = self.request.query_params.get("actors")
         title = self.request.query_params.get("title")
 
-        if genres is not None:
-            queryset = queryset.filter(genres__name__icontains=genres)
+        if genres:
+            genres_list = [
+                int(genre_id.strip())
+                for genre_id in genres.split(",")
+                if genre_id.strip().isdigit()
+            ]
+            queryset = queryset.filter(genres__id__in=genres_list).distinct()
 
-        if actors is not None:
-            queryset = queryset.filter(actors__id=actors)
+        if actors:
+            actors_list = [
+                int(actor_id.strip())
+                for actor_id in actors.split(",")
+                if actor_id.strip().isdigit()
+            ]
+            queryset = queryset.filter(actors__id__in=actors_list).distinct()
 
-        if title is not None:
+        if title:
             queryset = queryset.filter(title__icontains=title)
 
         return queryset
@@ -73,6 +89,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -93,11 +110,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .prefetch_related("tickets")
                 .annotate(
                     tickets_available=(
-                        F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                        F("cinema_hall__rows")
+                        * F("cinema_hall__seats_in_row")
                         - Count("tickets")
                     )
                 )
             )
+
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
