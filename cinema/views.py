@@ -94,8 +94,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset
                 .prefetch_related("movie", "cinema_hall", "tickets")
                 .annotate(
-                    capacity=(F("cinema_hall__rows") *
-                              F("cinema_hall__seats_in_row")),
+                    capacity=(F("cinema_hall__rows")
+                              * F("cinema_hall__seats_in_row")),
                     tickets_available=F("capacity") - Count("tickets"))
             )
 
