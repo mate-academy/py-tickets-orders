@@ -108,7 +108,6 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
             "movie",
             "cinema_hall",
             "taken_places",
-            "tickets_available",
         )
 
     def get_taken_places(self, obj):
