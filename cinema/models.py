@@ -1,3 +1,5 @@
+from typing import Type
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -111,7 +113,12 @@ class Ticket(models.Model):
         )
 
     @staticmethod
-    def validate_seat(seat: int, row: int, movie_session, error_to_raise):
+    def validate_seat(
+            seat: int,
+            row: int,
+            movie_session: MovieSession,
+            error_to_raise: Type[BaseException]
+    ) -> None:
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),

@@ -120,13 +120,19 @@ class TicketSerializer(serializers.ModelSerializer):
             )
         ]
 
-        def validate(self, attrs):
+        def validate(self, attrs: dict) -> dict:
+            seat = attrs.get("seat")
+            row = attrs.get("row")
+            movie_session = attrs.get("movie_session")
+
             Ticket.validate_seat(
-                attrs["seat"],
-                attrs["movie_session"],
-                attrs["row"],
+                seat,
+                row,
+                movie_session,
                 serializers.ValidationError
             )
+
+            return attrs
 
 
 class TicketListSerializer(TicketSerializer):
@@ -140,7 +146,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("tickets",)
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> Order:
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
@@ -155,7 +161,3 @@ class OrderListSerializer(OrderSerializer):
         read_only=False,
         allow_empty=False
     )
-
-    class Meta:
-        model = Order
-        fields = ("id", "created_at", "tickets",)
