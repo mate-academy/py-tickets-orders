@@ -2,6 +2,7 @@ from django.db.models import F
 from rest_framework import viewsets, pagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.exceptions import InvalidIdException
 
 from cinema.serializers import (
     GenreSerializer,
@@ -45,9 +46,15 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.GET.get("title")
 
         if actors:
-            queryset = queryset.filter(actors__id__in=actors.split(","))
+            actors = actors.split(",")
+            if not all(actor_id.isdecimal() for actor_id in actors):
+                raise InvalidIdException()
+            queryset = queryset.filter(actors__id__in=actors)
         if genres:
-            queryset = queryset.filter(genres__id__in=genres.split(","))
+            genres = genres.split(",")
+            if not all(genre_id.isdecimal() for genre_id in genres):
+                raise InvalidIdException()
+            queryset = queryset.filter(genres__id__in=genres)
         if title:
             queryset = queryset.filter(title__contains=title)
 
@@ -91,6 +98,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if date:
             queryset = queryset.filter(show_time__date=date)
         if movie_id:
+            if not movie_id.isdecimal():
+                raise InvalidIdException()
             queryset = queryset.filter(movie_id=int(movie_id))
 
         return queryset
