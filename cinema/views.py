@@ -53,24 +53,27 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
-        genres = self.request.query_params.get("genres")
-        actors = self.request.query_params.get("actors")
-        title = self.request.query_params.get("title")
+        queryset = self.queryset.prefetch_related("genres", "actors")
 
-        if genres:
-            genres_ids = self._params_to_ints(genres)
-            queryset = queryset.filter(genres__id__in=genres_ids)
+        if self.action == "list":
 
-        if actors:
-            actors_ids = self._params_to_ints(actors)
-            queryset = queryset.filter(actors__id__in=actors_ids)
+            genres = self.request.query_params.get("genres")
+            actors = self.request.query_params.get("actors")
+            title = self.request.query_params.get("title")
 
-        if title:
-            queryset = queryset.filter(title__contains=title)
+            if actors:
+                actors = self._params_to_ints(actors)
+                queryset = queryset.filter(actors__id__in=actors)
 
-        if self.action in ("list", "retrieve"):
-            return queryset.prefetch_related("genres", "actors")
+            if genres:
+                genres = self._params_to_ints(genres)
+                queryset = queryset.filter(genres__id__in=genres)
+
+            if title:
+                queryset = queryset.filter(title__icontains=title)
+
+        elif self.action == "retrieve":
+            queryset = queryset.prefetch_related("genres", "actors")
 
         return queryset.distinct()
 
@@ -78,10 +81,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-
-    @staticmethod
-    def _params_to_ints(query_string):
-        return [int(str_id) for str_id in query_string.split(",")]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -94,15 +93,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        movies = self.request.query_params.get("movies")
-        date = self.request.query_params.get("date")
-        if movies:
-            movies_ids = self._params_to_ints(movies)
-            queryset = queryset.filter(movies__id__in=movies_ids)
-
-        if date:
-            queryset = queryset.filter(show_time__date=date)
-
         if self.action == "list":
             queryset = (
                 queryset
@@ -113,7 +103,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                     ) - Count("tickets")
                 )
             )
-        elif self.action in "retrieve":
+            movie = self.request.query_params.get("movie")
+            date = self.request.query_params.get("date")
+            if movie:
+                queryset = queryset.filter(movie__id=movie)
+
+            if date:
+                queryset = queryset.filter(show_time__date=date)
+
+        if self.action in "retrieve":
             queryset = queryset.select_related("movie", "cinema_hall")
 
         return queryset.distinct()
