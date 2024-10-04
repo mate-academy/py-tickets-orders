@@ -28,27 +28,23 @@ from cinema.serializers import (
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by("id")
     serializer_class = GenreSerializer
-    pagination_class = BasePagination
 
 
 class ActorViewSet(viewsets.ModelViewSet):
-    queryset = Actor.objects.all()
+    queryset = Actor.objects.all().order_by("id")
     serializer_class = ActorSerializer
-    pagination_class = BasePagination
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
-    queryset = CinemaHall.objects.all()
+    queryset = CinemaHall.objects.all().order_by("id")
     serializer_class = CinemaHallSerializer
-    pagination_class = BasePagination
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
+    queryset = Movie.objects.order_by("id")
     serializer_class = MovieSerializer
-    pagination_class = BasePagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = MovieFilter
 
@@ -62,7 +58,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
     def get_queryset(self):
-        queryset = Movie.objects.all()
+        queryset = self.queryset
         if self.action in ["list", "retrieve"]:
             return queryset.prefetch_related(
                 "genres",
@@ -73,7 +69,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-    pagination_class = BasePagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = MovieSessionFilter
 
@@ -103,7 +98,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             queryset = queryset.select_related()
 
-        return queryset
+        return queryset.order_by("id")
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -122,7 +117,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "tickets__movie_session__movie",
                 "tickets__movie_session__cinema_hall",
             )
-        return queryset
+        return queryset.order_by("id")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
