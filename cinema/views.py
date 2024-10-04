@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Any, Type, List
 
 from django.db.models import F, Count, QuerySet
 from rest_framework import viewsets
@@ -64,17 +64,20 @@ class MovieViewSet(viewsets.ModelViewSet):
             title = self.request.query_params.get("title")
 
             if genres:
-                genres_ids = [int(str_id) for str_id in genres.split(",")]
+                genres_ids = self._parse_comma_separated_ids(genres)
                 queryset = queryset.filter(genres__id__in=genres_ids)
 
             if actors:
-                actors_ids = [int(str_id) for str_id in actors.split(",")]
+                actors_ids = self._parse_comma_separated_ids(actors)
                 queryset = queryset.filter(actors__id__in=actors_ids)
 
             if title:
                 queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
+
+    def _parse_comma_separated_ids(self, param: str) -> List[int]:
+        return [int(str_id) for str_id in param.split(",")]
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
