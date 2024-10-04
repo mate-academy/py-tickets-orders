@@ -38,6 +38,13 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
+    @staticmethod
+    def _split_ids(ids: str) -> list[str]:
+        ids = ids.split(",")
+        if not all(id_.isdecimal() for id_ in ids):
+            raise InvalidIdException()
+        return ids
+
     def get_queryset(self):
         queryset = self.queryset
 
@@ -46,14 +53,10 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.GET.get("title")
 
         if actors:
-            actors = actors.split(",")
-            if not all(actor_id.isdecimal() for actor_id in actors):
-                raise InvalidIdException()
+            actors = self._split_ids(actors)
             queryset = queryset.filter(actors__id__in=actors)
         if genres:
-            genres = genres.split(",")
-            if not all(genre_id.isdecimal() for genre_id in genres):
-                raise InvalidIdException()
+            genres = self._split_ids(genres)
             queryset = queryset.filter(genres__id__in=genres)
         if title:
             queryset = queryset.filter(title__contains=title)
