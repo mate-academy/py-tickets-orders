@@ -133,6 +133,10 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "created_at", "tickets")
 
+
+class OrderCreateSerializer(OrderSerializer):
+    tickets = TicketCreateSerializer(many=True, write_only=True)
+
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
         with transaction.atomic():
@@ -145,7 +149,3 @@ class OrderSerializer(serializers.ModelSerializer):
                     movie_session_id=movie_session_id
                 )
         return order
-
-
-class OrderCreateSerializer(OrderSerializer):
-    tickets = TicketCreateSerializer(many=True, write_only=True)
