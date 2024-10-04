@@ -1,7 +1,5 @@
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.fields import SerializerMethodField
-from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
     Actor,
@@ -84,10 +82,20 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
 
+class TicketSeatsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ["row", "seat"]
+
+
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = SerializerMethodField()
+    taken_places = TicketSeatsSerializer(
+        source="tickets",
+        many=True,
+        read_only=True
+    )
 
     class Meta:
         model = MovieSession
@@ -99,15 +107,6 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
             "taken_places",
         )
 
-    def get_taken_places(self, movie_session: MovieSession) -> list[dict]:
-        return [
-            {
-                "row": ticket.row,
-                "seat": ticket.seat
-            }
-            for ticket in movie_session.tickets.all()
-        ]
-
 
 class TicketSerializer(serializers.ModelSerializer):
     movie_session = MovieSessionListSerializer(read_only=False)
@@ -115,12 +114,6 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ["id", "row", "seat", "movie_session"]
-
-
-class OrderSetPagination(PageNumberPagination):
-    page_size = 3
-    page_size_query_param = "page_size"
-    max_page_size = 3
 
 
 class OrderSerializer(serializers.ModelSerializer):

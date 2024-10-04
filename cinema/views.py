@@ -1,4 +1,4 @@
-from django.db.models import QuerySet, Q, F, Count
+from django.db.models import QuerySet, F, Count
 from rest_framework import viewsets
 from rest_framework.serializers import Serializer, SerializerMetaclass
 
@@ -10,7 +10,7 @@ from cinema.models import (
     MovieSession,
     Order
 )
-
+from cinema.paginators import OrderSetPagination
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -22,7 +22,6 @@ from cinema.serializers import (
     MovieSessionDetailSerializer,
     MovieListSerializer,
     OrderSerializer,
-    OrderSetPagination,
     OrderCreateSerializer,
 )
 
