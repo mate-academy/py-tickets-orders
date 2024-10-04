@@ -86,8 +86,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
 
         if self.action == "list":
-            queryset = queryset.select_related().prefetch_related("movie__genres", "movie__actors").annotate(
-                tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets"),
+            ticket_count = Count("tickets")
+            capacity = F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+            queryset = queryset.select_related().prefetch_related(
+                "movie__genres",
+                "movie__actors"
+            ).annotate(
+                tickets_available=capacity - ticket_count,
             )
 
         date = self.request.query_params.get("date")
@@ -125,7 +130,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action == "list":
-            queryset = queryset.prefetch_related("tickets__movie_session__cinema_hall", "tickets__movie_session__movie")
+            queryset = queryset.prefetch_related(
+                "tickets__movie_session__cinema_hall",
+                "tickets__movie_session__movie"
+            )
         return queryset
 
     def perform_create(self, serializer):
