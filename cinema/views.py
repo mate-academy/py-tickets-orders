@@ -1,6 +1,8 @@
-from rest_framework import viewsets
+from django.db.models import F, Count, IntegerField
+from rest_framework import viewsets, pagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.exceptions import InvalidIdException
 
 from cinema.serializers import (
     GenreSerializer,
@@ -12,6 +14,8 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
+    OrderSerializer,
+    OrderCreateSerializer,
 )
 
 
@@ -33,6 +37,31 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+
+    @staticmethod
+    def _split_ids(ids: str) -> list[str]:
+        ids = ids.split(",")
+        if not all(id_.isdecimal() for id_ in ids):
+            raise InvalidIdException()
+        return ids
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        actors = self.request.GET.get("actors")
+        genres = self.request.GET.get("genres")
+        title = self.request.GET.get("title")
+
+        if actors:
+            actors = self._split_ids(actors)
+            queryset = queryset.filter(actors__id__in=actors)
+        if genres:
+            genres = self._split_ids(genres)
+            queryset = queryset.filter(genres__id__in=genres)
+        if title:
+            queryset = queryset.filter(title__contains=title)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -56,3 +85,54 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.select_related("movie", "cinema_hall")
+
+        queryset = queryset.annotate(
+            tickets_available=F("cinema_hall__rows")
+            * F("cinema_hall__seats_in_row")
+            - Count("tickets")
+        )
+
+        date = self.request.GET.get("date")
+        movie_id = self.request.GET.get("movie")
+
+        if date:
+            queryset = queryset.filter(show_time__date=date)
+        if movie_id:
+            if not movie_id.isdecimal():
+                raise InvalidIdException()
+            queryset = queryset.filter(movie_id=int(movie_id))
+
+        return queryset
+
+
+class OrderPagination(pagination.PageNumberPagination):
+    page_size = 10
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    pagination_class = OrderPagination
+
+    def get_queryset(self):
+        queryset = self.queryset.prefetch_related(
+            "tickets__movie_session__movie",
+            "tickets__movie_session__cinema_hall",
+        )
+        if not self.request.user.is_authenticated:
+            return queryset.none()
+
+        queryset = queryset.filter(user=self.request.user)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return OrderCreateSerializer
+
+        return self.serializer_class
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
