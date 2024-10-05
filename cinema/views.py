@@ -107,7 +107,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = (
                 queryset
                 .select_related("movie")
-                .annotate(tickets_available=F("cinema_hall__seats_in_row") - Count("tickets"))
+                .annotate(
+                    tickets_available=F(
+                        "cinema_hall__seats_in_row"
+                    ) - Count("tickets")
+                )
             ).order_by("id")
         return queryset
 
@@ -119,7 +123,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderSetPagination(PageNumberPagination):
     page_size = 2
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 20
 
 
@@ -135,7 +139,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
 
         if self.action == "list":
-            queryset = queryset.prefetch_related("tickets__movie_session__cinema_hall")
+            queryset = queryset.prefetch_related(
+                "tickets__movie_session__cinema_hall"
+            )
 
         return queryset
 
