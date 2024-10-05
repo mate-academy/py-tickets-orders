@@ -130,11 +130,11 @@ class OrderSerializer(serializers.ModelSerializer):
         self.fields["tickets"] = TicketListSerializer(many=True)
         return super().to_representation(instance)
 
+    @transaction.atomic
     def create(self, validated_data):
         user = self.context["request"].user
-        with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(user=user, **validated_data)
-            for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(user=user, **validated_data)
+        for ticket_data in tickets_data:
+            Ticket.objects.create(order=order, **ticket_data)
+        return order

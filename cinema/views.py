@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from django.db.models import Count, F
-import datetime
-import re
+from rest_framework.pagination import PageNumberPagination
+
 
 from cinema.models import (
     Genre,
@@ -21,32 +21,29 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer,
+    MovieListSerializer,
+    OrderSerializer,
 )
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
-    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
-    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
-    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -60,26 +57,21 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Movie.objects.all()
 
-        genres = self.request.query_params.get("genres")
-        actors = self.request.query_params.get("actors")
+        def filter_by_param(param, field_name):
+            param_value = self.request.query_params.get(param)
+            if param_value:
+                param_list = [
+                    int(item.strip())
+                    for item in param_value.split(",")
+                    if item.strip().isdigit()
+                ]
+                return queryset.filter(**{f"{field_name}__id__in": param_list}).distinct()
+            return queryset
+
+        queryset = filter_by_param("genres", "genres")
+        queryset = filter_by_param("actors", "actors")
+
         title = self.request.query_params.get("title")
-
-        if genres:
-            genres_list = [
-                int(genre_id.strip())
-                for genre_id in genres.split(",")
-                if genre_id.strip().isdigit()
-            ]
-            queryset = queryset.filter(genres__id__in=genres_list).distinct()
-
-        if actors:
-            actors_list = [
-                int(actor_id.strip())
-                for actor_id in actors.split(",")
-                if actor_id.strip().isdigit()
-            ]
-            queryset = queryset.filter(actors__id__in=actors_list).distinct()
-
         if title:
             queryset = queryset.filter(title__icontains=title)
 
@@ -128,9 +120,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+class OrderPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = OrderPagination
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
