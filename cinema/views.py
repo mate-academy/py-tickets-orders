@@ -65,7 +65,9 @@ class MovieViewSet(viewsets.ModelViewSet):
                     for item in param_value.split(",")
                     if item.strip().isdigit()
                 ]
-                return queryset.filter(**{f"{field_name}__id__in": param_list}).distinct()
+                return queryset.filter(
+                    **{f"{field_name}__id__in": param_list}
+                ).distinct()
             return queryset
 
         queryset = filter_by_param("genres", "genres")
