@@ -67,12 +67,12 @@ class MovieViewSet(viewsets.ModelViewSet):
         if actors:
             actors = self._params_to_ins(actors)
             queryset = queryset.filter(actors__id__in=actors)
-        elif genres:
+        if genres:
             genres = self._params_to_ins(genres)
             queryset = queryset.filter(genres__id__in=genres)
-        elif title:
+        if title:
             queryset = queryset.filter(title__icontains=title)
-        elif self.action in ("list", "retrieve"):
+        if self.action in ("list", "retrieve"):
             return queryset.prefetch_related("actors", "genres")
 
         return queryset
@@ -159,4 +159,4 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return OrderListSerializer
-        return OrderSerializer
+        return self.serializer_class
