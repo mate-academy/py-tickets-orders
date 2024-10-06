@@ -1,5 +1,6 @@
+from datetime import datetime
+
 from django.db.models import Count, F
-from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -74,7 +75,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         elif self.action in ("list", "retrieve"):
             return queryset.prefetch_related("actors", "genres")
 
-        return queryset.distinct()
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -89,8 +90,11 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related("cinema_hall", "movie")
     serializer_class = MovieSessionSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["movie", "show_time"]
+
+    @staticmethod
+    def _params_to_ins(query_string):
+        return [int(str_id) for str_id in
+                query_string.split(",")]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -103,6 +107,17 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
+        movie = self.request.query_params.get("movie")
+        date = self.request.query_params.get("date")
+
+        if date:
+            date = datetime.strptime(date, "%Y-%m-%d").date()
+            queryset = queryset.filter(show_time__date=date)
+
+        if movie:
+            movie = self._params_to_ins(movie)
+            queryset = queryset.filter(movie_id__in=movie)
+
         if self.action == "list":
             queryset = (
                 queryset
@@ -110,15 +125,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .annotate(
                     tickets_available=F(
                         "cinema_hall__seats_in_row"
-                    ) - Count("tickets")
+                    ) * F("cinema_hall__rows") - Count("tickets")
                 )
             ).order_by("id")
-        return queryset
 
-    @staticmethod
-    def _params_to_ins(query_string):
-        return [int(str_id) for str_id in
-                query_string.split(",")]
+        return queryset
 
 
 class OrderSetPagination(PageNumberPagination):

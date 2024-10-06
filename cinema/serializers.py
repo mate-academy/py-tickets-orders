@@ -93,6 +93,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
+    # show_time = serializers.DateTimeField(format='%Y-%m-%d')
+
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -103,18 +105,18 @@ class Ticket(models.Model):
                 raise ValidationError(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
+                                          f"number must be in available range: "
+                                          f"(1, {cinema_hall_attr_name}): "
+                                          f"(1, {count_attrs})"
                     }
                 )
 
     def save(
-        self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
     ):
         self.full_clean()
         super(Ticket, self).save(
