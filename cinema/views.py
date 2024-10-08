@@ -72,7 +72,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(actors__id__in=actors)
         if title:
             queryset = queryset.filter(title__icontains=title)
-        return queryset
+        return queryset.distinct()
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
