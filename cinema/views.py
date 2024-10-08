@@ -35,11 +35,18 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
+    queryset = Movie.objects.prefetch_related("actors", "genres")
     serializer_class = MovieSerializer
 
+    @staticmethod
+    def _params_to_int(item_string: str) -> list[int]:
+        return [
+                int(item_id.strip(" "))
+                for item_id in item_string.split(",")
+            ]
+
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = super().get_queryset()
         title = self.request.query_params.get("title")
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
@@ -47,19 +54,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
         if actors:
-            actors_ids = [
-                int(actor_id.strip(" "))
-                for actor_id in actors.split(",")
-            ]
-            queryset = queryset.filter(actors__id__in=actors_ids)
+            queryset = queryset.filter(actors__id__in=self._params_to_int(actors))
         if genres:
-            genres_ids = [
-                int(genre_id.strip(" "))
-                for genre_id in genres.split(",")
-            ]
-            queryset = queryset.filter(genres__id__in=genres_ids)
+            queryset = queryset.filter(genres__id__in=self._params_to_int(genres))
 
-        return queryset.prefetch_related("actors", "genres")
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -76,10 +75,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = super().get_queryset()
 
         date = self.request.query_params.get("date")
-        print("DATE: ", date, type(date))
+
         movie_id = self.request.query_params.get("movie")
 
         if date:
