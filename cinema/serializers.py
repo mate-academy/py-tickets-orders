@@ -94,7 +94,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
 
-    def get_taken_places(self, obj):
+    def get_taken_places(self, obj: MovieSession) -> list[dict]:
         tickets = Ticket.objects.filter(movie_session=obj)
         return [{"row": ticket.row, "seat": ticket.seat} for ticket in tickets]
 
@@ -106,7 +106,7 @@ class TicketSerializer(serializers.ModelSerializer):
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict) -> dict:
         Ticket.validate_ticket(
             attrs["row"],
             attrs["seat"],
@@ -133,13 +133,12 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "created_at", "tickets")
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict):
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
-            return order
 
 
 class OrderRetrieveSerializer(OrderSerializer):
