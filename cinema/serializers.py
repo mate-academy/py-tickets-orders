@@ -1,9 +1,6 @@
-from os import supports_effective_ids
-
 from django.db import transaction
 
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from cinema.models import (
     Genre,
@@ -62,12 +59,6 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ["id", "row", "seat", "movie_session"]
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Ticket.objects.all(),
-                fields=["movie_session", "row", "seat"]
-            )
-        ]
 
         def validate(self, attrs):
             Ticket.validate_seat(
@@ -113,8 +104,8 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    movie = MovieListSerializer(read_only=True)
+    cinema_hall = CinemaHallSerializer(read_only=True)
     taken_places = TicketListSerializer(
         many=True, read_only=True, source="tickets"
     )

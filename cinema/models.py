@@ -84,6 +84,14 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["movie_session", "row", "seat"],
+                name="unique_movie_session_row_seat"
+            )
+        ]
+
     @staticmethod
     def validate_seat(row: int, seat: int, movie_session: MovieSession):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
@@ -122,6 +130,3 @@ class Ticket(models.Model):
         return (
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
-
-    class Meta:
-        unique_together = ("movie_session", "row", "seat")
