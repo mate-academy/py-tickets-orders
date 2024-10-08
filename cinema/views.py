@@ -68,10 +68,10 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if actors:
             actors = self._params_to_ints(actors)
-            queryset = queryset.filter(actors__id__in=actors).distinct()
+            queryset = queryset.filter(actors__id__in=actors)
         if genres:
             genres = self._params_to_ints(genres)
-            queryset = queryset.filter(genres__id__in=genres).distinct()
+            queryset = queryset.filter(genres__id__in=genres)
         if title:
             queryset = queryset.filter(title__icontains=title)
         if self.action in ["list", "retrieve"]:
@@ -98,11 +98,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie_id = self.request.query_params.get("movie")
 
         if date:
-            year, month, day = date.split("-")
             queryset = queryset.filter(
-                show_time__year=year,
-                show_time__month=month,
-                show_time__day=day
+                show_time__date=date,
             )
         if movie_id:
             queryset = queryset.filter(movie_id=int(movie_id))
@@ -124,7 +121,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderPagination
 
     def get_queryset(self):
-        queryset = self.queryset.filter(user=self.request.user)
+        queryset = super().get_queryset()
         if self.action == "list":
             queryset = queryset.prefetch_related(
                 "tickets__movie_session__movie",
