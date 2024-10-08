@@ -71,7 +71,7 @@ class MovieViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(title__icontains=title)
 
         elif self.action == "retrieve":
-            queryset = queryset.prefetch_related("genres", "actors")
+            queryset = queryset
 
         return queryset.distinct()
 
@@ -109,7 +109,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             if date:
                 queryset = queryset.filter(show_time__date=date)
 
-        if self.action in "retrieve":
+        if self.action == "retrieve":
             queryset = queryset.select_related("movie", "cinema_hall")
 
         return queryset.distinct()

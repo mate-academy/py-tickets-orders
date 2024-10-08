@@ -89,30 +89,36 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("id", "row", "seat", "movie_session")
 
     def validate(self, attrs):
+        result = super().validate(attrs)
+
         Ticket.validate_seat_and_row(
-            attrs["seat"],
-            attrs["movie_session"].cinema_hall.seats_in_row,
-            attrs["row"],
-            attrs["movie_session"].cinema_hall.rows,
+            result["seat"],
+            result["movie_session"].cinema_hall.seats_in_row,
+            result["row"],
+            result["movie_session"].cinema_hall.rows,
             serializers.ValidationError,
         )
-        return attrs
+        return result
+
+
+class TicketSeatsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = SerializerMethodField()
+    taken_places = TicketSeatsSerializer(
+        many=True,
+        read_only=True,
+        source="tickets"
+    )
 
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
-
-    def get_taken_places(self, movie_session):
-        return [
-            {"row": ticket.row, "seat": ticket.seat}
-            for ticket in movie_session.tickets.all()
-        ]
 
 
 class TicketRetrieveSerializer(TicketSerializer):
