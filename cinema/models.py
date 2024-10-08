@@ -84,13 +84,22 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["movie_session", "row", "seat"],
+                name="unique_movie_session_row_seat"
+            )
+        ]
+
+    @staticmethod
+    def validate_seat(row: int, seat: int, movie_session: MovieSession):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row"),
         ]:
             count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+                movie_session.cinema_hall, cinema_hall_attr_name
             )
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise ValidationError(
@@ -101,6 +110,9 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
+
+    def clean(self):
+        return self.validate_seat(self.row, self.seat, self.movie_session)
 
     def save(
         self,
@@ -118,6 +130,3 @@ class Ticket(models.Model):
         return (
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
-
-    class Meta:
-        unique_together = ("movie_session", "row", "seat")
