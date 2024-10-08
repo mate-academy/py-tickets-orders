@@ -41,9 +41,9 @@ class MovieViewSet(viewsets.ModelViewSet):
     @staticmethod
     def _params_to_int(item_string: str) -> list[int]:
         return [
-                int(item_id.strip(" "))
-                for item_id in item_string.split(",")
-            ]
+            int(item_id.strip(" "))
+            for item_id in item_string.split(",")
+        ]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -54,9 +54,13 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
         if actors:
-            queryset = queryset.filter(actors__id__in=self._params_to_int(actors))
+            queryset = queryset.filter(
+                actors__id__in=self._params_to_int(actors)
+            )
         if genres:
-            queryset = queryset.filter(genres__id__in=self._params_to_int(genres))
+            queryset = queryset.filter(
+                genres__id__in=self._params_to_int(genres)
+            )
 
         return queryset
 
