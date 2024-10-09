@@ -70,9 +70,6 @@ class MovieViewSet(viewsets.ModelViewSet):
             if title:
                 queryset = queryset.filter(title__icontains=title)
 
-        elif self.action == "retrieve":
-            queryset = queryset
-
         return queryset.distinct()
 
 
@@ -123,7 +120,10 @@ class OrdersViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset.filter(user=self.request.user)
         if self.action == "list":
-            queryset = queryset.prefetch_related("tickets__movie_session")
+            queryset = queryset.prefetch_related(
+                "tickets__movie_session__movie",
+                "tickets__movie_session__cinema_hall"
+            )
         return queryset
 
     def perform_create(self, serializer):
