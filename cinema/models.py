@@ -51,8 +51,16 @@ class Movie(models.Model):
 
 class MovieSession(models.Model):
     show_time = models.DateTimeField()
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE)
+    movie = models.ForeignKey(
+        Movie,
+        on_delete=models.CASCADE,
+        related_name="movie_sessions"
+    )
+    cinema_hall = models.ForeignKey(
+        CinemaHall,
+        on_delete=models.CASCADE,
+        related_name="movie_sessions"
+    )
 
     class Meta:
         ordering = ["-show_time"]
@@ -121,3 +129,20 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+
+    @staticmethod
+    def validate_seat_and_row(
+            seat: int,
+            num_seats: int,
+            row: int,
+            num_rows: int,
+            error_to_raise
+    ):
+        if not (1 <= seat <= num_seats):
+            raise error_to_raise({
+                "seat": f"seat must be in range [1, {num_seats}], not {seat}"
+            })
+        if not (1 <= row <= num_rows):
+            raise error_to_raise({
+                "seat": f"row must be in range [1, {num_rows}], not {row}"
+            })
