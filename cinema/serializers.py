@@ -85,6 +85,11 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
 
+class TicketRowAndSeatSerializer(serializers.ModelSerializer):
+    row = serializers.IntegerField()
+    seat = serializers.IntegerField()
+
+
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
