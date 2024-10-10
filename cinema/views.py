@@ -62,7 +62,7 @@ class MovieViewSet(viewsets.ModelViewSet):
                 genres__id__in=self._params_to_int(genres)
             )
 
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -124,7 +124,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderPagination
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = super().get_queryset()
         if self.action == "list":
             queryset = queryset.prefetch_related(
                 "tickets__movie_session__cinema_hall",
