@@ -31,7 +31,7 @@ class Actor(models.Model):
         return self.first_name + " " + self.last_name
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
 
@@ -84,30 +84,45 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
+    @staticmethod
+    def validate_seats(
+            seat: int,
+            row: int,
+            movie_session: MovieSession,
+            error_to_raise
+    ) -> None:
+        for ticket_atr_value, ticket_attr_name, cinema_hall_attr_name in [
+            (seat, "seat", "seats_in_row"),
+            (row, "row", "rows")
         ]:
             count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
+                movie_session.cinema_hall,
+                cinema_hall_attr_name)
+            if not (1 <= ticket_atr_value <= count_attrs):
+                raise error_to_raise(
                     {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
+                        ticket_attr_name:
+                            f"{ticket_attr_name} number must be "
+                            f"in available range: "
+                            f"(1, {cinema_hall_attr_name}): (1, {count_attrs})"
                     }
+
                 )
 
+    def clean(self):
+        Ticket.validate_seats(
+            self.seat,
+            self.row,
+            self.movie_session,
+            ValidationError
+        )
+
     def save(
-        self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
     ):
         self.full_clean()
         super(Ticket, self).save(
