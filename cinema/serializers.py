@@ -126,11 +126,10 @@ class OrderSerializer(serializers.ModelSerializer):
             order = Order.objects.create(**validated_data)
             for ticket in tickets:
                 Ticket.objects.create(order=order, **ticket)
-            return order
 
 
 class TicketListSerializer(TicketSerializer):
-    movie_session = MovieSessionListSerializer(many=False, read_only=True)
+    movie_session = MovieSessionListSerializer(read_only=True)
 
 
 class OrderListSerializer(OrderSerializer):
