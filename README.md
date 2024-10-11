@@ -98,7 +98,7 @@ Vary: Accept
     }
 ]
 ```
-
+ 
 
 4. Return taken places for movie session details endpoint
 ```
