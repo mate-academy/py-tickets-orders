@@ -1,3 +1,5 @@
+from typing import Callable
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -64,7 +66,8 @@ class MovieSession(models.Model):
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
     )
 
     def __str__(self):
@@ -79,28 +82,38 @@ class Ticket(models.Model):
         MovieSession, on_delete=models.CASCADE, related_name="tickets"
     )
     order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="tickets"
+        Order,
+        on_delete=models.CASCADE,
+        related_name="tickets"
     )
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
+    @staticmethod
+    def ticket_validation(
+        row: int, seat: int, cinema_hall: CinemaHall, error_class: Callable
+    ) -> None:
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row"),
         ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
+            count_attrs = getattr(cinema_hall, cinema_hall_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
+                error_message = (
+                    f"{ticket_attr_name} "
+                    f"number must be in available range: "
+                    f"(1, {cinema_hall_attr_name}): "
+                    f"(1, {count_attrs})"
                 )
+                raise error_class({ticket_attr_name: error_message})
+
+    def clean(self):
+        self.ticket_validation(
+            self.row,
+            self.seat,
+            self.movie_session.cinema_hall,
+            ValidationError
+        )
 
     def save(
         self,
@@ -111,12 +124,16 @@ class Ticket(models.Model):
     ):
         self.full_clean()
         super(Ticket, self).save(
-            force_insert, force_update, using, update_fields
+            force_insert,
+            force_update,
+            using,
+            update_fields
         )
 
     def __str__(self):
         return (
-            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+            f"{str(self.movie_session)} "
+            f"(row: {self.row}, seat: {self.seat})"
         )
 
     class Meta:
