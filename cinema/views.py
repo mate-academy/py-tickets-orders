@@ -74,23 +74,26 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = (
-        MovieSession.objects.all()
-        .select_related("movie", "cinema_hall")
-        .annotate(
-            total_capacity=F("cinema_hall__rows")
-            * F("cinema_hall__seats_in_row"),
-            total_tickets=Count("tickets"),
-            tickets_available=F("total_capacity") - F("total_tickets")
-        )
+    queryset = MovieSession.objects.all().select_related(
+        "movie", "cinema_hall"
     )
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
         date_str = self.request.query_params.get("date")
         movie_id_str = self.request.query_params.get("movie")
-
-        queryset = self.queryset
+        queryset = (
+            MovieSession.objects.all()
+            .select_related("movie", "cinema_hall")
+            .annotate(
+                total_capacity=F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row"),
+                total_tickets=Count("tickets"),
+                tickets_available=F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")
+                - F("total_tickets")
+            )
+        )
 
         if date_str:
             date = datetime.strptime(date_str, "%Y-%m-%d").date()
