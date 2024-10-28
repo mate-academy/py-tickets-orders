@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -28,9 +28,7 @@ class MovieSerializer(serializers.ModelSerializer):
 
 
 class MovieListSerializer(MovieSerializer):
-    genres = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="name"
-    )
+    genres = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     actors = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="full_name"
     )
@@ -53,9 +51,43 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 
 class MovieSessionListSerializer(MovieSessionSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
-    cinema_hall_name = serializers.CharField(
-        source="cinema_hall.name", read_only=True
+    cinema_hall_name = serializers.CharField(source="cinema_hall.name", read_only=True)
+    cinema_hall_capacity = serializers.IntegerField(
+        source="cinema_hall.capacity", read_only=True
     )
+    tickets_available = serializers.IntegerField()
+
+    class Meta:
+        model = MovieSession
+        fields = (
+            "id",
+            "show_time",
+            "movie_title",
+            "cinema_hall_name",
+            "cinema_hall_capacity",
+            "tickets_available",
+        )
+
+
+class TicketMovieSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ["row", "seat"]
+
+
+class MovieSessionDetailSerializer(MovieSessionSerializer):
+    movie = MovieListSerializer(many=False, read_only=True)
+    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TicketMovieSerializer(source="tickets", many=True, read_only=True)
+
+    class Meta:
+        model = MovieSession
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
+
+
+class MovieSessionOrderSerializer(MovieSessionSerializer):
+    movie_title = serializers.CharField(source="movie.title", read_only=True)
+    cinema_hall_name = serializers.CharField(source="cinema_hall.name", read_only=True)
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
@@ -71,10 +103,42 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
 
-class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+class TicketListSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionOrderSerializer(read_only=True)
 
     class Meta:
-        model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        model = Ticket
+        fields = ["id", "row", "seat", "movie_session"]
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ["id", "tickets", "created_at"]
+
+
+class TicketOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ["row", "seat", "movie_session"]
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    tickets = TicketOrderSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            "tickets",
+        ]
+
+    def create(self, validated_data):
+        tickets_data = validated_data.pop("tickets")
+        order = Order.objects.create(**validated_data)
+
+        for ticket_data in tickets_data:
+            Ticket.objects.create(order=order, **ticket_data)
+
+        return order
