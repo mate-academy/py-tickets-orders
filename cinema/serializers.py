@@ -1,6 +1,16 @@
 from rest_framework import serializers
+from rest_framework.permissions import IsAuthenticated
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -59,6 +69,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -68,13 +79,49 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
+            "tickets_available",
         )
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = serializers.SerializerMethodField()
+
+    def get_taken_places(self, obj):
+        tickets = Ticket.objects.filter(movie_session=obj).values(
+            "row",
+            "seat"
+        )
+        return list(tickets)
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    queryset = Ticket.objects.all()
+    movie_session = MovieSessionListSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    permission_class = [IsAuthenticated]
+    queryset = Order.objects.all()
+    tickets = TicketSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at", )
+
+    def get_queryset(self):
+        return Order.objects.all().filter(
+            user=self.request.user
+        ).prefetch_related(
+            "tickets__movie_session__cinema_hall",
+            "tickets__movie_session__movie"
+        )
