@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+import mimetypes
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,6 +27,13 @@ SECRET_KEY = (
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+    "INTERCEPT_REDIRECTS": False,
+}
+
+mimetypes.add_type("application/javascript", ".js", True)
 
 ALLOWED_HOSTS = []
 
@@ -124,7 +132,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
