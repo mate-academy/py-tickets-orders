@@ -60,6 +60,10 @@ class MovieSession(models.Model):
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
+    @property
+    def tickets_available(self):
+        return self.cinema_hall.capacity - self.tickets.count()
+
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -79,7 +83,7 @@ class Ticket(models.Model):
         MovieSession, on_delete=models.CASCADE, related_name="tickets"
     )
     order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="tickets"
+        Order, on_delete=models.CASCADE, related_name="tickets", null=True
     )
     row = models.IntegerField()
     seat = models.IntegerField()
