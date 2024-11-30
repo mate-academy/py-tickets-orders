@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import (
+    Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -59,6 +61,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -68,13 +71,73 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
+            "tickets_available"
         )
+
+
+class TicketSeatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TicketSeatSerializer(source="tickets", many=True,
+                                        read_only=True)
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
+
+
+class TicketDetailSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionListSerializer(many=False)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat", "movie_session")
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        ticket_row = attrs["row"]
+        ticket_seat = attrs["seat"]
+        cinema_hall_rows = attrs["movie_session"].cinema_hall.rows
+        cinema_hall_seats = attrs["movie_session"].cinema_hall.seats_in_row
+
+        if not (1 <= ticket_row <= cinema_hall_rows):
+            raise serializers.ValidationError({
+                "row": f"Row number must be in available range: "
+                       f"1..{cinema_hall_rows}"
+            })
+
+        if not (1 <= ticket_seat <= cinema_hall_seats):
+            raise serializers.ValidationError({
+                "row": f"Seat number must be in available range: "
+                       f"1..{cinema_hall_seats}"
+            })
+
+        return data
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ("tickets",)
+
+
+class OrderListSerializer(serializers.ModelSerializer):
+    tickets = TicketDetailSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
