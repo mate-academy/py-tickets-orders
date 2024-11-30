@@ -80,7 +80,7 @@ Filtering by title with the `string` parameter should return all movies whose ti
 the movie by its id.
 Example:
 ```
-GET /api/cinema/movie_sessions/?date=2022-12-12&movie=1
+GET /api/cinema/movie_sessions/?date=2022-1-12&movie=1
 ```
 ```
 HTTP 200 OK
