@@ -1,6 +1,10 @@
+from typing import Optional
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+
+from django.contrib.messages import error
 
 
 class CinemaHall(models.Model):
@@ -84,31 +88,40 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+    @staticmethod
+    def validate_seat_and_row(
+            param: str,
+            number: int,
+            max_number: int,
+            error_to_raise: error
+    ) -> None:
+        if not (1 <= number <= max_number):
+            raise error_to_raise({
+                f"{param}": f"seat must be in range [1, {max_number}],"
+                            f"not {number}"
+            })
+
+    def clean(self) -> None:
+        Ticket.validate_seat_and_row(
+            "seat",
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row,
+            ValidationError
+        )
+        Ticket.validate_seat_and_row(
+            "row",
+            self.row,
+            self.movie_session.cinema_hall.rows,
+            ValidationError
+        )
 
     def save(
         self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
-    ):
+        force_insert: bool = False,
+        force_update: bool = False,
+        using: Optional[str] = None,
+        update_fields: Optional[str] = None,
+    ) -> None:
         self.full_clean()
         super(Ticket, self).save(
             force_insert, force_update, using, update_fields
