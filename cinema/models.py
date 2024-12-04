@@ -1,6 +1,8 @@
-from django.core.exceptions import ValidationError
-from django.db import models
+from typing import Callable
+
 from django.conf import settings
+from django.db import models
+from django.db.models import UniqueConstraint
 
 
 class CinemaHall(models.Model):
@@ -11,6 +13,13 @@ class CinemaHall(models.Model):
     @property
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
+
+    @property
+    def tickets_available(self) -> int:
+        return (
+            self.capacity
+            - MovieSession.objects.filter(cinema_hall=self).count()
+        )
 
     def __str__(self):
         return self.name
@@ -39,8 +48,8 @@ class Movie(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     duration = models.IntegerField()
-    genres = models.ManyToManyField(Genre)
-    actors = models.ManyToManyField(Actor)
+    genres = models.ManyToManyField(Genre, related_name="movies")
+    actors = models.ManyToManyField(Actor, related_name="movies")
 
     class Meta:
         ordering = ["title"]
@@ -84,16 +93,22 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
+    @staticmethod
+    def validate_seats_in_row(
+        movie_session: MovieSession,
+        row: int,
+        seat: int,
+        error_to_raise: Callable,
+    ):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row"),
         ]:
             count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+                movie_session.cinema_hall, cinema_hall_attr_name
             )
             if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
+                raise error_to_raise(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
                         f"number must be in available range: "
@@ -101,6 +116,14 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
+
+    def clean(self):
+        Ticket.validate_seats_in_row(
+            movie_session=self.movie_session,
+            row=self.row,
+            seat=self.seat,
+            error_to_raise=ValueError,
+        )
 
     def save(
         self,
@@ -120,4 +143,10 @@ class Ticket(models.Model):
         )
 
     class Meta:
-        unique_together = ("movie_session", "row", "seat")
+        # UniqueConstraint auto generate "non_field_errors"
+        constraints = [
+            UniqueConstraint(
+                name="unique_ticket",
+                fields=["movie_session", "row", "seat"],
+            )
+        ]
