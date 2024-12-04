@@ -12,6 +12,11 @@ class CinemaHall(models.Model):
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
 
+    @property
+    def tickets_available(self) -> int:
+        tickets = MovieSession.objects.filter(cinema_hall=self)
+        return self.capacity - tickets.count()
+
     def __str__(self):
         return self.name
 
@@ -39,8 +44,8 @@ class Movie(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     duration = models.IntegerField()
-    genres = models.ManyToManyField(Genre)
-    actors = models.ManyToManyField(Actor)
+    genres = models.ManyToManyField(Genre, related_name="movies")
+    actors = models.ManyToManyField(Actor, related_name="movies")
 
     class Meta:
         ordering = ["title"]
@@ -64,8 +69,8 @@ class MovieSession(models.Model):
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.created_at)
@@ -76,22 +81,29 @@ class Order(models.Model):
 
 class Ticket(models.Model):
     movie_session = models.ForeignKey(
-        MovieSession, on_delete=models.CASCADE, related_name="tickets"
+        MovieSession,
+        on_delete=models.CASCADE,
+        related_name="tickets"
     )
     order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="tickets"
-    )
+        Order,
+        on_delete=models.CASCADE,
+        related_name="tickets")
+
     row = models.IntegerField()
     seat = models.IntegerField()
 
     def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
+        for (ticket_attr_value,
+             ticket_attr_name,
+             cinema_hall_attr_name) in [
             (self.row, "row", "rows"),
             (self.seat, "seat", "seats_in_row"),
         ]:
             count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
+                self.movie_session.cinema_hall,
+                cinema_hall_attr_name)
+
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise ValidationError(
                     {
@@ -110,13 +122,17 @@ class Ticket(models.Model):
         update_fields=None,
     ):
         self.full_clean()
-        super(Ticket, self).save(
-            force_insert, force_update, using, update_fields
-        )
+        (super(Ticket, self)
+         .save(force_insert,
+               force_update,
+               using, update_fields))
 
     def __str__(self):
         return (
-            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+            f""
+            f"{str(self.movie_session)}"
+            f" (row: {self.row}, "
+            f" seat: {self.seat})"
         )
 
     class Meta:
