@@ -1,3 +1,5 @@
+from typing import Type
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
@@ -39,8 +41,8 @@ class Movie(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     duration = models.IntegerField()
-    genres = models.ManyToManyField(Genre)
-    actors = models.ManyToManyField(Actor)
+    genres = models.ManyToManyField(Genre, related_name="movies")
+    actors = models.ManyToManyField(Actor, related_name="movies")
 
     class Meta:
         ordering = ["title"]
@@ -51,8 +53,16 @@ class Movie(models.Model):
 
 class MovieSession(models.Model):
     show_time = models.DateTimeField()
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE)
+    movie = models.ForeignKey(
+        Movie,
+        on_delete=models.CASCADE,
+        related_name="movie_sessions"
+    )
+    cinema_hall = models.ForeignKey(
+        CinemaHall,
+        on_delete=models.CASCADE,
+        related_name="movie_sessions"
+    )
 
     class Meta:
         ordering = ["-show_time"]
@@ -84,23 +94,27 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    @staticmethod
+    def validate_row_and_seat(
+            row: int, num_row: int,
+            seat: int, num_seat: int,
+            error_to_raise: Type[Exception]
+    ) -> None:
+        if not (1 <= row <= num_row):
+            raise error_to_raise(
+                {"row": f"Row must be in range (1, {num_row})."}
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        if not (1 <= seat <= num_seat):
+            raise error_to_raise(
+                {"seat": f"Seat must be in range (1, {num_seat})."}
+            )
+
+    def clean(self):
+        Ticket.validate_row_and_seat(
+            self.row, self.movie_session.cinema_hall.rows,
+            self.seat, self.movie_session.cinema_hall.seats_in_row,
+            ValidationError
+        )
 
     def save(
         self,
