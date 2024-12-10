@@ -87,3 +87,4 @@ class OrderApiTests(TestCase):
             response.data[0]["tickets_available"],
             self.cinema_hall.capacity - 1,
         )
+        print(response.data[0]["tickets_available"])

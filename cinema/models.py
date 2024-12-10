@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+from django.db.models import UniqueConstraint
+from rest_framework.exceptions import APIException
 
 
 class CinemaHall(models.Model):
@@ -84,23 +86,47 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=["row", "seat", "movie_session"],
+                             name="unique_ticket")
+        ]
+
+    @staticmethod
+    def validate_seat(
+            row: int,
+            seat: int,
+            num_rows: int,
+            num_seats: int,
+            error: callable):
+        if not (1 <= row <= num_rows):
+            raise error(
+                {
+                    "row": [
+                        f"row number must be in available range: (1, rows): "
+                        f"(1, {num_rows})"
+                    ]
+                }
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        if not (1 <= seat <= num_seats):
+            raise error(
+                {
+                    "seat": [
+                        f"seat number must be in available range: "
+                        f"(1, seats_in_row): "
+                        f"(1, {num_seats})"
+                    ]
+                }
+            )
+
+    def clean(self):
+        self.validate_seat(
+            self.row,
+            self.seat,
+            self.movie_session.cinema_hall.rows,
+            self.movie_session.cinema_hall.seats_in_row,
+            ValidationError
+        )
 
     def save(
         self,
@@ -118,6 +144,3 @@ class Ticket(models.Model):
         return (
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
-
-    class Meta:
-        unique_together = ("movie_session", "row", "seat")
