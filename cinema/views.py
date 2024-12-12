@@ -116,6 +116,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderPagination
 
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Order.objects.none()
         queryset = self.queryset
         return queryset.filter(user=self.request.user)
 

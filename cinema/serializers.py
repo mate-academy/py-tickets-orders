@@ -53,14 +53,14 @@ class MovieSessionSerializer(serializers.ModelSerializer):
         fields = ("id", "show_time", "movie", "cinema_hall")
 
 
-class MovieSessionListSerializer(MovieSessionSerializer):
+class MovieSessionListSerializer(serializers.ModelSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
     cinema_hall_name = serializers.CharField(
-        source="cinema_hall.name", read_only=True
-    )
+        source="cinema_hall.name",
+        read_only=True)
     cinema_hall_capacity = serializers.IntegerField(
-        source="cinema_hall.capacity", read_only=True
-    )
+        source="cinema_hall.capacity",
+        read_only=True)
     tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -73,6 +73,13 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "cinema_hall_capacity",
             "tickets_available",
         )
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        total_capacity = instance.cinema_hall.capacity
+        booked_tickets = instance.tickets.count()
+        representation["tickets_available"] = total_capacity - booked_tickets
+        return representation
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
@@ -100,7 +107,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=False)
+    tickets = TicketSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
