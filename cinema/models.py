@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.conf import settings
 
 
 class CinemaHall(models.Model):
@@ -39,7 +39,7 @@ class Movie(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     duration = models.IntegerField()
-    genres = models.ManyToManyField(Genre)
+    genres = models.ManyToManyField(Genre, related_name="movies")
     actors = models.ManyToManyField(Actor)
 
     class Meta:
@@ -59,6 +59,10 @@ class MovieSession(models.Model):
 
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
+
+    @property
+    def available_spots(self) -> int:
+        return self.cinema_hall.capacity - self.tickets.count()
 
 
 class Order(models.Model):
