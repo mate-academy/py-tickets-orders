@@ -60,6 +60,10 @@ class MovieSession(models.Model):
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
+    @property
+    def tickets_available(self):
+        return self.cinema_hall.capacity - self.tickets.count()
+
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -84,14 +88,14 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
+    @staticmethod
+    def validate_seat(ticket_row, ticket_seat, cinema_hall_id):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
+            (ticket_row, "row", "rows"),
+            (ticket_seat, "seat", "seats_in_row"),
         ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
+            cinema_hall = CinemaHall.objects.get(pk=cinema_hall_id)
+            count_attrs = getattr(cinema_hall, cinema_hall_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise ValidationError(
                     {
@@ -101,6 +105,11 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
+
+    def clean(self):
+        Ticket.validate_seat(
+            self.row, self.seat, self.movie_session.cinema_hall.id
+        )
 
     def save(
         self,
@@ -121,3 +130,7 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+        ordering = (
+            "row",
+            "seat",
+        )
