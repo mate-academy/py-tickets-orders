@@ -1,5 +1,4 @@
 from django.test import TestCase
-
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -59,15 +58,11 @@ class ActorApiTests(TestCase):
         )
 
     def test_delete_actor(self):
-        response = self.client.delete(
-            "/api/cinema/actors/1/",
-        )
+        response = self.client.delete("/api/cinema/actors/1/")
         db_actors_id_1 = Actor.objects.filter(id=1)
         self.assertEqual(db_actors_id_1.count(), 0)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_invalid_actor(self):
-        response = self.client.delete(
-            "/api/cinema/actors/1000/",
-        )
+        response = self.client.delete("/api/cinema/actors/1000/")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
