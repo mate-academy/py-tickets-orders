@@ -27,6 +27,9 @@ class Actor(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
 
+    class Meta:
+        ordering = ["id"]
+
     def __str__(self):
         return self.first_name + " " + self.last_name
 
@@ -40,7 +43,7 @@ class Movie(models.Model):
     description = models.TextField()
     duration = models.IntegerField()
     genres = models.ManyToManyField(Genre)
-    actors = models.ManyToManyField(Actor)
+    actors = models.ManyToManyField(Actor, related_name="movies")
 
     class Meta:
         ordering = ["title"]
