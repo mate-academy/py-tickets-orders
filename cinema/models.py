@@ -19,6 +19,9 @@ class CinemaHall(models.Model):
 class Genre(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
+    class Meta:
+        verbose_name_plural = "genres"
+
     def __str__(self):
         return self.name
 
@@ -26,6 +29,9 @@ class Genre(models.Model):
 class Actor(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name_plural = "actors"
 
     def __str__(self):
         return self.first_name + " " + self.last_name
@@ -39,8 +45,8 @@ class Movie(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     duration = models.IntegerField()
-    genres = models.ManyToManyField(Genre)
-    actors = models.ManyToManyField(Actor)
+    genres = models.ManyToManyField(Genre, related_name="movies")
+    actors = models.ManyToManyField(Actor, related_name="movies")
 
     class Meta:
         ordering = ["title"]
