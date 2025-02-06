@@ -1,4 +1,4 @@
-from django.db.models import F, Count
+from django.db.models import F, Count, Q
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -44,6 +44,26 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
+
+        if actors:
+            queryset = queryset.filter(Q(actors__first_name__icontains=actors) | Q(actors__last_name__icontains=actors))
+            return queryset.distinct()
+        if genres:
+            queryset = queryset.filter(genres__name__icontains=genres)
+            return queryset.distinct()
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+            return queryset.distinct()
+
+        if self.action == "list":
+            return queryset.prefetch_related()
+        return queryset
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
@@ -60,6 +80,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
+
         if self.action in "list":
             return queryset.select_related().annotate(tickets_available=F("cinema_hall__seats_in_row")
                                                                         * F("cinema_hall__rows")
@@ -73,6 +94,7 @@ class OrderSetPagination(PageNumberPagination):
     page_size = 1
     page_query_param = "page_size"
     max_page_size = 20
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
