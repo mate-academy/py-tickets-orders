@@ -13,7 +13,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderListSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
 )
 
 
@@ -52,18 +54,20 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
-            queryset = queryset.filter(Q(actors__first_name__icontains=actors) | Q(actors__last_name__icontains=actors))
-            return queryset.distinct()
+            queryset = queryset.filter(
+                Q(actors__first_name__icontains=actors)
+                | Q(actors__last_name__icontains=actors)
+            )
+
         if genres:
             queryset = queryset.filter(genres__name__icontains=genres)
-            return queryset.distinct()
+
         if title:
             queryset = queryset.filter(title__icontains=title)
-            return queryset.distinct()
 
         if self.action == "list":
             return queryset.prefetch_related()
-        return queryset
+        return queryset.distinct()
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -92,9 +96,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=parsed_date)
 
         if self.action in "list":
-            return queryset.select_related().annotate(tickets_available=F("cinema_hall__seats_in_row")
-                                                                        * F("cinema_hall__rows")
-                                                                        - Count("tickets"))
+            return queryset.select_related().annotate(
+                tickets_available=F("cinema_hall__seats_in_row")
+                * F("cinema_hall__rows")
+                - Count("tickets")
+            )
         elif self.action in "retrieve":
             return queryset.select_related()
 
