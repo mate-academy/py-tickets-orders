@@ -1,7 +1,7 @@
+from django.db.models import F, Count
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
-
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -56,3 +56,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action in "list":
+            return queryset.select_related().annotate(tickets_available=F("cinema_hall__seats_in_row")
+                                                                        * F("cinema_hall__rows")
+                                                                        - Count("tickets"))
+        elif self.action in "retrieve":
+            return queryset.select_related()
+        return queryset.order_by("id")
