@@ -84,23 +84,39 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    def __str__(self):
+        return (
+            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+        )
+
+    class Meta:
+        unique_together = ("movie_session", "row", "seat")
+
+    @staticmethod
+    def validate_seat_row(
+            seat: int,
+            row: int,
+            seats_in_row: int,
+            rows: int,
+            error_to_raise
+    ):
+        if not (1 <= seat <= seats_in_row) and (1 <= row <= rows):
+            raise error_to_raise(
+                {
+                    "seat": f"seat must be in range [1, {seats_in_row}], "
+                    f"not {seat}",
+                    "row": f"row must be in range [1, {rows}], not {row}"
+                }
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+
+    def clean(self):
+        Ticket.validate_seat_row(
+            self.row,
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row,
+            self.movie_session.cinema_hall.rows,
+            ValueError
+        )
 
     def save(
         self,
@@ -113,11 +129,3 @@ class Ticket(models.Model):
         super(Ticket, self).save(
             force_insert, force_update, using, update_fields
         )
-
-    def __str__(self):
-        return (
-            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
-        )
-
-    class Meta:
-        unique_together = ("movie_session", "row", "seat")
