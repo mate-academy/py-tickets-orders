@@ -114,7 +114,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ("id", "created_at", "tickets")
+        fields = ("id", "tickets", "created_at")
 
     def create(self, validated_data):
         with transaction.atomic():
