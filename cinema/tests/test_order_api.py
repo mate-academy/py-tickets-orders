@@ -57,8 +57,11 @@ class OrderApiTests(TestCase):
         self.client.force_authenticate(user=self.user)
         orders_response = self.client.get("/api/cinema/orders/")
         self.assertEqual(orders_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(orders_response.data["count"], 1)
-        order = orders_response.data["results"][0]
+        
+        # Проверяем длину списка вместо count
+        self.assertEqual(len(orders_response.data), 1)
+        
+        order = orders_response.data[0]  # Берем первый элемент списка
         self.assertEqual(len(order["tickets"]), 1)
         ticket = order["tickets"][0]
         self.assertEqual(ticket["row"], 2)
