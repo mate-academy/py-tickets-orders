@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 
@@ -84,23 +83,37 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    @staticmethod
+    def validate_seat(seat: int, max_seat: int, error_to_raise):
+        if not (1 <= seat <= max_seat):
+            raise error_to_raise(
+                {
+                    f"Seat number must be in available range: "
+                    f"(1, {max_seat}): "
+                }
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+
+    @staticmethod
+    def validate_row(row: int, max_row: int, error_to_raise):
+        if not (1 <= row <= max_row):
+            raise error_to_raise(
+                {
+                    f"Row number must be in available range: "
+                    f"(1, {max_row}): "
+                }
+            )
+
+    def clean(self):
+        Ticket.validate_seat(
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row,
+            ValueError,
+        )
+        Ticket.validate_row(
+            self.row,
+            self.movie_session.cinema_hall.rows,
+            ValueError,
+        )
 
     def save(
         self,
