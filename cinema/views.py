@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -58,9 +59,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
+class MessagesPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "per_page"
+    max_page_size = 20
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = MessagesPagination
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
