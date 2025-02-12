@@ -1,4 +1,7 @@
+from django.utils import timezone
+
 from rest_framework import viewsets, filters
+from rest_framework.filters import BaseFilterBackend
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -47,9 +50,28 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
 
+class DateAndMovieFilterBackend(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        date_param = request.query_params.get('date')
+        movie_param = request.query_params.get('movie')
+
+        if date_param:
+            try:
+                date = timezone.datetime.strptime(date_param, '%Y-%m-%d').date()
+                queryset = queryset.filter(show_time__date=date)
+            except ValueError:
+                pass
+
+        if movie_param:
+            queryset = queryset.filter(movie__id=movie_param)
+
+        return queryset
+
+
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+    filter_backends = [DateAndMovieFilterBackend]
 
     def get_serializer_class(self):
         if self.action == "list":
