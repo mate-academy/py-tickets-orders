@@ -1,6 +1,8 @@
+from django.db.models import F, Count, Subquery, OuterRef
 from django.utils import timezone
 
 from rest_framework import viewsets, filters
+from rest_framework.fields import IntegerField
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.pagination import PageNumberPagination
 
@@ -72,6 +74,18 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
     filter_backends = [DateAndMovieFilterBackend]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action == "list":
+            queryset = (
+                queryset
+                .select_related("cinema_hall")
+                .annotate(tickets_available=(
+                        F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                ) - Count("tickets"))
+            ).order_by("id")
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
