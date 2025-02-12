@@ -1,13 +1,10 @@
-from django.db.models import F, Count, Subquery, OuterRef
+from django.db.models import F, Count
 from django.utils import timezone
-
-from rest_framework import viewsets, filters
-from rest_framework.fields import IntegerField
+from rest_framework import viewsets
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
-
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -17,7 +14,8 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer,
+    MovieListSerializer,
+    OrderSerializer,
 )
 
 
@@ -36,11 +34,29 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
+class MovieFilterBackend(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        title_param = request.query_params.get('title')
+        actors_param = request.query_params.get('actors')
+        genres_param = request.query_params.get('genres')
+
+        if title_param:
+            queryset = queryset.filter(title__icontains=title_param)
+
+        if actors_param:
+            queryset = queryset.filter(actors__id=actors_param)
+
+        if genres_param:
+            genres_ids = [int(str_id) for str_id in genres_param.split(',')]
+            queryset = queryset.filter(genres__id__in=genres_ids)
+
+        return queryset
+
+
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ["title", "actors__first_name", "actors__last_name", "genres__name"]
+    filter_backends = [MovieFilterBackend]
 
     def get_serializer_class(self):
         if self.action == "list":
