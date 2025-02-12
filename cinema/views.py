@@ -36,9 +36,9 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 class MovieFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        title_param = request.query_params.get('title')
-        actors_param = request.query_params.get('actors')
-        genres_param = request.query_params.get('genres')
+        title_param = request.query_params.get("title")
+        actors_param = request.query_params.get("actors")
+        genres_param = request.query_params.get("genres")
 
         if title_param:
             queryset = queryset.filter(title__icontains=title_param)
@@ -47,14 +47,14 @@ class MovieFilterBackend(BaseFilterBackend):
             queryset = queryset.filter(actors__id=actors_param)
 
         if genres_param:
-            genres_ids = [int(str_id) for str_id in genres_param.split(',')]
+            genres_ids = [int(str_id) for str_id in genres_param.split(",")]
             queryset = queryset.filter(genres__id__in=genres_ids)
 
         return queryset
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
+    queryset = Movie.objects.all().prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
     filter_backends = [MovieFilterBackend]
 
@@ -70,15 +70,11 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 class DateAndMovieFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        date_param = request.query_params.get('date')
-        movie_param = request.query_params.get('movie')
+        date_param = request.query_params.get("date")
+        movie_param = request.query_params.get("movie")
 
         if date_param:
-            try:
-                date = timezone.datetime.strptime(date_param, '%Y-%m-%d').date()
-                queryset = queryset.filter(show_time__date=date)
-            except ValueError:
-                pass
+            queryset = queryset.filter(show_time__date=date_param)
 
         if movie_param:
             queryset = queryset.filter(movie__id=movie_param)
@@ -95,10 +91,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
         if self.action == "list":
             queryset = (
-                queryset
-                .select_related("cinema_hall")
+                queryset.select_related("cinema_hall")
                 .annotate(tickets_available=(
-                        F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                    F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
                 ) - Count("tickets"))
             ).order_by("id")
         return queryset
