@@ -1,19 +1,10 @@
 from datetime import datetime
 
 from django.test import TestCase
-
-from rest_framework.test import APIClient
 from rest_framework import status
+from rest_framework.test import APIClient
 
-from cinema.models import (
-    Movie,
-    Genre,
-    Actor,
-    CinemaHall,
-    MovieSession,
-    Ticket,
-    Order,
-)
+from cinema.models import Actor, CinemaHall, Genre, Movie, MovieSession, Order, Ticket
 from user.models import User
 
 
@@ -26,9 +17,7 @@ class OrderApiTests(TestCase):
         self.comedy = Genre.objects.create(
             name="Comedy",
         )
-        self.actress = Actor.objects.create(
-            first_name="Kate", last_name="Winslet"
-        )
+        self.actress = Actor.objects.create(first_name="Kate", last_name="Winslet")
         self.movie = Movie.objects.create(
             title="Titanic",
             description="Titanic description",
@@ -73,12 +62,8 @@ class OrderApiTests(TestCase):
             f"/api/cinema/movie_sessions/{self.movie_session.id}/"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            response.data["taken_places"][0]["row"], self.ticket.row
-        )
-        self.assertEqual(
-            response.data["taken_places"][0]["seat"], self.ticket.seat
-        )
+        self.assertEqual(response.data["taken_places"][0]["row"], self.ticket.row)
+        self.assertEqual(response.data["taken_places"][0]["seat"], self.ticket.seat)
 
     def test_movie_session_list_tickets_available(self):
         response = self.client.get(f"/api/cinema/movie_sessions/")
