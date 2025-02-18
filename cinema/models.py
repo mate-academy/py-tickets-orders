@@ -84,23 +84,33 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
+    @staticmethod
+    def validate_row(row: int, num_rows: int):
+        if not (1 <= row <= num_rows):
+            raise ValidationError({
+                "row": f"Row number must be in range:"
+                       f" [1, {num_rows}], not {row}"
+            })
+
+    @staticmethod
+    def validate_seat(seat: int, seats_in_row: int):
+        if not (1 <= seat <= seats_in_row):
+            raise ValidationError({
+                "seat": f"Seat number must be in range:"
+                        f" [1, {seats_in_row}], not {seat}"
+            })
+
     def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        # Validate row using the cinema hall's number of rows
+        Ticket.validate_row(
+            self.row,
+            self.movie_session.cinema_hall.rows
+        )
+        # Validate seat using the cinema hall's seats per row
+        Ticket.validate_seat(
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row
+        )
 
     def save(
         self,
@@ -121,3 +131,4 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+        ordering = ("row", "seat")
