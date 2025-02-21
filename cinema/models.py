@@ -8,6 +8,9 @@ class CinemaHall(models.Model):
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
 
+    class Meta:
+        ordering = ["name", ]
+
     @property
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
@@ -19,6 +22,9 @@ class CinemaHall(models.Model):
 class Genre(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
+    class Meta:
+        ordering = ["id", ]
+
     def __str__(self):
         return self.name
 
@@ -26,6 +32,9 @@ class Genre(models.Model):
 class Actor(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
+
+    class Meta:
+        ordering = ["first_name", "last_name"]
 
     def __str__(self):
         return self.first_name + " " + self.last_name
@@ -43,7 +52,7 @@ class Movie(models.Model):
     actors = models.ManyToManyField(Actor)
 
     class Meta:
-        ordering = ["title"]
+        ordering = ["id", "title"]
 
     def __str__(self):
         return self.title
@@ -121,3 +130,4 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+        ordering = ["id"]
