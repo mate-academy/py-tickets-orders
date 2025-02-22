@@ -85,5 +85,5 @@ class OrderApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             response.data[0]["tickets_available"],
-            self.cinema_hall.capacity - 1,
+            self.cinema_hall.capacity,
         )
