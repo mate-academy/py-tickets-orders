@@ -56,3 +56,24 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(user=self.request.user)
+        if self.action == "list":
+            return queryset.prefetch_related(
+                "tickets__movie_session__cinema_hall",
+                "tickets__movie_session__movie"
+            )
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return OrderListSerializer
+        return OrderSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
