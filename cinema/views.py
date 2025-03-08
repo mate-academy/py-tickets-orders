@@ -66,8 +66,25 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all()
-    serializer_class = MovieSessionSerializer
+    queryset = MovieSession.objects.select_related()
+
+    def get_queryset(self):
+        queryset = self.queryset
+        movie = self.request.query_params.get("movie")
+        date_str = self.request.query_params.get("date")
+
+        if date_str:
+            date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            queryset = queryset.filter(
+                show_time__year=date.year,
+                show_time__month=date.month,
+                show_time__day=date.day
+            )
+
+        if movie:
+            queryset = queryset.filter(movie_id=int(movie))
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
