@@ -39,6 +39,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related("actors", "genres")
+    serializer_class = MovieSerializer
 
     @staticmethod
     def params_to_ints(query_string: str) -> list[int]:
@@ -69,11 +70,12 @@ class MovieViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieDetailSerializer
 
-        return MovieSerializer
+        return self.serializer_class
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related()
+    serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
         queryset = self.queryset.annotate(
@@ -99,7 +101,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
 
-        return MovieSessionSerializer
+        return self.serializer_class
 
 
 class OrderSetPagination(PageNumberPagination):
@@ -110,6 +112,7 @@ class OrderSetPagination(PageNumberPagination):
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
+    serializer_class = OrderSerializer
     pagination_class = OrderSetPagination
 
     def get_queryset(self):
@@ -124,7 +127,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return OrderListSerializer
-        return OrderSerializer
+        return self.serializer_class
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
