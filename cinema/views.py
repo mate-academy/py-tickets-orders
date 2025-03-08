@@ -1,8 +1,11 @@
 from datetime import datetime
 
+from django.db.models import F
+from django.db.models.aggregates import Count
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -57,7 +60,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if genres:
             genres = self.params_to_ints(genres)
             return queryset.filter(genres__id__in=genres)
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -73,22 +76,21 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related()
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.annotate(
+            tickets_available=F("cinema_hall__rows")
+            * F("cinema_hall__seats_in_row")
+            - Count("tickets")
+        )
         movie = self.request.query_params.get("movie")
-        date_str = self.request.query_params.get("date")
+        date = self.request.query_params.get("date")
 
-        if date_str:
-            date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            queryset = queryset.filter(
-                show_time__year=date.year,
-                show_time__month=date.month,
-                show_time__day=date.day
-            )
+        if date:
+            queryset = queryset.filter(show_time__date=date)
 
         if movie:
             queryset = queryset.filter(movie_id=int(movie))
 
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -100,23 +102,28 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
+class OrderSetPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
+    pagination_class = OrderSetPagination
 
     def get_queryset(self):
         queryset = self.queryset.filter(user=self.request.user)
         if self.action == "list":
             return queryset.prefetch_related(
                 "tickets__movie_session__cinema_hall",
-                "tickets__movie_session__movie"
+                "tickets__movie_session__movie",
             )
         return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
             return OrderListSerializer
-        # elif self.action == "retrieve":
-        #     return OrderDetailSerializer
         return OrderSerializer
 
     def perform_create(self, serializer):
