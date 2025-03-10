@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
@@ -115,7 +116,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date_str)
 
         if movie_id:
-            queryset = queryset.filter(movie_id=movie_id)
+            if not movie_id.isdigit():
+                raise ValidationError(
+                    f"Movie param must be an integer ID. Got '{movie_id}'"
+                )
+            queryset = queryset.filter(movie_id=int(movie_id))
 
         return queryset
 

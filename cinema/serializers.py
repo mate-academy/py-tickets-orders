@@ -94,7 +94,8 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
     def get_taken_places(self, obj):
         tickets = obj.tickets.all()
-
+        if not tickets.exists():
+            return []
         return [
             {"row": ticket.row, "seat": ticket.seat}
             for ticket in tickets
@@ -124,10 +125,27 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "created_at", "tickets")
 
+    def validate_tickets(self, tickets_list):
+
+        if not tickets_list:
+            raise serializers.ValidationError("No tickets provided.")
+
+        for ticket_data in tickets_list:
+            row = ticket_data.get("row")
+            seat = ticket_data.get("seat")
+            if row is not None and row <= 0:
+                raise serializers.ValidationError(
+                    f"Row number must be positive. Got row={row}."
+                )
+            if seat is not None and seat <= 0:
+                raise serializers.ValidationError(
+                    f"Seat number must be positive. Got seat={seat}."
+                )
+        return tickets_list
+
     def create(self, validated_data):
         with transaction.atomic():
-            tickets_data = validated_data.pop(
-                "tickets")
+            tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
