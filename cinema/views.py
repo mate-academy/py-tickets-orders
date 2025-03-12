@@ -110,7 +110,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie:
             queryset = queryset.filter(movie__id=movie)
         if date:
-            queryset = queryset.filter(show_time__data=date)
+            queryset = queryset.filter(show_time__date=date)
 
         return queryset.distinct()
 

@@ -93,9 +93,9 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
 
     taken_places = TicketSeatRowSerializer(
-        many=False,
+        many=True,
         read_only=True,
-        source="tickets",
+        source="tickets.all",
     )
 
     class Meta:
