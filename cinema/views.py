@@ -105,12 +105,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             ).order_by("id")
 
         movie = self.request.query_params.get("movie")
-        data = self.request.query_params.get("data")
+        date = self.request.query_params.get("date")
 
         if movie:
             queryset = queryset.filter(movie__id=movie)
-        if data:
-            queryset = queryset.filter(show_time__data=data)
+        if date:
+            queryset = queryset.filter(show_time__data=date)
 
         return queryset.distinct()
 
