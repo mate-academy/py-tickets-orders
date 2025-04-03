@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.conf import settings
 
 
 class CinemaHall(models.Model):
@@ -67,11 +67,11 @@ class Order(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE
     )
 
-    def __str__(self):
-        return str(self.created_at)
-
     class Meta:
         ordering = ["-created_at"]
+
+    def __str__(self):
+        return str(self.created_at)
 
 
 class Ticket(models.Model):
