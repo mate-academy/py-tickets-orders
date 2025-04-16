@@ -1,6 +1,10 @@
+from django.db.models import F, Count
+from django.utils.dateparse import parse_date
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import (Genre, Actor, CinemaHall, Movie,
+                           MovieSession, Order)
 
 from cinema.serializers import (
     GenreSerializer,
@@ -12,6 +16,9 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
+    OrderSerializer,
+    ListTicketSerializer,
+    ListOrderSerializer,
 )
 
 
@@ -43,6 +50,25 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    def get_queryset(self):
+        queryset = Movie.objects.all().prefetch_related("genres", "actors")
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
+
+        if actors:
+            actor_ids = actors.split(",")
+            queryset = queryset.filter(actors__id__in=actor_ids)
+
+        if genres:
+            genre_ids = genres.split(",")
+            queryset = queryset.filter(genres__id__in=genre_ids)
+
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+
+        return queryset.distinct()
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
@@ -56,3 +82,58 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = MovieSession.objects.all()
+        request = self.request
+        date_param = request.query_params.get("date")
+        movie_ids = request.query_params.get("movie")
+
+        if date_param:
+            parsed_date = parse_date(date_param)
+            if parsed_date:
+                queryset = queryset.filter(
+                    show_time__date=parsed_date
+                )
+
+        if movie_ids:
+            ids = movie_ids.split(",")
+            queryset = queryset.filter(movie__id__in=ids)
+
+        queryset = (
+            queryset
+            .select_related("movie", "cinema_hall")
+            .annotate(tickets_available=(
+                F("cinema_hall__rows")
+                * F("cinema_hall__seats_in_row")) - Count("tickets")
+            )
+        )
+
+        return queryset
+
+
+class OrderPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    pagination_class = OrderPagination
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user).prefetch_related(
+            "tickets__movie_session__movie",
+            "tickets__movie_session__cinema_hall"
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve", ):
+            return ListOrderSerializer
+
+        return OrderSerializer
