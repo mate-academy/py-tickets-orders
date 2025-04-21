@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+from django.db.models import UniqueConstraint
 
 
 class CinemaHall(models.Model):
@@ -84,26 +85,43 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["movie_session", "row", "seat"],
+                name="unique_ticket"
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        ]
+
+    @staticmethod
+    def validate_seat(row, seat, movie_session, error_to_raise):
+        seat_validators = {
+            "row": row,
+            "seat": seat
+        }
+        hall_limits = {
+            "row": movie_session.cinema_hall.rows,
+            "seat": movie_session.cinema_hall.seats_in_row
+        }
+
+        for attr, value in seat_validators.items():
+            max_value = hall_limits[attr]
+            if not (1 <= value <= max_value):
+                raise error_to_raise({
+                    attr: f"{attr} must be between 1 and {max_value}"
+                })
+
+    def clean(self):
+        self.validate_seat(
+            self.row,
+            self.seat,
+            self.movie_session,
+            ValidationError
+        )
 
     def save(
         self,
+        *args,
         force_insert=False,
         force_update=False,
         using=None,
@@ -111,13 +129,14 @@ class Ticket(models.Model):
     ):
         self.full_clean()
         super(Ticket, self).save(
-            force_insert, force_update, using, update_fields
+            *args,
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields
         )
 
     def __str__(self):
         return (
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
-
-    class Meta:
-        unique_together = ("movie_session", "row", "seat")
