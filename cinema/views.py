@@ -37,7 +37,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     def get_queryset(self):
-        queryset = self.queryset.prefetch_related("genres", "actors")
+        queryset = Movie.objects.prefetch_related("genres", "actors")
 
         title = self.request.query_params.get("title")
         actors = self.request.query_params.get("actors")
@@ -71,7 +71,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
-        queryset = self.queryset.select_related("movie", "cinema_hall")
+        queryset = MovieSession.objects.select_related("movie", "cinema_hall")
         date = self.request.query_params.get("date")
         movie_id = self.request.query_params.get("movie")
         if date:
@@ -95,7 +95,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = self.queryset.prefetch_related(
+        queryset = Order.objects.prefetch_related(
             "tickets__movie_session__movie",
             "tickets__movie_session__cinema_hall"
         )
