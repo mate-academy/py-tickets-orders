@@ -125,7 +125,11 @@ class TicketDetailSerializer(serializers.ModelSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = TicketDetailSerializer(many=True, read_only=True, source="tickets")
+    taken_places = TicketDetailSerializer(
+        many=True,
+        read_only=True,
+        source="tickets"
+    )
 
     class Meta:
         model = MovieSession
@@ -161,7 +165,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             user = self.context["request"].user
             order = Order.objects.create(user=user, **validated_data)
             if not tickets_data:
-                raise serializers.ValidationError("You must provide at least one ticket")
+                raise serializers.ValidationError(
+                    "You must provide "
+                    "at least one ticket"
+                )
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
             return order
