@@ -84,23 +84,43 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    @staticmethod
+    def validate_seat(seat, seats_in_row, error_to_raise):
+        if not (1 <= seat <= seats_in_row):
+            raise error_to_raise(
+                {
+                    "seat": f"Seat number must be "
+                    f"between 1 and {seats_in_row}, got {seat}."
+                }
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+
+    @staticmethod
+    def validate_row(row, rows, error_to_raise):
+        if not (1 <= row <= rows):
+            raise error_to_raise(
+                {
+                    "row": f"Row number must be "
+                    f"between 1 and {rows}, got {row}."
+                }
+            )
+
+    def clean(self):
+        if not self.movie_session_id:
+            raise ValidationError(
+                "Movie session must be set before validating ticket."
+            )
+
+        Ticket.validate_seat(
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row,
+            ValidationError
+        )
+
+        Ticket.validate_row(
+            self.row,
+            self.movie_session.cinema_hall.rows,
+            ValidationError
+        )
 
     def save(
         self,
@@ -121,3 +141,4 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
+        ordering = ["seat"]
