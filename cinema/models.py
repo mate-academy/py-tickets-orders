@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+from django.db.models.constraints import UniqueConstraint
 
 
 class CinemaHall(models.Model):
@@ -120,4 +121,9 @@ class Ticket(models.Model):
         )
 
     class Meta:
-        unique_together = ("movie_session", "row", "seat")
+        constraints = [
+            UniqueConstraint(
+                fields=["movie_session", "row", "seat"],
+                name="unique_ticket_seat_movie_session"
+            ),
+        ]
