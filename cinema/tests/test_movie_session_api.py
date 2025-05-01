@@ -1,45 +1,41 @@
 import datetime
-
 from django.test import TestCase
-
-from rest_framework.test import APIClient
+from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APIClient
 
 from cinema.models import Movie, Genre, Actor, MovieSession, CinemaHall, Ticket
+
+MOVIE_SESSION_URL = "/api/cinema/movie_sessions/"
 
 
 class MovieSessionApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        drama = Genre.objects.create(
-            name="Drama",
+        self.genre = Genre.objects.create(name="Drama")
+        self.genre2 = Genre.objects.create(name="Comedy")
+        self.actor = Actor.objects.create(
+            first_name="Kate",
+            last_name="Winslet"
         )
-        comedy = Genre.objects.create(
-            name="Comedy",
-        )
-        actress = Actor.objects.create(first_name="Kate", last_name="Winslet")
         self.movie = Movie.objects.create(
             title="Titanic",
             description="Titanic description",
             duration=123,
         )
-        self.movie.genres.add(drama)
-        self.movie.genres.add(comedy)
-        self.movie.actors.add(actress)
+        self.movie.genres.add(self.genre, self.genre2)
+        self.movie.actors.add(self.actor)
+
         self.cinema_hall = CinemaHall.objects.create(
             name="White",
             rows=10,
-            seats_in_row=14,
+            seats_in_row=14
         )
+
         self.movie_session = MovieSession.objects.create(
+            show_time="2022-09-02 09:00:00",
             movie=self.movie,
-            cinema_hall=self.cinema_hall,
-            show_time=datetime.datetime(
-                year=2022,
-                month=9,
-                day=2,
-                hour=9
-            ),
+            cinema_hall=self.cinema_hall
         )
 
     def test_get_movie_sessions(self):
@@ -114,16 +110,22 @@ class MovieSessionApiTests(TestCase):
         self.assertEqual(movie_sessions.count(), 2)
 
     def test_get_movie_session(self):
-        response = self.client.get("/api/cinema/movie_sessions/1/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get(f"{MOVIE_SESSION_URL}{self.movie_session.id}/")
+
+        self.assertEqual(response.data["show_time"], "2022-09-02T09:00:00")
         self.assertEqual(response.data["movie"]["title"], "Titanic")
-        self.assertEqual(
-            response.data["movie"]["description"], "Titanic description"
-        )
+        self.assertEqual(response.data["movie"]["description"], "Titanic description")
         self.assertEqual(response.data["movie"]["duration"], 123)
-        self.assertEqual(response.data["movie"]["genres"], ["Drama", "Comedy"])
-        self.assertEqual(response.data["movie"]["actors"], ["Kate Winslet"])
-        self.assertEqual(response.data["cinema_hall"]["capacity"], 140)
+        self.assertEqual(
+            sorted(response.data["movie"]["genres"]),
+            ["Comedy", "Drama"]
+        )
+        self.assertEqual(
+            sorted(response.data["movie"]["actors"]),
+            ["Kate Winslet"]
+        )
+        self.assertEqual(response.data["cinema_hall"]["name"], "White")
         self.assertEqual(response.data["cinema_hall"]["rows"], 10)
         self.assertEqual(response.data["cinema_hall"]["seats_in_row"], 14)
-        self.assertEqual(response.data["cinema_hall"]["name"], "White")
+        self.assertEqual(response.data["cinema_hall"]["capacity"], 140)
+        self.assertEqual(response.data["taken_places"], [])

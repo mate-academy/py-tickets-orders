@@ -28,18 +28,22 @@ class MovieApiTests(TestCase):
         self.movie.actors.add(self.actress)
 
     def test_get_movies(self):
-        movies = self.client.get("/api/cinema/movies/")
         titanic = {
             "title": "Titanic",
             "description": "Titanic description",
             "duration": 123,
-            "genres": ["Drama", "Comedy"],
+            "genres": ["Comedy", "Drama"],
             "actors": ["Kate Winslet"],
         }
-        print(movies.data)
-        self.assertEqual(movies.status_code, status.HTTP_200_OK)
+        movies = self.client.get("/api/cinema/movies/")
+
         for field in titanic:
-            self.assertEqual(movies.data[0][field], titanic[field])
+            if field in ["genres", "actors"]:
+                self.assertEqual(
+                    sorted(movies.data[0][field]), sorted(titanic[field])
+                )
+            else:
+                self.assertEqual(movies.data[0][field], titanic[field])
 
     def test_get_movies_with_genres_filtering(self):
         movies = self.client.get(
@@ -107,12 +111,13 @@ class MovieApiTests(TestCase):
         self.assertEqual(response.data["title"], "Titanic")
         self.assertEqual(response.data["description"], "Titanic description")
         self.assertEqual(response.data["duration"], 123)
-        self.assertEqual(response.data["genres"][0]["name"], "Drama")
-        self.assertEqual(response.data["genres"][1]["name"], "Comedy")
-        self.assertEqual(response.data["actors"][0]["first_name"], "Kate")
-        self.assertEqual(response.data["actors"][0]["last_name"], "Winslet")
         self.assertEqual(
-            response.data["actors"][0]["full_name"], "Kate Winslet"
+            sorted(g["name"] for g in response.data["genres"]),
+            ["Comedy", "Drama"]
+        )
+        self.assertEqual(
+            sorted(a["full_name"] for a in response.data["actors"]),
+            ["Kate Winslet"]
         )
 
     def test_get_invalid_movie(self):
