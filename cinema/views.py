@@ -37,8 +37,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    queryset = Movie.objects.all()
-
     def get_queryset(self):
         queryset = Movie.objects.all()
 
@@ -60,10 +58,8 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
-
         if self.action == "retrieve":
             return MovieDetailSerializer
-
         return MovieSerializer
 
 
@@ -84,15 +80,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def get_serializer_class(self):
+        if self.action == "list":
+            return MovieSessionListSerializer
+        if self.action == "retrieve":
+            return MovieSessionDetailSerializer
 
-def get_serializer_class(self):
-    if self.action == "list":
-        return MovieSessionListSerializer
-
-    if self.action == "retrieve":
-        return MovieSessionDetailSerializer
-
-    return MovieSessionSerializer
+        return MovieSessionSerializer
 
 
 class OrderPagination(PageNumberPagination):

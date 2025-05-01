@@ -39,8 +39,7 @@ class MovieSerializer(serializers.ModelSerializer):
 
 class MovieListSerializer(MovieSerializer):
     genres = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
+        many=True, read_only=True,
         slug_field="name"
     )
     actors = serializers.SlugRelatedField(
@@ -78,7 +77,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         source="cinema_hall.capacity",
         read_only=True
     )
-
     tickets_available = serializers.SerializerMethodField()
 
     class Meta:
@@ -92,8 +90,8 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "tickets_available",
         )
 
-        def get_tickets_available(self, obj):
-            return obj.cinema_hall.capacity - obj.tickets.count()
+    def get_tickets_available(self, obj):
+        return obj.cinema_hall.capacity - obj.tickets.count()
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -141,10 +139,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(
-        many=True,
-        read_only=True
-    )
+    tickets = TicketSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
