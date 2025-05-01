@@ -8,3 +8,11 @@ venv/
 **__pycache__/
 *.pyc
 app/db.sqlite3
+cinema/tests/
+cinema/__init__.py
+cinema/apps.py
+cinema/models.py
+cinema_service/__init__.py
+cinema_service/asgi.py
+cinema_service/urls.py
+cinema_service/wsgi.py
