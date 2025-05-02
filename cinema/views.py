@@ -44,10 +44,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    @staticmethod
-    def _params_to_ints(query_string):
-        return [int(str_id) for str_id in query_string.split(",")]
-
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
@@ -77,14 +73,14 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
+    @staticmethod
+    def _params_to_ints(query_string):
+        return [int(str_id) for str_id in query_string.split(",")]
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-
-    @staticmethod
-    def _params_to_ints(query_string):
-        return [int(str_id) for str_id in query_string.split(",")]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -116,6 +112,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
+    @staticmethod
+    def _params_to_ints(query_string):
+        return [int(str_id) for str_id in query_string.split(",")]
 
 class OrderSetPagination(PageNumberPagination):
     page_size = 1
