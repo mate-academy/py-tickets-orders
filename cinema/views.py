@@ -116,6 +116,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def _params_to_ints(query_string):
         return [int(str_id) for str_id in query_string.split(",")]
 
+
 class OrderSetPagination(PageNumberPagination):
     page_size = 1
     page_size_query_param = "page_size"
