@@ -91,8 +91,8 @@ class TicketCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         data = super(TicketCreateSerializer, self).validate(attrs)
         Ticket.validate_seat(
-            attrs["row"],
             attrs["seat"],
+            attrs["row"],
             attrs["movie_session"].cinema_hall.seats_in_row,
             attrs["movie_session"].cinema_hall.rows,
             ValidationError,
