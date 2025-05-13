@@ -1,6 +1,6 @@
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+from rest_framework.exceptions import ValidationError
 
 
 class CinemaHall(models.Model):
@@ -89,7 +89,7 @@ class Ticket(models.Model):
             self.seat,
             self.row,
             self.movie_session,
-            ValueError
+            ValidationError,
         )
 
     def save(

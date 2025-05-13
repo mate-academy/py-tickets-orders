@@ -1,6 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from cinema.models import (
     Genre,
@@ -99,7 +99,7 @@ class TicketSerializer(serializers.ModelSerializer):
             attrs["seat"],
             attrs["row"],
             attrs["movie_session"],
-            serializers.ValidationError
+            ValidationError
         )
 
     def to_representation(self, instance):
