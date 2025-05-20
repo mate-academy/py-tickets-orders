@@ -22,30 +22,42 @@ class CinemaHallApiTests(TestCase):
 
     def test_get_cinema_halls(self):
         response = self.client.get("/api/cinema/cinema_halls/")
-        blue_hall = {
-            "name": "Blue",
-            "rows": 15,
-            "seats_in_row": 20,
-            "capacity": 300,
-        }
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["name"], blue_hall["name"])
-        self.assertEqual(response.data[0]["rows"], blue_hall["rows"])
-        self.assertEqual(
-            response.data[0]["seats_in_row"], blue_hall["seats_in_row"]
-        )
-        vip_hall = {
-            "name": "VIP",
-            "rows": 6,
-            "seats_in_row": 8,
-            "capacity": 48,
+        self.assertIn("results",
+                      response.data)
+        halls_data = response.data["results"]
+
+        blue_hall_expected = {
+            "name": "Blue", "rows": 15, "seats_in_row": 20, "capacity": 300
         }
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[1]["name"], vip_hall["name"])
-        self.assertEqual(response.data[1]["rows"], vip_hall["rows"])
-        self.assertEqual(
-            response.data[1]["seats_in_row"], vip_hall["seats_in_row"]
-        )
+        vip_hall_expected = {
+            "name": "VIP", "rows": 6, "seats_in_row": 8, "capacity": 48
+        }
+
+        found_blue = False
+        found_vip = False
+        for hall_data in halls_data:
+            if hall_data["name"] == "Blue":
+                self.assertEqual(hall_data["rows"], blue_hall_expected["rows"])
+                self.assertEqual(
+                    hall_data["seats_in_row"],
+                    blue_hall_expected["seats_in_row"]
+                )
+                self.assertEqual(hall_data["capacity"],
+                                 blue_hall_expected["capacity"])
+                found_blue = True
+            elif hall_data["name"] == "VIP":
+                self.assertEqual(hall_data["rows"], vip_hall_expected["rows"])
+                self.assertEqual(
+                    hall_data["seats_in_row"],
+                    vip_hall_expected["seats_in_row"]
+                )
+                self.assertEqual(hall_data["capacity"],
+                                 vip_hall_expected["capacity"])
+                found_vip = True
+
+        self.assertTrue(found_blue, "Blue hall not found in response")
+        self.assertTrue(found_vip, "VIP hall not found in response")
 
     def test_post_cinema_halls(self):
         response = self.client.post(

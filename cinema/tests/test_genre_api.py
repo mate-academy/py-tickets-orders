@@ -18,9 +18,11 @@ class GenreApiTests(TestCase):
 
     def test_get_genres(self):
         response = self.client.get("/api/cinema/genres/")
-        genres = [genre["name"] for genre in response.data]
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(sorted(genres), ["Comedy", "Drama"])
+        self.assertIn("results", response.data)
+        genres_data = response.data["results"]
+        genres_names = [genre["name"] for genre in genres_data]
+        self.assertEqual(sorted(genres_names), ["Comedy", "Drama"])
 
     def test_post_genres(self):
         response = self.client.post(
