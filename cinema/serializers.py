@@ -78,7 +78,9 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionSerializer(read_only=False)
+    movie_session = serializers.PrimaryKeyRelatedField(
+        queryset=MovieSession.objects.all()
+    )
 
     class Meta:
         model = Ticket
@@ -117,7 +119,7 @@ class CreateTicketSerializer(TicketSerializer):
         fields = ["id", "row", "seat", "movie_session"]
 
 
-class TakenTicketSerializer(TicketSerializer):
+class TakenTicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ["row", "seat"]
