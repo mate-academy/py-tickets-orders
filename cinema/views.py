@@ -93,7 +93,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         movie = self.request.query_params.get("movie")
         if movie:
-            self._params_to_ints(movie)
+            movie = self._params_to_ints(movie)
             queryset = queryset.filter(movie__id__in=movie)
 
         if self.action == "list":
