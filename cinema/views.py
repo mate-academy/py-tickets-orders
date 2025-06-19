@@ -40,20 +40,29 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     def get_queryset(self):
-        queryset = Movie.objects.all()
-        title = self.request.query_params.get("title")
-        actors = self.request.query_params.getlist("actors")
-        genres = self.request.query_params.getlist("genres")
+        queryset = super().get_queryset()
 
-        if title:
-            queryset = queryset.filter(title__icontains=title)
+        actors = self.request.query_params.getlist("actors")
+        if len(actors) == 1 and "," in actors[0]:
+            actors = actors[0].split(",")
         if actors:
-            queryset = queryset.filter(actors__id__in=actors)
+            try:
+                actors = [int(actor_id) for actor_id in actors]
+                queryset = queryset.filter(actors__id__in=actors)
+            except ValueError:
+                pass  # або можна кинути помилку, якщо це критично
+
+        genres = self.request.query_params.getlist("genres")
+        if len(genres) == 1 and "," in genres[0]:
+            genres = genres[0].split(",")
         if genres:
-            queryset = queryset.filter(genres__id__in=genres)
+            try:
+                genres = [int(genre_id) for genre_id in genres]
+                queryset = queryset.filter(genres__id__in=genres)
+            except ValueError:
+                pass
 
         return queryset.distinct()
-
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer

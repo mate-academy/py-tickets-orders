@@ -92,7 +92,7 @@ class MovieSessionListSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(many=False, read_only=True)
+    movie_session = MovieSessionListSerializer(many=False)
 
     class Meta:
         model = Ticket
@@ -111,7 +111,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
         cinema_hall = movie_session.cinema_hall
 
-        Ticket.validate_seat(
+        TicketSerializer.validate_seat(
             ticket_attr_value=row,
             ticket_attr_name="row",
             count_attrs=cinema_hall.rows,
@@ -119,7 +119,7 @@ class TicketSerializer(serializers.ModelSerializer):
             cinema_hall_attr_name="rows",
         )
 
-        Ticket.validate_seat(
+        TicketSerializer.validate_seat(
             ticket_attr_value=seat,
             ticket_attr_name="seat",
             count_attrs=cinema_hall.seats_in_row,
