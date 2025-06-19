@@ -1,19 +1,18 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from cinema.models import (Genre,
-                           Actor,
-                           CinemaHall,
-                           Movie,
-                           MovieSession,
-                           Order,
-                           Ticket)
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
 
 class GenreSerializer(serializers.ModelSerializer):
+    cinema_hall_capacity = serializers.IntegerField(
+        source="cinema_hall.capacity", read_only=True
+    )
+    tickets_available = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Genre
-        fields = ("id", "name")
+        fields = ("id", "name", "cinema_hall_capacity", "tickets_available")
 
 
 class ActorSerializer(serializers.ModelSerializer):
@@ -31,17 +30,11 @@ class CinemaHallSerializer(serializers.ModelSerializer):
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
-        fields = ("id",
-                  "title",
-                  "description",
-                  "duration",
-                  "genres",
-                  "actors")
+        fields = ("id", "title", "description", "duration", "genres", "actors")
 
 
 class MovieListSerializer(MovieSerializer):
-    genres = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="name")
+    genres = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     actors = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="full_name"
     )
@@ -53,12 +46,7 @@ class MovieDetailSerializer(MovieSerializer):
 
     class Meta:
         model = Movie
-        fields = ("id",
-                  "title",
-                  "description",
-                  "duration",
-                  "genres",
-                  "actors")
+        fields = ("id", "title", "description", "duration", "genres", "actors")
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
@@ -69,8 +57,7 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 
 class MovieSessionListSerializer(serializers.ModelSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
-    cinema_hall_name = serializers.CharField(
-        source="cinema_hall.name", read_only=True)
+    cinema_hall_name = serializers.CharField(source="cinema_hall.name", read_only=True)
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
@@ -92,71 +79,35 @@ class MovieSessionListSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(many=False)
-
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
-        extra_kwargs = {"order": {"required": False}}
-
-    def validate(self, attrs):
-        movie_session = attrs.get("movie_session")
-        row = attrs.get("row")
-        seat = attrs.get("seat")
-
-        if movie_session is None:
-            raise serializers.ValidationError(
-                {"movie_session": "This field is required."}
-            )
-
-        cinema_hall = movie_session.cinema_hall
-
-        TicketSerializer.validate_seat(
-            ticket_attr_value=row,
-            ticket_attr_name="row",
-            count_attrs=cinema_hall.rows,
-            error_to_raise=serializers.ValidationError,
-            cinema_hall_attr_name="rows",
-        )
-
-        TicketSerializer.validate_seat(
-            ticket_attr_value=seat,
-            ticket_attr_name="seat",
-            count_attrs=cinema_hall.seats_in_row,
-            error_to_raise=serializers.ValidationError,
-            cinema_hall_attr_name="seats_in_row",
-        )
-
-        return attrs
 
 
-class TakenPlaceSerializer(serializers.ModelSerializer):
+class TicketListSerializer(TicketSerializer):
     class Meta:
         model = Ticket
         fields = ("row", "seat")
 
 
+# class TakenPlaceSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Ticket
+#         fields = ("row", "seat")
+
+
 class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = TakenPlaceSerializer(
-        source="tickets", many=True, read_only=True)
-    tickets_available = serializers.IntegerField(read_only=True)
+    movie = MovieListSerializer(read_only=True)
+    cinema_hall = CinemaHallSerializer(read_only=True)
+    taken_places = TicketListSerializer(source="tickets", many=True, read_only=True)
 
     class Meta:
         model = MovieSession
-        fields = (
-            "id",
-            "show_time",
-            "movie",
-            "cinema_hall",
-            "taken_places",
-            "tickets_available",
-        )
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
+    tickets = TicketSerializer(many=True, read_only=False)
 
     class Meta:
         model = Order
@@ -166,8 +117,22 @@ class OrderSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
-
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
-
             return order
+
+
+class TicketDetailSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionListSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class OrderListSerializer(serializers.ModelSerializer):
+    tickets = TicketDetailSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
