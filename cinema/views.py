@@ -67,14 +67,16 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(title__icontains=title_param)
 
         if actors_param:
-            actors_param = self._params_to_ints(actors_param)
-            queryset = queryset.filter(actors__id__in=actors_param)
+            actor_ids = self._params_to_ints(actors_param)
+            for actor_id in actor_ids:
+                queryset = queryset.filter(actors__id=actor_id)
 
         if genres_param:
-            genres_param = self._params_to_ints(genres_param)
-            queryset = queryset.filter(genres__id__in=genres_param)
+            genre_ids = self._params_to_ints(genres_param)
+            for genre_id in genre_ids:
+                queryset = queryset.filter(genres__id=genre_id)
 
-        return queryset.prefetch_related("genres", "actors").distinct()
+        return queryset.prefetch_related("genres", "actors")
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -134,7 +136,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Order.objects.all().filter(user=self.request.user)
-        queryset.prefetch_related(
+        queryset = queryset.prefetch_related(
             "tickets__movie_session__movie",
             "tickets__movie_session__cinema_hall"
         )

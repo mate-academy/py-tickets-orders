@@ -11,14 +11,10 @@ from cinema.models import (Genre,
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    cinema_hall_capacity = serializers.IntegerField(
-        source="cinema_hall.capacity", read_only=True
-    )
-    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Genre
-        fields = ("id", "name", "cinema_hall_capacity", "tickets_available")
+        fields = ("id", "name")
 
 
 class ActorSerializer(serializers.ModelSerializer):
