@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.db.models import Count, F, ExpressionWrapper, IntegerField
+from django.db.models import Count, F, ExpressionWrapper, IntegerField, Q
 from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -47,7 +47,11 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _params_to_ints(query_string):
-        return [int(str_id) for str_id in query_string.split(",")]
+        return [
+            int(str_id) for str_id
+            in query_string.split(",")
+            if str_id.isdigit()
+        ]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -64,19 +68,21 @@ class MovieViewSet(viewsets.ModelViewSet):
         genres_param = self.request.query_params.get("genres")
 
         if title_param:
-            queryset = queryset.filter(title__icontains=title_param)
+            queryset = queryset.filter(
+                title__icontains=title_param)
 
         if actors_param:
             actor_ids = self._params_to_ints(actors_param)
-            for actor_id in actor_ids:
-                queryset = queryset.filter(actors__id=actor_id)
+            queryset = queryset.filter(
+                actors__id__in=actor_ids)
 
         if genres_param:
             genre_ids = self._params_to_ints(genres_param)
-            for genre_id in genre_ids:
-                queryset = queryset.filter(genres__id=genre_id)
+            queryset = queryset.filter(
+                genres__id__in=genre_ids)
 
-        return queryset.prefetch_related("genres", "actors")
+        return queryset.prefetch_related(
+            "genres", "actors").distinct()
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
