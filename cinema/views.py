@@ -1,6 +1,7 @@
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -11,7 +12,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer,
+    MovieListSerializer, OrderSerializer,
 )
 
 
@@ -43,6 +44,25 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        title = self.request.query_params.get('title')
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+
+        genres = self.request.query_params.get('genres')
+        if genres:
+            genre_ids = [int(id) for id in genres.split(',')]
+            queryset = queryset.filter(genres__id__in=genre_ids).distinct()
+
+        actors = self.request.query_params.get('actors')
+        if actors:
+            actor_ids = [int(id) for id in actors.split(',')]
+            queryset = queryset.filter(actors__id__in=actor_ids).distinct()
+
+        return queryset
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
@@ -56,3 +76,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    pagination_class = PageNumberPagination
+
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user).prefetch_related(
+            'tickets__movie_session__movie',
+            'tickets__movie_session__cinema_hall'
+        )
