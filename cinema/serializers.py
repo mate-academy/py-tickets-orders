@@ -104,7 +104,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(many=False, read_only=True)
+    movie_session = MovieSessionListSerializer(read_only=True)
 
     class Meta:
         model = Ticket
@@ -125,3 +125,14 @@ class OrderSerializer(serializers.ModelSerializer):
             for ticket_data in tickets_data:
                 TypeError.objects.create(order=order, **ticket_data)
             return order
+
+class TicketsListSerializer(TicketSerializer):
+    movie_session = MovieSessionListSerializer(read_only=False)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session",)
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketsListSerializer(many=True, read_only=True)
