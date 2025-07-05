@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import transaction
 
 from .models import (
     Genre,
@@ -111,8 +112,16 @@ class TicketSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=False)
+    tickets = TicketSerializer(many=True, read_only=False, allow_null=False)
 
     class Meta:
         model = Order
         fields = ["id", "tickets"]
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tickets_data = validated_data.pop("tracks")
+            order = Order.objects.create(**validated_data)
+            for ticket_data in tickets_data:
+                TypeError.objects.create(order=order, **ticket_data)
+            return order
