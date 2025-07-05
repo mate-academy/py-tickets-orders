@@ -126,6 +126,7 @@ class OrderSerializer(serializers.ModelSerializer):
                 TypeError.objects.create(order=order, **ticket_data)
             return order
 
+
 class TicketsListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer(read_only=False)
 
