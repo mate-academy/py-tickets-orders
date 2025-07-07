@@ -172,7 +172,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "unique_together": {("movie_session", "row", "seat")},
+                "unique_together": ("movie_session", "row", "seat"),
             },
         ),
     ]
