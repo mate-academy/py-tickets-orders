@@ -51,9 +51,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
         if actors:
-            queryset = queryset.filter(actors__name__icontains=actors).distinct()
+            queryset = (queryset.filter
+                        (actors__full_name__icontains=actors).distinct())
         if genres:
-            queryset = queryset.filter(genres____name__icontains=genres).distinct()
+            queryset = (queryset.filter
+                        (genres__name__icontains=genres).distinct())
         if title:
             queryset = queryset.filter(title__icontains=title).distinct()
 
@@ -88,8 +90,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action in "retrieve":
             queryset = queryset.select_related("movie", "cinema_hall")
         if self.action == "list":
-            queryset = (queryset.select_related("cinema_hall")
-                        .annotate(tickets_available=F("cinema_hall__capacity") - Count("tickets")))
+            queryset = (
+                queryset.select_related("cinema_hall").annotate(
+                    hall_capacity=F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row"),
+                    tickets_available=F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row") - Count("tickets"),
+                )
+            )
+
         return queryset.distinct()
 
 
@@ -112,6 +121,3 @@ class OrderViewSet(viewsets.ModelViewSet):
             serializer = OrderListSerializer
 
         return serializer
-
-
-
