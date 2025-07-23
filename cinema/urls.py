@@ -7,6 +7,8 @@ from cinema.views import (
     CinemaHallViewSet,
     MovieViewSet,
     MovieSessionViewSet,
+    OrderListCreateView,
+    MovieSessionDetailView,
 )
 
 router = routers.DefaultRouter()
@@ -16,6 +18,14 @@ router.register("cinema_halls", CinemaHallViewSet)
 router.register("movies", MovieViewSet)
 router.register("movie_sessions", MovieSessionViewSet)
 
-urlpatterns = [path("", include(router.urls))]
+urlpatterns = [
+    path("", include(router.urls)),
+    path("orders/", OrderListCreateView.as_view(), name="order-list-create"),
+    path(
+        "movie_sessions/<int:pk>/",
+        MovieSessionDetailView.as_view(),
+        name="movie-session-detail",
+    ),
+]
 
 app_name = "cinema"
