@@ -61,8 +61,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
-    tickets_available = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="seat", source="tickets")
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -94,11 +93,14 @@ class TicketSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=True)
+    created_at = serializers.DateTimeField(
+        format="%Y-%m-%d %H:%M:%S", read_only=True)
+    tickets = TicketSerializer(many=True, read_only=False)
 
     class Meta:
         model = Order
-        fields = ("id", "created_at", "tickets")
+        fields = ("id", "created_at", "user", "tickets")
+        read_only_fields = ("user",)
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -111,7 +113,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionDetailSerializer(many=False, read_only=True)
-    orders = OrderSerializer(many=True, read_only=True)
+    orders = OrderSerializer(many=False, read_only=True)
 
 
 class OrderListSerializer(OrderSerializer):
