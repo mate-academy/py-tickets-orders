@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+from rest_framework import serializers
 
 
 class CinemaHall(models.Model):
@@ -84,23 +85,19 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    @staticmethod
+    def validate_ticket_position(row, seat, movie_session):
+        cinema_hall = movie_session.cinema_hall
+        if not (1 <= row <= cinema_hall.rows):
+            raise serializers.ValidationError(
+                {"row": f"Row must be between 1 and {cinema_hall.rows}"}
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        if not (1 <= seat <= cinema_hall.seats_in_row):
+            raise serializers.ValidationError(
+                {"seat": f"Seat must be between 1 and "
+                         f"{cinema_hall.seats_in_row}"}
+            )
+        return row, seat
 
     def save(
         self,
