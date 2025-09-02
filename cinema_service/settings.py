@@ -33,6 +33,13 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": (
+        "rest_framework.pagination.LimitOffsetPagination"
+    ),
+    "PAGE_SIZE": 2
+}
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -124,7 +131,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
