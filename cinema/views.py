@@ -14,7 +14,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, TicketSerializer, TicketUpdateSerializer, OrderSerializer, OrderCreateSerializer,
+    MovieListSerializer, TicketSerializer, TicketCreateSerializer, OrderSerializer, OrderCreateSerializer,
 )
 
 from rest_framework.pagination import PageNumberPagination
@@ -134,7 +134,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return TicketSerializer
         elif self.action in ['update', 'create', 'partial_update']:
-            return TicketUpdateSerializer
+            return TicketCreateSerializer
         return  TicketSerializer
 
 
