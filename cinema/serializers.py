@@ -78,16 +78,6 @@ class MovieDetailSerializer(MovieSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     actors = ActorSerializer(many=True, read_only=True)
 
-    class Meta:
-        model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors")
-
-    def get_genres(self, obj):
-        return [genre.name for genre in obj.genres.all()]
-
-    def get_actors(self, obj):
-        return [actor.full_name for actor in obj.actors.all()]
-
 
 class MovieSessionSerializer(serializers.ModelSerializer):
     movie_title = serializers.CharField(
