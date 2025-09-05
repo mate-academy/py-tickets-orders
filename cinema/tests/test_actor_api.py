@@ -7,17 +7,24 @@ from cinema.models import Actor
 
 
 class ActorApiTests(TestCase):
+    fixtures = []
     def setUp(self):
         self.client = APIClient()
+        Actor.objects.all().delete()
         Actor.objects.create(first_name="George", last_name="Clooney")
         Actor.objects.create(first_name="Keanu", last_name="Reeves")
 
     def test_get_actors(self):
         response = self.client.get("/api/cinema/actors/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        actors_full_names = [actor["full_name"] for actor in response.data]
+        actors_full_names = [
+            actor["full_name"]
+            for actor in response.json()["results"]
+        ]
+        self.assertEqual(len(actors_full_names), 2)
         self.assertEqual(
-            sorted(actors_full_names), ["George Clooney", "Keanu Reeves"]
+            sorted(actors_full_names),
+            ["George Clooney", "Keanu Reeves"]
         )
 
     def test_post_actors(self):
@@ -48,14 +55,8 @@ class ActorApiTests(TestCase):
         actor_pk_1 = Actor.objects.get(pk=1)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            [
-                actor_pk_1.first_name,
-                actor_pk_1.last_name,
-            ],
-            [
-                "Scarlett",
-                "Johansson",
-            ],
+            [actor_pk_1.first_name, actor_pk_1.last_name],
+            ["Scarlett", "Johansson"],
         )
 
     def test_delete_actor(self):

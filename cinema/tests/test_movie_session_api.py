@@ -52,7 +52,8 @@ class MovieSessionApiTests(TestCase):
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
         for field in movie_session:
             self.assertEqual(
-                movie_sessions.data[0][field], movie_session[field]
+                movie_sessions.json()["results"][0][field],
+                movie_session[field]
             )
 
     def test_get_movie_sessions_filtered_by_date(self):
@@ -60,45 +61,32 @@ class MovieSessionApiTests(TestCase):
             "/api/cinema/movie_sessions/?date=2022-09-02"
         )
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(movie_sessions.data), 1)
+        self.assertEqual(len(movie_sessions.json()["results"]), 1)
 
         movie_sessions = self.client.get(
             "/api/cinema/movie_sessions/?date=2022-09-01"
         )
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(movie_sessions.data), 0)
+        self.assertEqual(len(movie_sessions.json()["results"]), 0)
 
     def test_get_movie_sessions_filtered_by_movie(self):
-        movie_sessions = self.client.get(
-            f"/api/cinema/movie_sessions/?movie={self.movie.id}"
-        )
+        movie_sessions = self.client.get(f"/api/cinema/movie_sessions/?movie={self.movie.id}")
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(movie_sessions.data), 1)
-
-        movie_sessions = self.client.get(
-            "/api/cinema/movie_sessions/?movie=1234"
-        )
+        self.assertEqual(len(movie_sessions.json()["results"]), 1)
+        movie_sessions = self.client.get("/api/cinema/movie_sessions/?movie=1234")
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(movie_sessions.data), 0)
+        self.assertEqual(len(movie_sessions.json()["results"]), 0)
 
     def test_get_movie_sessions_filtered_by_movie_and_data(self):
-        movie_sessions = self.client.get(
-            f"/api/cinema/movie_sessions/?movie={self.movie.id}&date=2022-09-2"
-        )
+        movie_sessions = self.client.get(f"/api/cinema/movie_sessions/?movie={self.movie.id}&date=2022-09-2")
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(movie_sessions.data), 1)
-
-        movie_sessions = self.client.get(
-            "/api/cinema/movie_sessions/?movie=1234&date=2022-09-2"
-        )
+        self.assertEqual(len(movie_sessions.json()["results"]), 1)
+        movie_sessions = self.client.get("/api/cinema/movie_sessions/?movie=1234&date=2022-09-2")
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(movie_sessions.data), 0)
-
-        movie_sessions = self.client.get(
-            f"/api/cinema/movie_sessions/?movie={self.movie.id}&date=2022-09-3"
-        )
+        self.assertEqual(len(movie_sessions.json()["results"]), 0)
+        movie_sessions = self.client.get(f"/api/cinema/movie_sessions/?movie={self.movie.id}&date=2022-09-3")
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(movie_sessions.data), 0)
+        self.assertEqual(len(movie_sessions.json()["results"]), 0)
 
     def test_post_movie_session(self):
         movies = self.client.post(
@@ -116,14 +104,15 @@ class MovieSessionApiTests(TestCase):
     def test_get_movie_session(self):
         response = self.client.get("/api/cinema/movie_sessions/1/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["movie"]["title"], "Titanic")
+        response_json = response.json()
+        self.assertEqual(response_json["movie"]["title"], "Titanic")
         self.assertEqual(
-            response.data["movie"]["description"], "Titanic description"
+            response_json["movie"]["description"], "Titanic description"
         )
-        self.assertEqual(response.data["movie"]["duration"], 123)
-        self.assertEqual(response.data["movie"]["genres"], ["Drama", "Comedy"])
-        self.assertEqual(response.data["movie"]["actors"], ["Kate Winslet"])
-        self.assertEqual(response.data["cinema_hall"]["capacity"], 140)
-        self.assertEqual(response.data["cinema_hall"]["rows"], 10)
-        self.assertEqual(response.data["cinema_hall"]["seats_in_row"], 14)
-        self.assertEqual(response.data["cinema_hall"]["name"], "White")
+        self.assertEqual(response_json["movie"]["duration"], 123)
+        self.assertEqual(response_json["movie"]["genres"], ["Drama", "Comedy"])
+        self.assertEqual(response_json["movie"]["actors"], ["Kate Winslet"])
+        self.assertEqual(response_json["cinema_hall"]["capacity"], 140)
+        self.assertEqual(response_json["cinema_hall"]["rows"], 10)
+        self.assertEqual(response_json["cinema_hall"]["seats_in_row"], 14)
+        self.assertEqual(response_json["cinema_hall"]["name"], "White")

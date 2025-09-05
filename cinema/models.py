@@ -90,17 +90,16 @@ class Ticket(models.Model):
             (self.seat, "seat", "seats_in_row"),
         ]:
             count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+                self.movie_session.cinema_hall,
+                cinema_hall_attr_name
             )
             if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+                raise ValidationError({
+                    ticket_attr_name: (
+                        f"{ticket_attr_name.capitalize()} number must be in "
+                        f"available range: (1, {count_attrs})"
+                    )
+                })
 
     def save(
         self,
@@ -110,8 +109,11 @@ class Ticket(models.Model):
         update_fields=None,
     ):
         self.full_clean()
-        super(Ticket, self).save(
-            force_insert, force_update, using, update_fields
+        super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields
         )
 
     def __str__(self):

@@ -3,6 +3,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 
+from django.db import models
 from cinema.models import Movie, Genre, Actor
 
 
@@ -36,36 +37,37 @@ class MovieApiTests(TestCase):
             "genres": ["Drama", "Comedy"],
             "actors": ["Kate Winslet"],
         }
-        print(movies.data)
         self.assertEqual(movies.status_code, status.HTTP_200_OK)
+        movies_data = movies.json()
         for field in titanic:
-            self.assertEqual(movies.data[0][field], titanic[field])
+            self.assertEqual(
+                movies_data["results"][0][field],
+                titanic[field]
+            )
 
     def test_get_movies_with_genres_filtering(self):
         movies = self.client.get(
             f"/api/cinema/movies/?genres={self.comedy.id}"
         )
-        self.assertEqual(len(movies.data), 1)
+        self.assertEqual(len(movies.json()["results"]), 1)
         movies = self.client.get(
             f"/api/cinema/movies/?genres={self.comedy.id},2,3"
         )
-        self.assertEqual(len(movies.data), 1)
+        self.assertEqual(len(movies.json()["results"]), 1)
         movies = self.client.get("/api/cinema/movies/?genres=123213")
-        self.assertEqual(len(movies.data), 0)
+        self.assertEqual(len(movies.json()["results"]), 0)
 
     def test_get_movies_with_actors_filtering(self):
-        movies = self.client.get(
-            f"/api/cinema/movies/?actors={self.actress.id}"
-        )
-        self.assertEqual(len(movies.data), 1)
+        movies = self.client.get(f"/api/cinema/movies/?actors={self.actress.id}")
+        self.assertEqual(len(movies.json()["results"]), 1)
         movies = self.client.get(f"/api/cinema/movies/?actors={123}")
-        self.assertEqual(len(movies.data), 0)
+        self.assertEqual(len(movies.json()["results"]), 0)
 
     def test_get_movies_with_title_filtering(self):
         movies = self.client.get(f"/api/cinema/movies/?title=ita")
-        self.assertEqual(len(movies.data), 1)
+        self.assertEqual(len(movies.json()["results"]), 1)
         movies = self.client.get(f"/api/cinema/movies/?title=ati")
-        self.assertEqual(len(movies.data), 0)
+        self.assertEqual(len(movies.json()["results"]), 0)
 
     def test_post_movies(self):
         movies = self.client.post(
@@ -81,7 +83,10 @@ class MovieApiTests(TestCase):
         db_movies = Movie.objects.all()
         self.assertEqual(movies.status_code, status.HTTP_201_CREATED)
         self.assertEqual(db_movies.count(), 2)
-        self.assertEqual(db_movies.filter(title="Superman").count(), 1)
+        self.assertEqual(
+            db_movies.filter(title="Superman").count(),
+            1
+        )
 
     def test_post_invalid_movies(self):
         movies = self.client.post(
@@ -104,15 +109,16 @@ class MovieApiTests(TestCase):
     def test_get_movie(self):
         response = self.client.get("/api/cinema/movies/1/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["title"], "Titanic")
-        self.assertEqual(response.data["description"], "Titanic description")
-        self.assertEqual(response.data["duration"], 123)
-        self.assertEqual(response.data["genres"][0]["name"], "Drama")
-        self.assertEqual(response.data["genres"][1]["name"], "Comedy")
-        self.assertEqual(response.data["actors"][0]["first_name"], "Kate")
-        self.assertEqual(response.data["actors"][0]["last_name"], "Winslet")
+        data = response.json()
+        self.assertEqual(data["title"], "Titanic")
+        self.assertEqual(data["description"], "Titanic description")
+        self.assertEqual(data["duration"], 123)
+        self.assertEqual(data["genres"][0]["name"], "Drama")
+        self.assertEqual(data["genres"][1]["name"], "Comedy")
+        self.assertEqual(data["actors"][0]["first_name"], "Kate")
+        self.assertEqual(data["actors"][0]["last_name"], "Winslet")
         self.assertEqual(
-            response.data["actors"][0]["full_name"], "Kate Winslet"
+            data["actors"][0]["full_name"], "Kate Winslet"
         )
 
     def test_get_invalid_movie(self):
@@ -153,3 +159,6 @@ class MovieApiTests(TestCase):
             "/api/cinema/movies/1000/",
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+# Removed duplicate Genre model definition to avoid type conflicts

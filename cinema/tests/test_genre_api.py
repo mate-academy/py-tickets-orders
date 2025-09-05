@@ -7,19 +7,21 @@ from cinema.models import Genre
 
 
 class GenreApiTests(TestCase):
+    fixtures = []
     def setUp(self):
         self.client = APIClient()
-        Genre.objects.create(
-            name="Comedy",
-        )
-        Genre.objects.create(
-            name="Drama",
-        )
+        Genre.objects.all().delete()
+        Genre.objects.create(name="Comedy")
+        Genre.objects.create(name="Drama")
 
     def test_get_genres(self):
         response = self.client.get("/api/cinema/genres/")
-        genres = [genre["name"] for genre in response.data]
+        genres = [
+            genre["name"]
+            for genre in response.json()["results"]
+        ]
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(genres), 2)
         self.assertEqual(sorted(genres), ["Comedy", "Drama"])
 
     def test_post_genres(self):
