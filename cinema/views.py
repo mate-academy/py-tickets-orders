@@ -3,7 +3,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Prefetch, F, Count
 
 from cinema.filters import MovieSessionFilter, MovieFilter
-from cinema.paginators import OrderPagination
 from cinema.models import (
     Genre,
     Actor,
@@ -33,21 +32,25 @@ from cinema.serializers import (
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
+    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = MovieFilter
+    pagination_class = None
 
     def get_queryset(self):
         return Movie.objects.prefetch_related(
@@ -67,6 +70,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, )
     filterset_class = MovieSessionFilter
+    pagination_class = None
 
     def get_queryset(self):
         queryset = MovieSession.objects.select_related(
@@ -93,6 +97,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 
 class TicketViewSet(viewsets.ModelViewSet):
+    pagination_class = None
+
     def get_queryset(self):
         if self.request.user.is_authenticated:
             return Ticket.objects.filter(
@@ -110,8 +116,6 @@ class TicketViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    pagination_class = OrderPagination
-
     def get_queryset(self):
         if self.request.user.is_authenticated:
             return Order.objects.filter(
