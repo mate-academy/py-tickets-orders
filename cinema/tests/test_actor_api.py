@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.contrib.auth import get_user_model
 
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -9,6 +10,13 @@ from cinema.models import Actor
 class ActorApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
+
+        self.user = get_user_model().objects.create_user(
+            username="testuser", password="testpass"
+        )
+        # Авторизуємо клієнта для всіх запитів
+        self.client.force_authenticate(user=self.user)
+
         Actor.objects.create(first_name="George", last_name="Clooney")
         Actor.objects.create(first_name="Keanu", last_name="Reeves")
 
@@ -59,15 +67,11 @@ class ActorApiTests(TestCase):
         )
 
     def test_delete_actor(self):
-        response = self.client.delete(
-            "/api/cinema/actors/1/",
-        )
+        response = self.client.delete("/api/cinema/actors/1/")
         db_actors_id_1 = Actor.objects.filter(id=1)
         self.assertEqual(db_actors_id_1.count(), 0)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_invalid_actor(self):
-        response = self.client.delete(
-            "/api/cinema/actors/1000/",
-        )
+        response = self.client.delete("/api/cinema/actors/1000/")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
