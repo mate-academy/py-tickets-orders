@@ -56,7 +56,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
     def get_queryset(self):
-        queryset = Movie.objects.all()
+        queryset = Movie.objects.prefetch_related("actors", "genres")
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
@@ -101,13 +101,19 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             movie_ids = [int(m_id) for m_id in movie_param.split(",")]
             queryset = queryset.filter(movie__id__in=movie_ids)
 
-        queryset = queryset.annotate(
-            tickets_available=ExpressionWrapper(
-                F("cinema_hall__rows")
-                * F("cinema_hall__seats_in_row")
-                - Count("tickets"),
-                output_field=IntegerField()
+        total_seats = F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+        tickets_sold = Count("tickets")
+
+        queryset = (
+            queryset
+            .select_related("movie", "cinema_hall")
+            .annotate(
+                tickets_available=ExpressionWrapper(
+                    total_seats - tickets_sold,
+                    output_field=IntegerField()
+                )
             )
+            .order_by("id")
         )
 
         return queryset
@@ -127,7 +133,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+        return (
+            Order.objects.filter(user=self.request.user)
+            .prefetch_related(
+                "tickets",
+                "tickets__movie_session__cinema_hall",
+                "tickets__movie_session__movie"
+            )
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
