@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
 from cinema.models import (
@@ -118,7 +119,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(many=False, read_only=False)
+    movie_session = PrimaryKeyRelatedField(queryset=MovieSession.objects.all())
 
     class Meta:
         model = Ticket

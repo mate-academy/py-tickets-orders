@@ -102,7 +102,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie__id__in=movie_ids)
 
         total_seats = F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
-        tickets_sold = Count("tickets")
+        tickets_sold = Count("tickets", distinct=True)
 
         queryset = (
             queryset
