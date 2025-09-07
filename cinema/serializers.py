@@ -93,7 +93,6 @@ class MovieSessionSerializer(serializers.ModelSerializer):
         fields = ("id", "show_time", "movie", "cinema_hall")
 
 
-# ... existing code ...
 class MovieSessionCompactSerializer(serializers.ModelSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
     cinema_hall_name = serializers.CharField(
@@ -114,7 +113,6 @@ class MovieSessionCompactSerializer(serializers.ModelSerializer):
         )
 
 
-# ... existing code ...
 class MovieSessionListWithAvailabilitySerializer(MovieSessionSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
     cinema_hall_name = serializers.CharField(
