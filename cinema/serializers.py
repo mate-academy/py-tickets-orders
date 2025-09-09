@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db import transaction
 from rest_framework import serializers
 
@@ -25,7 +27,7 @@ class ActorSerializer(serializers.ModelSerializer):
         model = Actor
         fields = ("id", "first_name", "last_name", "full_name")
 
-    def get_full_name(self, obj):
+    def get_full_name(self, obj: Actor) -> str:
         return f"{obj.first_name} {obj.last_name}"
 
 
@@ -86,7 +88,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "tickets_available",
         )
 
-    def get_tickets_available(self, obj):
+    def get_tickets_available(self, obj: MovieSession) -> int:
         capacity = obj.cinema_hall.rows * obj.cinema_hall.seats_in_row
         sold = obj.tickets.count()
         return capacity - sold
@@ -133,7 +135,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ("id", "tickets", "created_at")
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, Any]) -> Order:
         tickets_data = validated_data.pop("tickets")
         with transaction.atomic():
             order = Order.objects.create(**validated_data)

@@ -22,6 +22,13 @@ from cinema.serializers import (
 )
 
 
+class QueryParamsMixin:
+    @staticmethod
+    def _params_to_ints(query_string: str) -> list[int]:
+        return [int(str_id) for str_id in query_string.split(",") if str_id.strip().isdigit()]
+
+
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -67,13 +74,10 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
+class MovieViewSet(QueryParamsMixin, viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    @staticmethod
-    def _params_to_ints(query_string):
-        return [int(str_id) for str_id in query_string.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset.prefetch_related("actors", "genres")
@@ -105,13 +109,10 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(QueryParamsMixin, viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
-    @staticmethod
-    def _params_to_ints(query_string):
-        return [int(str_id) for str_id in query_string.split(",")]
 
     def get_queryset(self):
         queryset = self.queryset.select_related(
