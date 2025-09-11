@@ -113,7 +113,6 @@ class Ticket(models.Model):
                            self.movie_session,
                            ValidationError)
 
-
     def save(
         self,
         force_insert=False,

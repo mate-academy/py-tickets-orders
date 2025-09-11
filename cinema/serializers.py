@@ -104,7 +104,8 @@ class TicketSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
-        rep["movie_session"] = MovieSessionListSerializer(instance.movie_session).data
+        rep["movie_session"] = (
+            MovieSessionListSerializer(instance.movie_session).data)
         return rep
 
 
