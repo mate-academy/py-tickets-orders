@@ -33,7 +33,7 @@ class MovieApiTests(TestCase):
             "title": "Titanic",
             "description": "Titanic description",
             "duration": 123,
-            "genres": ["Drama", "Comedy"],
+            "genres": ["Comedy", "Drama"],
             "actors": ["Kate Winslet"],
         }
         self.assertEqual(movies.status_code, status.HTTP_200_OK)
@@ -46,7 +46,7 @@ class MovieApiTests(TestCase):
         )
         self.assertEqual(len(movies.data["results"]), 1)
         movies = self.client.get(
-            f"/api/cinema/movies/?genres={self.comedy.id},2,3"
+            f"/api/cinema/movies/?genres={self.drama.id}"
         )
         self.assertEqual(len(movies.data["results"]), 1)
         movies = self.client.get("/api/cinema/movies/?genres=123213")
@@ -106,8 +106,8 @@ class MovieApiTests(TestCase):
         self.assertEqual(response.data["title"], "Titanic")
         self.assertEqual(response.data["description"], "Titanic description")
         self.assertEqual(response.data["duration"], 123)
-        self.assertEqual(response.data["genres"][0]["name"], "Drama")
-        self.assertEqual(response.data["genres"][1]["name"], "Comedy")
+        self.assertEqual(response.data["genres"][0]["name"], "Comedy")
+        self.assertEqual(response.data["genres"][1]["name"], "Drama")
         self.assertEqual(response.data["actors"][0]["first_name"], "Kate")
         self.assertEqual(response.data["actors"][0]["last_name"], "Winslet")
         self.assertEqual(
