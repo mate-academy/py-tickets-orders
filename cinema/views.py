@@ -39,19 +39,19 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Movie.objects.all()
-        
-        actors = self.request.query_params.get('actors')
+
+        actors = self.request.query_params.get("actors")
         if actors is not None:
             queryset = queryset.filter(actors__id=actors)
-        
-        genres = self.request.query_params.get('genres')
+
+        genres = self.request.query_params.get("genres")
         if genres is not None:
             queryset = queryset.filter(genres__id=genres)
-            
-        title = self.request.query_params.get('title')
+
+        title = self.request.query_params.get("title")
         if title is not None:
             queryset = queryset.filter(title__icontains=title)
-            
+
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -70,15 +70,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = MovieSession.objects.all()
-        
-        date = self.request.query_params.get('date')
+
+        date = self.request.query_params.get("date")
         if date is not None:
             queryset = queryset.filter(show_time__date=date)
-        
-        movie = self.request.query_params.get('movie')
+
+        movie = self.request.query_params.get("movie")
         if movie is not None:
             queryset = queryset.filter(movie_id=movie)
-            
+
         return queryset
 
     def get_serializer_class(self):
