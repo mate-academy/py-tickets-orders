@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -21,36 +22,34 @@ from cinema.serializers import (
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
-    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
-    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
-    pagination_class = None
 
     def get_queryset(self):
         queryset = Movie.objects.all()
 
         actors = self.request.query_params.get("actors")
         if actors is not None:
-            queryset = queryset.filter(actors__id=actors)
+            actors_list = [int(actor_id) for actor_id in actors.split(",")]
+            queryset = queryset.filter(actors__id__in=actors_list)
 
         genres = self.request.query_params.get("genres")
         if genres is not None:
-            queryset = queryset.filter(genres__id=genres)
+            genres_list = [int(genre_id) for genre_id in genres.split(",")]
+            queryset = queryset.filter(genres__id__in=genres_list)
 
         title = self.request.query_params.get("title")
         if title is not None:
@@ -71,7 +70,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-    pagination_class = None
 
     def get_queryset(self):
         queryset = MovieSession.objects.all()
@@ -96,9 +94,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
+class OrderPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = OrderPagination
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
