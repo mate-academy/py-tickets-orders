@@ -8,5 +8,5 @@ urlpatterns = [
 ]
 
 # Add debug_toolbar URLs only if enabled
-if getattr(settings, 'DEBUG_TOOLBAR_ENABLED', False):
+if getattr(settings, "DEBUG_TOOLBAR_ENABLED", False):
     urlpatterns.append(path("__debug__/", include("debug_toolbar.urls")))

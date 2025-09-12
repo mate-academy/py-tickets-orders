@@ -51,7 +51,7 @@ INSTALLED_APPS = [
 
 # Add debug_toolbar only in development (when not in CI/testing)
 DEBUG_TOOLBAR_ENABLED = False
-if not os.environ.get('CI') and 'test' not in sys.argv:
+if not os.environ.get("CI") and "test" not in sys.argv:
     try:
         import debug_toolbar
         INSTALLED_APPS.append("debug_toolbar")
