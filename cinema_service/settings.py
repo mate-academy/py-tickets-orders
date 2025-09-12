@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
+import sys
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,15 +45,22 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "django_filters",
-    "debug_toolbar",
     "cinema",
     "user",
 ]
 
+# Add debug_toolbar only in development (when not in CI/testing)
+DEBUG_TOOLBAR_ENABLED = False
+if not os.environ.get('CI') and 'test' not in sys.argv:
+    try:
+        import debug_toolbar
+        INSTALLED_APPS.append("debug_toolbar")
+        DEBUG_TOOLBAR_ENABLED = True
+    except ImportError:
+        pass
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -59,6 +68,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# Add debug_toolbar middleware only if enabled
+if DEBUG_TOOLBAR_ENABLED:
+    MIDDLEWARE.insert(1, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
 ROOT_URLCONF = "cinema_service.urls"
 
