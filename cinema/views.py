@@ -53,7 +53,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if genres is not None:
             try:
                 # Handle comma-separated IDs
-                if ',' in genres:
+                if "," in genres:
                     genre_ids = [int(g) for g in genres.split(',')]
                     queryset = queryset.filter(genres__id__in=genre_ids)
                 else:
