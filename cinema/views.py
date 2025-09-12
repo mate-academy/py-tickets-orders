@@ -42,7 +42,11 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _params_to_ints(query_string):
-        return [int(str_id) for str_id in query_string.split(",")]
+        try:
+            ints_list = [int(str_id) for str_id in query_string.split(",")]
+        except ValueError:
+            raise ValueError
+        return ints_list
 
     def get_serializer_class(self):
         if self.action == "list":
