@@ -57,6 +57,12 @@ class MovieSession(models.Model):
     class Meta:
         ordering = ["-show_time"]
 
+    @property
+    def tickets_available(self):
+        total_seats = self.cinema_hall.rows * self.cinema_hall.seats_in_row
+        taken_seats = self.tickets.count()
+        return total_seats - taken_seats
+
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
