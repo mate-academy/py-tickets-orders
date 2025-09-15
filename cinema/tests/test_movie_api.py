@@ -3,7 +3,11 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from cinema.models import Movie, Genre, Actor
+from cinema.models import (
+    Movie,
+    Genre,
+    Actor
+)
 
 
 class MovieApiTests(TestCase):
