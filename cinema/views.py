@@ -27,26 +27,31 @@ from cinema.serializers import (
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
+    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
         if self.action == "retrieve":
+
             return MovieDetailSerializer
         return MovieSerializer
 
@@ -54,15 +59,17 @@ class MovieViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         genres = self.request.query_params.get("genres")
         actors = self.request.query_params.get("actors")
-        titles = self.request.query_params.get("titles")
+        titles = self.request.query_params.get("title")
 
         if genres:
             genres_list = [genre.strip() for genre in genres.split(",")]
-            qs = qs.filter(genres__name__in=genres_list)
+            qs = qs.filter(genres__id__in=genres_list)
 
         if actors:
-            actors_list = [actor.strip() for actor in actors.split(",")]
-            qs = qs.filter(actors__first_name__in=actors_list)
+            actor_ids = [actor_id.strip() for actor_id in actors.split(",") if
+                         actor_id.strip().isdigit()]
+            if actor_ids:
+                qs = qs.filter(actors__id__in=actor_ids)
 
         if titles:
             titles_list = [title.strip() for title in titles.split(",")]
@@ -77,24 +84,26 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
         if self.action == "retrieve":
+            self.pagination_class = None
             return MovieSessionDetailSerializer
         return MovieSessionSerializer
 
     def get_queryset(self):
         qs = self.queryset
-        data = self.request.query_params.get("data")
+        date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
         if movie:
             qs = qs.filter(movie__id=movie.strip())
 
-        if data:
-            qs = qs.filter(show_time=data.strip())
+        if date:
+            qs = qs.filter(show_time__date=date.strip())
 
         if self.action == "list":
             qs = qs.annotate(
@@ -123,6 +132,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "retrieve":
+            self.pagination_class = None
             return OrderListSerializer
         if self.action == "create":
             return OrderCreateSerializer
