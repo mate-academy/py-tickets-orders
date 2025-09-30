@@ -1,0 +1,15 @@
+[tool.black]
+line-length = 88
+extend-exclude = '''
+/(
+  \.venv
+ | venv
+ | env
+ | __pycache__
+ | migrations
+)/
+'''
+
+[tool.isort]
+profile = "black"
+skip = [".venv", "venv", "env", "__pycache__", "migrations"]
