@@ -1,6 +1,8 @@
+from django.db.models import Count, F
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -11,7 +13,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer,
+    MovieListSerializer, OrderSerializer,
 )
 
 
@@ -43,6 +45,29 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
+    def get_queryset(self):
+        queryset = self.queryset
+
+        actors = self.request.query_params.get("actors")
+        genres = self.request.query_params.get("genres")
+        title = self.request.query_params.get("title")
+
+        if actors:
+            actors = [int(str_id) for str_id in actors.split(",")]
+            queryset = queryset.filter(actors__id__in=actors)
+
+        if genres:
+            genres = [int(str_id) for str_id in actors.split(",")]
+            queryset = queryset.filter(genres__id__in=genres)
+
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related("actors", "genres")
+
+        return queryset.distinct()
+
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
@@ -56,3 +81,47 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        movie = self.request.query_params.get("movie")
+        date = self.request.query_params.get("date")
+
+        if movie:
+            movie = [int(str_id) for str_id in movie.split(",")]
+            queryset = queryset.filter(movie__id__in=movie)
+
+        if date:
+            queryset = queryset.filter(show_time__date=date)
+
+        if self.action == "list":
+            queryset = queryset.prefetch_related("movie").annotate(tickets_available=F("cinema_hall__capacity") - Count("tickets"))
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related("movie",
+        "cinema_hall",
+        "tickets")
+
+        return queryset.distinct()
+
+class OrderPagination(PageNumberPagination):
+   page_size = 1
+   page_size_query_param = "page_size"
+   max_page_size = 20
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    pagination_class = OrderPagination
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(user=self.request.user)
+
+        if self.action == "list":
+            queryset = queryset.prefetch_related("tickets__movie_session__movie",
+    "tickets__movie_session__cinema_hall")
+
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
