@@ -53,7 +53,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        if self.action == ("list", "retrieve"):
+        if self.action in ("list", "retrieve"):
             queryset = queryset.prefetch_related("genres", "actors")
 
         return queryset.distinct()
@@ -84,13 +84,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date)
 
         if self.action == "list":
-            queryset = (
-                queryset.prefetch_related("movie", "cinema_hall").annotate(
-                    tickets_available=F("cinema_hall__rows")
-                    * F("cinema_hall__seats_in_row")
-                    - Count("tickets")
-                )
-            ).order_by("id")
+            queryset = queryset.prefetch_related("movie", "cinema_hall")
 
         return queryset.distinct()
 

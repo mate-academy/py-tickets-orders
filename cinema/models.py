@@ -90,14 +90,17 @@ class Ticket(models.Model):
 
         if not (1 <= row <= cinema_hall.rows):
             raise ValidationError(
-                {"row": f"Row number must be in range (1, {cinema_hall.rows})"}
+                {
+                    "row": f"Row number must be between "
+                    f"1 and {cinema_hall.rows} (inclusive)"
+                }
             )
 
         if not (1 <= seat <= cinema_hall.seats_in_row):
             raise ValidationError(
                 {
-                    "seat": f"Seat number must be in "
-                    f"range (1, {cinema_hall.seats_in_row})"
+                    "seat": f"Seat number must be between "
+                    f"1 and {cinema_hall.seats_in_row} (inclusive))"
                 }
             )
 
@@ -111,6 +114,7 @@ class Ticket(models.Model):
         using=None,
         update_fields=None,
     ):
+        self.full_clean()
         (super(Ticket, self)
          .save(force_insert, force_update, using, update_fields))
 
