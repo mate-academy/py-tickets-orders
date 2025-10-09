@@ -1,6 +1,7 @@
 import datetime
 
 from django.test import TestCase
+from rest_framework.templatetags.rest_framework import items
 
 from rest_framework.test import APIClient
 from rest_framework import status
@@ -34,12 +35,7 @@ class MovieSessionApiTests(TestCase):
         self.movie_session = MovieSession.objects.create(
             movie=self.movie,
             cinema_hall=self.cinema_hall,
-            show_time=datetime.datetime(
-                year=2022,
-                month=9,
-                day=2,
-                hour=9
-            ),
+            show_time=datetime.datetime(year=2022, month=9, day=2, hour=9),
         )
 
     def test_get_movie_sessions(self):
@@ -49,22 +45,17 @@ class MovieSessionApiTests(TestCase):
             "cinema_hall_name": "White",
             "cinema_hall_capacity": 140,
         }
+        items = movie_sessions.data.get("results", movie_sessions.data)
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
         for field in movie_session:
-            self.assertEqual(
-                movie_sessions.data[0][field], movie_session[field]
-            )
+            self.assertEqual(items[0][field], movie_session[field])
 
     def test_get_movie_sessions_filtered_by_date(self):
-        movie_sessions = self.client.get(
-            "/api/cinema/movie_sessions/?date=2022-09-02"
-        )
+        movie_sessions = self.client.get("/api/cinema/movie_sessions/?date=2022-09-02")
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
         self.assertEqual(len(movie_sessions.data), 1)
 
-        movie_sessions = self.client.get(
-            "/api/cinema/movie_sessions/?date=2022-09-01"
-        )
+        movie_sessions = self.client.get("/api/cinema/movie_sessions/?date=2022-09-01")
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
         self.assertEqual(len(movie_sessions.data), 0)
 
@@ -75,9 +66,7 @@ class MovieSessionApiTests(TestCase):
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
         self.assertEqual(len(movie_sessions.data), 1)
 
-        movie_sessions = self.client.get(
-            "/api/cinema/movie_sessions/?movie=1234"
-        )
+        movie_sessions = self.client.get("/api/cinema/movie_sessions/?movie=1234")
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
         self.assertEqual(len(movie_sessions.data), 0)
 
@@ -117,9 +106,7 @@ class MovieSessionApiTests(TestCase):
         response = self.client.get("/api/cinema/movie_sessions/1/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["movie"]["title"], "Titanic")
-        self.assertEqual(
-            response.data["movie"]["description"], "Titanic description"
-        )
+        self.assertEqual(response.data["movie"]["description"], "Titanic description")
         self.assertEqual(response.data["movie"]["duration"], 123)
         self.assertEqual(response.data["movie"]["genres"], ["Drama", "Comedy"])
         self.assertEqual(response.data["movie"]["actors"], ["Kate Winslet"])
