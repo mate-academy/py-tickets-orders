@@ -1,4 +1,4 @@
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -40,16 +40,47 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        actors = self.request.query_params.get("actors")
-        genres = self.request.query_params.get("genres")
+        actors_params = self.request.query_params.get("actors")
+        genres_params = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
 
-        if actors:
-            actors_ids = [int(str_id) for str_id in actors.split(",")]
-            queryset = queryset.filter(actors__id__in=actors_ids)
-        if genres:
-            genres_ids = [int(str_id) for str_id in genres.split(",")]
-            queryset = queryset.filter(genres__id__in=genres_ids)
+        if actors_params:
+            ids, names = [], []
+            for token in actors_params.split(","):
+                token = token.strip()
+                if not token:
+                    continue
+                try:
+                    ids.append(int(token))
+                except ValueError:
+                    names.append(token)
+            query = Q()
+            if ids:
+                query |= Q(actors__id__in=ids)
+            if names:
+                query |= Q(actors__full_name__in=names)
+
+            if query:
+                queryset = queryset.filter(query).distinct()
+        if genres_params:
+            if genres_params:
+                ids, names = [], []
+                for token in genres_params.split(","):
+                    token = token.strip()
+                    if not token:
+                        continue
+                    try:
+                        ids.append(int(token))
+                    except ValueError:
+                        names.append(token)
+                query = Q()
+                if ids:
+                    query |= Q(genres__id__in=ids)
+                if names:
+                    query |= Q(genres__full_name__in=names)
+
+                if query:
+                    queryset = queryset.filter(query).distinct()
         if title:
             queryset = queryset.filter(title__icontains=title)
 

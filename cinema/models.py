@@ -100,7 +100,7 @@ class Ticket(models.Model):
             raise ValidationError(
                 {
                     "seat": f"Seat number must be between "
-                    f"1 and {cinema_hall.seats_in_row} (inclusive))"
+                    f"1 and {cinema_hall.seats_in_row} (inclusive)"
                 }
             )
 
