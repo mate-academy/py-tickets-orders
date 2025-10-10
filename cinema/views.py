@@ -103,7 +103,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             queryset = (
                 queryset
-                .prefetch_related("movie")
+                .select_related("movie", "cinema_hall")
+                .prefetch_related("tickets")
                 .annotate(
                     tickets_available=(
                         F("cinema_hall__rows")
@@ -115,7 +116,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         elif self.action == "retrieve":
             queryset = (queryset.select_related("cinema_hall", "movie").
-                        prefetch_related("movie"))
+                        prefetch_related("tickets"))
         return queryset.distinct()
 
 
