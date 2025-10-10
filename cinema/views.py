@@ -114,7 +114,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             )
 
         elif self.action == "retrieve":
-            queryset = queryset.prefetch_related("movie")
+            queryset = (queryset.select_related("cinema_hall", "movie").
+                        prefetch_related("movie"))
         return queryset.distinct()
 
 
@@ -131,9 +132,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset.filter(user=self.request.user)
-        if self.action in "list":
+        if self.action == "list":
             queryset = (queryset.
-                        prefetch_related("tickets__movie_session__movie")
+                        prefetch_related("tickets__movie_session__movie",
+                                         "tickets__movie_session__cinema_hall")
                         )
         return queryset
 
