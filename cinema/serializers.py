@@ -90,7 +90,7 @@ class MovieSessionDetailSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_taken_places(obj):
-        return obj.tickets.values("row", "seat")
+        return list(obj.tickets.values("row", "seat"))
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -112,12 +112,12 @@ class TicketCreateSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    tickets = TicketCreateSerializer(many=True, write_only=True)
+    tickets_create = TicketCreateSerializer(many=True, write_only=True)
     tickets = TicketSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
-        fields = ("id", "tickets", "created_at")
+        fields = ("id", "tickets_create", "tickets", "created_at")
 
     def create(self, validated_data, **kwargs):
         user = kwargs.get("user") or self.context["request"].user
