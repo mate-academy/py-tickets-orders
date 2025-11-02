@@ -94,7 +94,7 @@ class TicketReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ("movie_session", "row", "seat")
+        fields = ("id", "movie_session", "row", "seat")
 
 
 class TicketCreateSerializer(serializers.ModelSerializer):
@@ -104,7 +104,7 @@ class TicketCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ("movie_session", "row", "seat")
+        fields = ("id", "movie_session", "row", "seat")
 
 
 class OrderListSerializer(serializers.ModelSerializer):
