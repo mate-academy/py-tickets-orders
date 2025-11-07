@@ -1,6 +1,8 @@
 from rest_framework import serializers
-
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from django.db import transaction
+from .models import (
+    Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -52,13 +54,16 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
-    movie_title = serializers.CharField(source="movie.title", read_only=True)
+    movie_title = serializers.CharField(
+        source="movie.title", read_only=True
+    )
     cinema_hall_name = serializers.CharField(
         source="cinema_hall.name", read_only=True
     )
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
+    tickets_available = serializers.SerializerMethodField()
 
     class Meta:
         model = MovieSession
@@ -68,13 +73,93 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
+            "tickets_available"
         )
+
+    def get_tickets_available(self, obj):
+        sold_tickets = Ticket.objects.filter(movie_session=obj).count()
+        return obj.cinema_hall.capacity - sold_tickets
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = serializers.SerializerMethodField()
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = (
+            "id",
+            "show_time",
+            "movie",
+            "cinema_hall",
+            "taken_places"
+        )
+
+    def get_taken_places(self, obj):
+        tickets = Ticket.objects.filter(movie_session=obj)
+        return [
+            {"row": ticket.row, "seat": ticket.seat}
+            for ticket in tickets
+        ]
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionListSerializer(read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class TicketCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat", "movie_session")
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True, read_only=True)
+    tickets_input = TicketCreateSerializer(many=True, write_only=True, source="tickets")
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "tickets_input", "created_at")
+        read_only_fields = ("created_at",)
+
+    def validate(self, attrs):
+        tickets_data = attrs.get("tickets", [])
+
+        if not tickets_data:
+            raise serializers.ValidationError("At least one ticket is required.")
+
+        for ticket_data in tickets_data:
+            movie_session = ticket_data["movie_session"]
+            row = ticket_data["row"]
+            seat = ticket_data["seat"]
+
+            if row < 1 or row > movie_session.cinema_hall.rows:
+                raise serializers.ValidationError("Invalid row number.")
+
+            if seat < 1 or seat > movie_session.cinema_hall.seats_in_row:
+                raise serializers.ValidationError("Invalid seat number.")
+
+            if Ticket.objects.filter(
+                movie_session=movie_session,
+                row=row,
+                seat=seat
+            ).exists():
+                raise serializers.ValidationError("This seat is already taken.")
+
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        tickets_data = validated_data.pop("tickets")
+        user = self.context["request"].user
+        order = Order.objects.create(user=user)
+
+        for ticket_data in tickets_data:
+            Ticket.objects.create(order=order, **ticket_data)
+
+        return order
