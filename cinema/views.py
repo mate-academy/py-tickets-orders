@@ -102,18 +102,17 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             queryset = (queryset
-            .select_related("cinema_hall")
-            .prefetch_related("tickets")
-            .annotate(
-                tickets_available=ExpressionWrapper(
-                    F("cinema_hall__rows")
-                    * F("cinema_hall__seats_in_row")
-                    - Count("tickets"),
-                    output_field=IntegerField(),
-                )
-            )
-            )
-
+                        .select_related("cinema_hall")
+                        .prefetch_related("tickets")
+                        .annotate(
+                            tickets_available=ExpressionWrapper(
+                                F("cinema_hall__rows")
+                                * F("cinema_hall__seats_in_row")
+                                - Count("tickets"),
+                                output_field=IntegerField(),
+                            )
+                        )
+                        )
         return queryset.distinct()
 
 
@@ -126,13 +125,13 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = (Order.objects
-        .filter(user=self.request.user)
-        .prefetch_related(
-            "tickets",
-            "tickets__movie_session__movie",
-            "tickets__movie_session__cinema_hall",
-        )
-        )
+                    .filter(user=self.request.user)
+                    .prefetch_related(
+                        "tickets",
+                        "tickets__movie_session__movie",
+                        "tickets__movie_session__cinema_hall",
+                    )
+                    )
         return queryset
 
     def get_serializer_class(self):
