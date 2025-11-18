@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from django.db.models import F, Count, ExpressionWrapper, IntegerField
-from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -53,7 +52,6 @@ class MovieViewSet(viewsets.ModelViewSet):
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
-        string = self.request.query_params.get("string")
         if actors:
             actors_ids = [int(str_id) for str_id in actors.split(",")]
             queryset = queryset.filter(
@@ -66,11 +64,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             )
         if title:
             queryset = queryset.filter(
-                title=title
-            )
-        if string:
-            queryset = queryset.filter(
-                title__icontains=string
+                title__incontains=title
             )
 
         return queryset.distinct()
