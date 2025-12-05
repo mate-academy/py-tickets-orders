@@ -1,58 +1,83 @@
-from rest_framework import viewsets
+from datetime import datetime
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from rest_framework import generics, filters
+from rest_framework.permissions import IsAuthenticated
 
-from cinema.serializers import (
-    GenreSerializer,
-    ActorSerializer,
-    CinemaHallSerializer,
+from .models import Movie, MovieSession, Order
+from .serializers import (
     MovieSerializer,
-    MovieSessionSerializer,
     MovieSessionListSerializer,
-    MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer,
+    OrderSerializer,
+    OrderCreateSerializer,
 )
 
 
-class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-
-
-class ActorViewSet(viewsets.ModelViewSet):
-    queryset = Actor.objects.all()
-    serializer_class = ActorSerializer
-
-
-class CinemaHallViewSet(viewsets.ModelViewSet):
-    queryset = CinemaHall.objects.all()
-    serializer_class = CinemaHallSerializer
-
-
-class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
+# ────────────────────────────────
+# MOVIE LIST VIEW + FILTERS
+# ────────────────────────────────
+class MovieListView(generics.ListAPIView):
     serializer_class = MovieSerializer
 
+    def get_queryset(self):
+        qs = Movie.objects.all()
+
+        title = self.request.query_params.get("title")
+        genres = self.request.query_params.get("genres")
+        actors = self.request.query_params.get("actors")
+
+        if title:
+            qs = qs.filter(title__icontains=title)
+
+        if genres:
+            qs = qs.filter(genres__name__icontains=genres)
+
+        if actors:
+            qs = qs.filter(actors__full_name__icontains=actors)
+
+        return qs
+
+
+# ────────────────────────────────
+# MOVIE SESSION LIST VIEW + FILTERS
+# ────────────────────────────────
+class MovieSessionListView(generics.ListAPIView):
+    serializer_class = MovieSessionListSerializer
+
+    def get_queryset(self):
+        qs = MovieSession.objects.select_related("movie", "cinema_hall")
+
+        date = self.request.query_params.get("date")
+        movie_id = self.request.query_params.get("movie")
+
+        if date:
+            parsed_date = datetime.strptime(date, "%Y-%m-%d").date()
+            qs = qs.filter(show_time__date=parsed_date)
+
+        if movie_id:
+            qs = qs.filter(movie__id=movie_id)
+
+        return qs
+
+
+# ────────────────────────────────
+# MOVIE SESSION DETAIL VIEW
+# ────────────────────────────────
+class MovieSessionDetailView(generics.RetrieveAPIView):
+    queryset = MovieSession.objects.select_related("movie", "cinema_hall")
+    serializer_class = MovieSessionDetailSerializer
+
+
+# ────────────────────────────────
+# ORDERS
+# ────────────────────────────────
+class OrderListCreateView(generics.ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+
     def get_serializer_class(self):
-        if self.action == "list":
-            return MovieListSerializer
+        if self.request.method == "POST":
+            return OrderCreateSerializer
+        return OrderSerializer
 
-        if self.action == "retrieve":
-            return MovieDetailSerializer
-
-        return MovieSerializer
-
-
-class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all()
-    serializer_class = MovieSessionSerializer
-
-    def get_serializer_class(self):
-        if self.action == "list":
-            return MovieSessionListSerializer
-
-        if self.action == "retrieve":
-            return MovieSessionDetailSerializer
-
-        return MovieSessionSerializer
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user).prefetch_related("tickets")
