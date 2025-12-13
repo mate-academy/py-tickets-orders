@@ -1,6 +1,7 @@
 from django.db.models import F, Count
 from django.utils.dateparse import parse_date
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
     Genre,
@@ -46,17 +47,12 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def params_to_ints(query_strings):
+    def params_to_ints(query_string):
         """Convert a list of string IDs to a list of integers."""
-        try:
-            result = [
-                int(str_id)
-                for str_id in query_strings.split(",")
-                if str_id.isdigit()
-            ]
-        except ValueError:
-            result = []
-        return result
+        return [
+            int(str_id)
+            for str_id in query_string.split(",")
+        ]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -119,7 +115,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .prefetch_related("tickets")
                 .annotate(
                     tickets_available=F(
-                        "cinema_hall__capacity"
+                        "cinema_hall__rows"
+                    ) * F(
+                        "cinema_hall__seats_in_row"
                     ) - Count("tickets")
                 )
             )
@@ -127,9 +125,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+class OrderPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = OrderPagination
 
     def get_serializer_class(self):
         serializer = self.serializer_class
