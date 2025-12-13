@@ -91,7 +91,11 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
             model = Ticket
             fields = ("row", "seat")
 
-    taken_places = _TakenPlacesSerializer(many=True, read_only=True)
+    taken_places = _TakenPlacesSerializer(
+        many=True,
+        read_only=True,
+        source="tickets",
+    )
 
     class Meta:
         model = MovieSession
