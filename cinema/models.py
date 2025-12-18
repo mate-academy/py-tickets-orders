@@ -1,4 +1,4 @@
-from django.core.exceptions import ValidationError
+from django.core import exceptions as model_exceptions
 from django.db import models
 from django.conf import settings
 
@@ -84,7 +84,7 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
+    def validate_seats(self, error_to_raise: type[Exception]):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (self.row, "row", "rows"),
             (self.seat, "seat", "seats_in_row"),
@@ -93,7 +93,7 @@ class Ticket(models.Model):
                 self.movie_session.cinema_hall, cinema_hall_attr_name
             )
             if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
+                raise error_to_raise(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
                         f"number must be in available range: "
@@ -101,6 +101,10 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
+
+    def clean(self):
+        self.validate_seats(error_to_raise=model_exceptions.ValidationError)
+        super().clean()
 
     def save(
         self,
