@@ -120,11 +120,10 @@ AUTH_USER_MODEL = "user.User"
 
 LANGUAGE_CODE = "en-us"
 
+USE_TZ = True
 TIME_ZONE = "UTC"
 
 USE_I18N = True
-
-USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -136,3 +135,9 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS":
+        "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 1
+}
