@@ -23,6 +23,7 @@ from cinema.serializers import (
     MovieSessionSerializer,
     OrderListSerializer,
     OrderSerializer,
+    TicketListSerializer,
     TicketSerializer,
 )
 
@@ -71,9 +72,9 @@ class MovieViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(**{db_lookup: ids})
 
         if self.action in ["list", "retrieve"]:
-            return queryset.prefetch_related("actors", "genres")
+            return queryset.prefetch_related("actors", "genres").distinct()
 
-        return queryset.distinct()
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -169,4 +170,9 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
-    serializer_class = TicketSerializer
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return TicketListSerializer
+
+        return TicketSerializer
