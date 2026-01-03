@@ -8,7 +8,7 @@ Read [the guideline](https://github.com/mate-academy/py-task-guideline/blob/main
 - After loading data from fixture you can use following superuser (or create another one by yourself):
   - Login: `admin.user`
   - Password: `1qazcde3`
-
+v
 `In this task you will add the functionality of working with orders.
 
 1. Create serializers and views to support the following endpoints:
