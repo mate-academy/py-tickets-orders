@@ -139,6 +139,12 @@ class TicketListSerializer(serializers.ModelSerializer):
         fields = ("id", "row", "seat", "movie_session")
 
 
+class TakenPlaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
+
+
 class OrderCreateSerializer(serializers.ModelSerializer):
     tickets = TicketCreateSerializer(many=True)
 
@@ -168,9 +174,3 @@ class OrderListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ("id", "tickets", "created_at")
-
-
-class TakenPlaceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Ticket
-        fields = ("row", "seat")
