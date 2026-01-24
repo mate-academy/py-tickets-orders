@@ -20,20 +20,7 @@ from cinema.serializers import (
 )
 
 
-class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-
-
-class ActorViewSet(viewsets.ModelViewSet):
-    queryset = Actor.objects.all()
-    serializer_class = ActorSerializer
-
-
-class CinemaHallViewSet(viewsets.ModelViewSet):
-    queryset = CinemaHall.objects.all()
-    serializer_class = CinemaHallSerializer
-
+# ... (GenreViewSet, ActorViewSet, CinemaHallViewSet)
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
@@ -72,12 +59,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'movie': ['exact']}  # Filtro por movie_id
+    filterset_fields = {'movie': ['exact']}
 
     def get_queryset(self):
         queryset = MovieSession.objects.all()
 
-        # Filtrar por data (date=YYYY-MM-DD)
         date_param = self.request.query_params.get('date')
         if date_param:
             queryset = queryset.filter(show_time__date=date_param)
@@ -86,11 +72,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = queryset.annotate(
             tickets_sold=Count('tickets', distinct=True)
         ).annotate(
-            # Assumindo que capacity é a forma correta de obter o total
             tickets_available=F('cinema_hall__capacity') - F('tickets_sold')
         )
 
-        return queryset.order_by('-show_time')
+        return queryset.order_by("-show_time")
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -100,7 +85,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
-# --- NOVO ViewSet para Order ---
+# ... (OrderViewSet)
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
@@ -113,6 +98,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).prefetch_related(
-            'tickets__movie_session__movie',
-            'tickets__movie_session__cinema_hall'
+            "tickets__movie_session__movie",
+            "tickets__movie_session__cinema_hall",
         )
