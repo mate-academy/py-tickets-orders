@@ -102,6 +102,14 @@ class Ticket(models.Model):
                     }
                 )
 
+    @staticmethod
+    def validate_seat(seat, row, movie_session):
+        if (
+                not (1 <= seat <= movie_session.cinema_hall.seats_in_row)
+                or not (1 <= row <= movie_session.cinema_hall.rows)
+        ):
+            raise ValidationError("No such seat!")
+
     def save(
         self,
         force_insert=False,
