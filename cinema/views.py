@@ -22,21 +22,18 @@ from cinema.serializers import (
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-
-
-# ... (corpo inalterado)
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
-
-
-# ... (corpo inalterado)
+    queryset = Actor.objects.all()
+    serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
-
-
-# ... (corpo inalterado)
+    queryset = CinemaHall.objects.all()
+    serializer_class = CinemaHallSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
