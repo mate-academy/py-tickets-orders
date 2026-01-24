@@ -1,6 +1,53 @@
-# ... (imports)
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from django.utils import timezone
+from django.db.models import Count, F
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError as DjangoValidationError
 
-# ... (GenreSerializer até MovieDetailSerializer)
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+
+
+# --- Serializers de Modelos Base (Menores primeiro) ---
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = ("id", "name")
+
+
+class ActorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Actor
+        fields = ("id", "first_name", "last_name", "full_name")
+
+
+class CinemaHallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CinemaHall
+        fields = ("id", "name", "rows", "seats_in_row", "capacity")
+
+
+class MovieSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "genres",
+            "actors"
+        )
+
+
+class MovieListSerializer(MovieSerializer):
+    genres = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="name"
+    )
+    actors = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="full_name"
+    )
+
 
 class MovieDetailSerializer(MovieSerializer):
     genres = GenreSerializer(many=True, read_only=True)
@@ -18,7 +65,12 @@ class MovieDetailSerializer(MovieSerializer):
         )
 
 
-# ... (MovieSessionSerializer)
+# --- MovieSession Serializers (Define antes de serem referenciados) ---
+class MovieSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MovieSession
+        fields = ("id", "show_time", "movie", "cinema_hall")
+
 
 class MovieSessionListSerializer(MovieSessionSerializer):
     movie_title = serializers.CharField(source="movie.title", read_only=True)
@@ -52,14 +104,13 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
         fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
 
     def get_taken_places(self, obj: MovieSession):
-        # Corrigido Q000 e E501
         taken = Ticket.objects.filter(movie_session=obj).values("row", "seat").order_by("row", "seat")
         return list(taken)
 
 
 # --- Serializers para Tickets ---
 class TicketNestedSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(read_only=True)  # Ajustado de string para objeto
+    movie_session = MovieSessionListSerializer(read_only=True)
 
     class Meta:
         model = Ticket
@@ -131,7 +182,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         if len(new_tickets_info) != len(set(new_tickets_info)):
             raise ValidationError({"tickets": "Há ingressos duplicados no seu pedido."})
 
-        # Checa conflito com DB
         existing_tickets = Ticket.objects.filter(
             movie_session_id__in={s[0] for s in new_tickets_info},
             row__in={s[1] for s in new_tickets_info},

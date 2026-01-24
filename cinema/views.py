@@ -1,4 +1,40 @@
-# ... (imports e serializadores)
+from rest_framework import viewsets, filters
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Count, F
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db import transaction
+
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+
+from cinema.serializers import (
+    GenreSerializer,
+    ActorSerializer,
+    CinemaHallSerializer,
+    MovieSerializer,
+    MovieSessionSerializer,
+    MovieSessionListSerializer,
+    MovieDetailSerializer,
+    MovieSessionDetailSerializer,
+    MovieListSerializer,
+    OrderListSerializer,
+    OrderCreateSerializer,
+)
+
+
+class GenreViewSet(viewsets.ModelViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class ActorViewSet(viewsets.ModelViewSet):
+    queryset = Actor.objects.all()
+    serializer_class = ActorSerializer
+
+
+class CinemaHallViewSet(viewsets.ModelViewSet):
+    queryset = CinemaHall.objects.all()
+    serializer_class = CinemaHallSerializer
+
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
@@ -58,7 +94,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
-# ... (OrderViewSet)
+# --- NOVO ViewSet para Order ---
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
