@@ -20,28 +20,37 @@ from cinema.serializers import (
 )
 
 
-# ... (GenreViewSet, ActorViewSet, CinemaHallViewSet)
+class GenreViewSet(viewsets.ModelViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class ActorViewSet(viewsets.ModelViewSet):
+    queryset = Actor.objects.all()
+    serializer_class = ActorSerializer
+
+
+class CinemaHallViewSet(viewsets.ModelViewSet):
+    queryset = CinemaHall.objects.all()
+    serializer_class = CinemaHallSerializer
+
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    # REMOVIDO filter_backends e filterset_fields
-
     def get_queryset(self):
         queryset = Movie.objects.all()
 
-        title = self.request.query_params.get('title')
+        title = self.request.query_params.get("title")
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        # Filtro por gêneros (assumindo múltiplos parâmetros ?genres=X&genres=Y)
-        genres = self.request.query_params.getlist('genres')
+        genres = self.request.query_params.getlist("genres")
         if genres:
             queryset = queryset.filter(genres__name__in=genres).distinct()
 
-        # Filtro por atores (assumindo múltiplos parâmetros ?actors=X&actors=Y)
-        actors = self.request.query_params.getlist('actors')
+        actors = self.request.query_params.getlist("actors")
         if actors:
             queryset = queryset.filter(actors__full_name__in=actors).distinct()
 
@@ -59,20 +68,19 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'movie': ['exact']}
+    filterset_fields = {"movie": ["exact"]}
 
     def get_queryset(self):
         queryset = MovieSession.objects.all()
 
-        date_param = self.request.query_params.get('date')
+        date_param = self.request.query_params.get("date")
         if date_param:
             queryset = queryset.filter(show_time__date=date_param)
 
-        # Adicionar tickets_available (Requisito)
         queryset = queryset.annotate(
-            tickets_sold=Count('tickets', distinct=True)
+            tickets_sold=Count("tickets", distinct=True)
         ).annotate(
-            tickets_available=F('cinema_hall__capacity') - F('tickets_sold')
+            tickets_available=F("cinema_hall__capacity") - F("tickets_sold")
         )
 
         return queryset.order_by("-show_time")
@@ -85,7 +93,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
-# ... (OrderViewSet)
+# --- NOVO ViewSet para Order ---
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 

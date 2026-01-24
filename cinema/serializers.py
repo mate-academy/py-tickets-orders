@@ -2,16 +2,100 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.utils import timezone
 from django.db.models import Count, F
-from django.db import IntegrityError  # Importar para captura no create
-from django.core.exceptions import ValidationError as DjangoValidationError  # Alias para evitar conflito
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
 
-# ... (GenreSerializer, ActorSerializer, CinemaHallSerializer, MovieSerializer, MovieListSerializer, MovieDetailSerializer permanecem os mesmos)
-# ... (MovieSessionSerializer, MovieSessionListSerializer, MovieSessionDetailSerializer permanecem os mesmos)
+# --- Serializers de Modelos Base (Menores primeiro) ---
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = ("id", "name")
+
+
+class ActorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Actor
+        fields = ("id", "first_name", "last_name", "full_name")
+
+
+class CinemaHallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CinemaHall
+        fields = ("id", "name", "rows", "seats_in_row", "capacity")
+
+
+class MovieSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "genres",
+            "actors"
+        )
+
+
+class MovieListSerializer(MovieSerializer):
+    genres = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="name"
+    )
+    actors = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="full_name"
+    )
+
+
+class MovieDetailSerializer(MovieSerializer):
+    genres = GenreSerializer(many=True, read_only=True)
+    actors = ActorSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Movie
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "genres",
+            "actors"
+        )
+
+
+# --- MovieSession Serializers (Define antes de serem referenciados) ---
+class MovieSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MovieSession
+        fields = ("id", "show_time", "movie", "cinema_hall")
+
+
+class MovieSessionListSerializer(MovieSessionSerializer):
+    movie_title = serializers.CharField(source="movie.title", read_only=True)
+    cinema_hall_name = serializers.CharField(
+        source="cinema_hall.name", read_only=True
+    )
+    cinema_hall_capacity = serializers.IntegerField(
+        source="cinema_hall.capacity", read_only=True
+    )
+    tickets_available = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = MovieSession
+        fields = (
+            "id",
+            "show_time",
+            "movie_title",
+            "cinema_hall_name",
+            "cinema_hall_capacity",
+            "tickets_available",
+        )
+
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
+    # Agora que MovieListSerializer está definida, pode ser usado diretamente
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
     taken_places = serializers.SerializerMethodField()
@@ -21,18 +105,14 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
         fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
 
     def get_taken_places(self, obj: MovieSession):
-        # Ordenação corrigida para evitar warnings/inconsistências
         taken = Ticket.objects.filter(movie_session=obj).values('row', 'seat').order_by('row', 'seat')
         return list(taken)
 
 
 # --- Serializers para Tickets ---
 class TicketNestedSerializer(serializers.ModelSerializer):
-    # Usa string para evitar F821, mas o serializer aninhado deve ser um campo que DRF reconhece
-    # Corrigido para um SerializerMethodField ou campo que aceite o nome
-    # No retorno, usamos o nome do campo, mas para o read_only o DRF tentará resolver.
-    # Se o erro persistir, este campo deve ser um SerializerMethodField.
-    movie_session = "MovieSessionListSerializer"
+    # Agora que MovieSessionListSerializer está definida, pode ser usado diretamente
+    movie_session = MovieSessionListSerializer(read_only=True)
 
     class Meta:
         model = Ticket
@@ -40,7 +120,6 @@ class TicketNestedSerializer(serializers.ModelSerializer):
 
 
 class TicketWriteSerializer(serializers.ModelSerializer):
-    # Garante que aceita o ID e o valida contra MovieSession
     movie_session = serializers.PrimaryKeyRelatedField(queryset=MovieSession.objects.all())
 
     class Meta:
@@ -71,7 +150,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         session_ids = set()
         for ticket_info in data.get('tickets', []):
-            # Pega o ID, pois o PrimaryKeyRelatedField no validated_data armazena o objeto, mas .id é o int
             session_id = ticket_info['movie_session'].id
             session_ids.add(session_id)
 
@@ -93,14 +171,13 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         ticket_data = validated_data.pop('tickets')
         user = self.context["request"].user
 
-        # Coleta informações para checagem de duplicidade DB/Payload
         new_tickets_info = []
         for ticket_info in ticket_data:
             session_id = ticket_info['movie_session'].id
             new_tickets_info.append((session_id, ticket_info['row'], ticket_info['seat']))
 
         if len(new_tickets_info) != len(set(new_tickets_info)):
-            raise ValidationError({"tickets": "Há ingressos duplicados (mesma sessão/fileira/assento) no seu pedido."})
+            raise ValidationError({"tickets": "Há ingressos duplicados no seu pedido."})
 
         # Checa conflito com DB
         existing_tickets = Ticket.objects.filter(
@@ -111,7 +188,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
         conflicts = set(existing_tickets) & set(new_tickets_info)
         if conflicts:
-            raise ValidationError({"tickets": f"Assentos já ocupados: {list(conflicts)}"})
+            raise ValidationError({"tickets": "Assentos já ocupados."})
 
         with transaction.atomic():
             order = Order.objects.create(user=user)
@@ -124,10 +201,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                         row=row,
                         seat=seat
                     )
-                except DjangoValidationError as e:  # Captura validação do Model (range)
+                except DjangoValidationError as e:
                     raise ValidationError({"tickets": f"Erro de validação de assento: {e.message_dict}"})
                 except Exception:
-                    # Se passou nas checagens, deve ser um erro raro de integridade não mapeado
                     raise ValidationError({"tickets": "Erro inesperado ao reservar assento."})
 
             return order
