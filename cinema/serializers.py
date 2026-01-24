@@ -6,6 +6,8 @@ from django.db.models import Count, F
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
 
+# ... (GenreSerializer, ActorSerializer, CinemaHallSerializer, MovieSerializer, MovieListSerializer, MovieDetailSerializer permanecem os mesmos)
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
@@ -45,7 +47,14 @@ class MovieDetailSerializer(MovieSerializer):
 
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "genres",
+            "actors"
+        )
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
@@ -62,7 +71,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
-    tickets_available = serializers.IntegerField(read_only=True)  # Adicionado
+    tickets_available = serializers.IntegerField(read_only=True)  # NOVO
 
     class Meta:
         model = MovieSession
@@ -77,6 +86,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
+    # Referência por string para evitar F821 se MovieListSerializer não estiver definida
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
     taken_places = serializers.SerializerMethodField()
@@ -86,14 +96,14 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
         fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
 
     def get_taken_places(self, obj: MovieSession):
-        taken = Ticket.objects.filter(movie_session=obj).values("row", "seat")
+        taken = Ticket.objects.filter(movie_session=obj).values('row', 'seat').order_by('row', 'seat')
         return list(taken)
 
 
-# --- Serializers para Tickets (DEFINIDOS ANTES DE ORDER) ---
+# --- Serializers para Tickets ---
 class TicketNestedSerializer(serializers.ModelSerializer):
-    # Referencia MovieSessionListSerializer que já foi definida
-    movie_session = MovieSessionListSerializer(read_only=True)
+    # Referência por string para evitar F821
+    movie_session = "MovieSessionListSerializer"  # Usando string
 
     class Meta:
         model = Ticket
@@ -101,13 +111,18 @@ class TicketNestedSerializer(serializers.ModelSerializer):
 
 
 class TicketWriteSerializer(serializers.ModelSerializer):
+    # Define explicitamente para garantir que aceita o ID de MovieSession
+    movie_session = serializers.PrimaryKeyRelatedField(queryset=MovieSession.objects.all())
+
     class Meta:
         model = Ticket
         fields = ("row", "seat", "movie_session")
 
+    # --- Serializers para Order ---
 
-# --- Serializers para Order ---
+
 class OrderListSerializer(serializers.ModelSerializer):
+    # Referência por string para evitar F821
     tickets = TicketNestedSerializer(many=True, read_only=True)
 
     class Meta:
@@ -123,47 +138,50 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         fields = ("tickets",)
 
     def validate(self, data):
-        # Validação de que sessões não acabaram
         session_ids = {
-            ticket_info["movie_session"]
-            for ticket_info in data.get("tickets", [])
-            if "movie_session" in ticket_info
+            ticket_info['movie_session']
+            for ticket_info in data.get('tickets', [])
+            if 'movie_session' in ticket_info
         }
 
         now = timezone.now()
+        # QuerySet.exists() é eficiente
         past_sessions = MovieSession.objects.filter(
             id__in=session_ids,
             show_time__lt=now
-        ).values_list("id", flat=True)
+        ).exists()
 
-        if past_sessions.exists():
+        if past_sessions:
             raise ValidationError(
-                f"Não é possível reservar ingressos para as sessões ID: {list(past_sessions)}. Elas já ocorreram."
+                "Não é possível reservar ingressos para sessões que já ocorreram."
             )
 
         return data
 
     def create(self, validated_data):
         from django.db import transaction
-
-        ticket_data = validated_data.pop("tickets")
-        user = self.context["request"].user
+        ticket_data = validated_data.pop('tickets')
+        user = self.context['request'].user
 
         with transaction.atomic():
             order = Order.objects.create(user=user)
 
             for ticket_info in ticket_data:
                 try:
+                    # A validação de range e unique_together é feita no model.save() (via full_clean)
                     Ticket.objects.create(
                         order=order,
-                        movie_session_id=ticket_info["movie_session"],
-                        row=ticket_info["row"],
-                        seat=ticket_info["seat"],
+                        movie_session_id=ticket_info['movie_session'].id,
+                        # .id se for objeto, ou só o valor se for int/PK
+                        row=ticket_info['row'],
+                        seat=ticket_info['seat']
                     )
                 except ValidationError as e:
-                    raise ValidationError({"tickets": f"Erro ao criar ticket: {e.message_dict}"})
+                    # Captura validação do Model (range)
+                    raise ValidationError({"tickets": f"Erro na validação de assento: {e.message_dict}"})
                 except Exception as e:
                     # Captura UniqueConstraint (lugar já ocupado) ou outro erro
-                    raise ValidationError({"tickets": f"Erro inesperado ao criar ticket: {e}"})
+                    raise ValidationError(
+                        {"tickets": "Erro ao reservar assento. Assento já ocupado ou sessão inválida."})
 
             return order

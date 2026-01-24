@@ -7,7 +7,7 @@ from cinema.views import (
     CinemaHallViewSet,
     MovieViewSet,
     MovieSessionViewSet,
-    OrderViewSet, # Importado
+    OrderViewSet,
 )
 
 router = routers.DefaultRouter()
@@ -16,8 +16,8 @@ router.register("actors", ActorViewSet)
 router.register("cinema_halls", CinemaHallViewSet)
 router.register("movies", MovieViewSet)
 router.register("movie_sessions", MovieSessionViewSet)
-router.register("orders", OrderViewSet) # Registrado
+router.register("orders", OrderViewSet)
 
-urlpatterns = [path("", include(router.urls))] # Rota base do router
+urlpatterns = [path("", include(router.urls))]  # Adicionado 2 espaços
 
 app_name = "cinema"
