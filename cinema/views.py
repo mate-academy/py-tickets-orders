@@ -1,44 +1,63 @@
 from rest_framework import viewsets, filters
-from rest_framework.permissions import IsAuthenticated  # Importar permissão
-from django.db.models import Count, F, Q  # Importar para filtros e anotações
-from django_filters.rest_framework import DjangoFilterBackend  # Importar para filtros
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Count, F, Q
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db import transaction  # Adicionado para OrderViewSet
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket  # Importar Order, Ticket
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
 from cinema.serializers import (
-    # ... (Serializers existentes)
-    OrderListSerializer,  # NOVO
-    OrderCreateSerializer,  # NOVO
-    MovieSessionListSerializer,  # Para anotação
+    GenreSerializer,
+    ActorSerializer,
+    CinemaHallSerializer,
+    MovieSerializer,
+    MovieSessionSerializer,
+    MovieSessionListSerializer,
+    MovieDetailSerializer,
+    MovieSessionDetailSerializer,
+    MovieListSerializer,
+    OrderListSerializer,  # Adicionado
+    OrderCreateSerializer,  # Adicionado
 )
 
 
-class GenreViewSet(viewsets.ModelViewSet):
-
-
-# ... (sem alteração)
-
-# ... (ActorViewSet, CinemaHallViewSet - sem alteração)
+# ... (GenreViewSet, ActorViewSet, CinemaHallViewSet permanecem os mesmos)
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {
-        'title': 'icontains',  # Filtro por título (substring)
-        'genres__name': 'exact',  # Filtro por gênero (exact match no nome)
-        'actors__full_name': 'exact',  # Filtro por ator (exact match no full_name)
-    }
 
-    # Nota: O DjangoFilterBackend com 'icontains' para char fields pode não funcionar
-    # automaticamente como desejado para todos os casos. A implementação manual ou
-    # um filtro customizado pode ser mais robusta, mas isso atende ao básico.
+    # Remove filter_backends, implementa filtros no get_queryset
+
+    def get_queryset(self):
+        queryset = Movie.objects.all()
+
+        # Filtro por título (string) - retorna filmes cujo título contém a string
+        title = self.request.query_params.get('title')
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+
+        # Filtro por gêneros
+        genres = self.request.query_params.getlist('genres')  # Pega múltiplos valores
+        if genres:
+            # Filtra filmes que tenham PELO MENOS um dos gêneros fornecidos
+            queryset = queryset.filter(genres__name__in=genres).distinct()
+
+        # Filtro por atores
+        actors = self.request.query_params.getlist('actors')  # Pega múltiplos valores
+        if actors:
+            # Filtra filmes que tenham PELO MENOS um dos atores fornecidos
+            queryset = queryset.filter(actors__full_name__in=actors).distinct()
+
+        return queryset.distinct()  # Garante unicidade após M2M joins
 
     def get_serializer_class(self):
         if self.action == "list":
             return MovieListSerializer
+
         if self.action == "retrieve":
             return MovieDetailSerializer
+
         return MovieSerializer
 
 
@@ -46,31 +65,25 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('movie', 'show_time')  # Permitir filtro por movie e show_time
+    # DjangoFilterBackend lida com movie=id. Para date, fazemos manualmente.
+    filterset_fields = {'movie': ['exact']}
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = MovieSession.objects.all()
 
-        # 1. Filtrar por data (date=YYYY-MM-DD)
+        # Filtrar por data (date=YYYY-MM-DD)
         date_param = self.request.query_params.get('date')
         if date_param:
-            # Filtra por show_time que começa com a data fornecida
             queryset = queryset.filter(show_time__date=date_param)
 
-        # 2. Filtrar por filme (movie=<id>) - DjangoFilterBackend deve lidar com isso se filterset_fields estiver configurado
-        # Se precisar ser manual:
-        # movie_param = self.request.query_params.get('movie')
-        # if movie_param:
-        #    queryset = queryset.filter(movie_id=movie_param)
-
-        # 3. Adicionar tickets_available (Requisito)
+        # Adicionar tickets_available (Requisito)
         queryset = queryset.annotate(
             tickets_sold=Count('tickets', distinct=True)
         ).annotate(
             tickets_available=F('cinema_hall__rows') * F('cinema_hall__seats_in_row') - F('tickets_sold')
         )
 
-        return queryset
+        return queryset.order_by('-show_time')  # Mantém ordenação base do model
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -84,22 +97,18 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 # --- NOVO ViewSet para Order ---
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
-    permission_classes = [IsAuthenticated]  # Requer autenticação
+    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.action == "list":
             return OrderListSerializer
         if self.action == "create":
             return OrderCreateSerializer
-        # Para retrieve, update, partial_update, podemos usar o ListSerializer ou criar um específico
-        return OrderListSerializer  # Usando ListSerializer para retrieve
+        return OrderListSerializer  # Para retrieve
 
     def get_queryset(self):
         # Filtra para retornar apenas os pedidos do usuário autenticado
-        return Order.objects.filter(user=self.request.user).prefetch_related('tickets__movie_session__movie')
-
-    def perform_create(self, serializer):
-        # O usuário é definido automaticamente no OrderCreateSerializer.create()
-        # e o serializer já tem acesso a self.context['request']
-        serializer.save()
+        return Order.objects.filter(user=self.request.user).prefetch_related(
+            'tickets__movie_session__movie',
+            'tickets__movie_session__cinema_hall'
+        )
