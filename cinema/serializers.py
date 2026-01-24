@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -148,7 +149,7 @@ class OrderListSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    tickets = TicketCreateSerializer(many=True)
+    tickets = TicketCreateSerializer(many=True, allow_empty=False)
 
     class Meta:
         model = Order
@@ -156,10 +157,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
-        order = Order.objects.create(**validated_data)
-
-        for ticket_data in tickets_data:
-            Ticket.objects.create(order=order, **ticket_data)
+        with transaction.atomic():
+            order = Order.objects.create(**validated_data)
+            for ticket_data in tickets_data:
+                Ticket.objects.create(order=order, **ticket_data)
         return order
 
 
