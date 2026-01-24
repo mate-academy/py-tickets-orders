@@ -71,7 +71,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
-    tickets_available = serializers.IntegerField(read_only=True)  # NOVO
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -86,7 +86,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
-    # Referência por string para evitar F821 se MovieListSerializer não estiver definida
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
     taken_places = serializers.SerializerMethodField()
@@ -102,8 +101,8 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 # --- Serializers para Tickets ---
 class TicketNestedSerializer(serializers.ModelSerializer):
-    # Referência por string para evitar F821
-    movie_session = "MovieSessionListSerializer"  # Usando string
+    # Usa string para referência circular/ordem
+    movie_session = "MovieSessionListSerializer"
 
     class Meta:
         model = Ticket
@@ -118,16 +117,19 @@ class TicketWriteSerializer(serializers.ModelSerializer):
         model = Ticket
         fields = ("row", "seat", "movie_session")
 
-    # --- Serializers para Order ---
 
-
+# --- Serializers para Order ---
 class OrderListSerializer(serializers.ModelSerializer):
-    # Referência por string para evitar F821
+    # Usa string para referência circular/ordem
     tickets = TicketNestedSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
-        fields = ("id", "tickets", "created_at")
+        fields = (
+            "id",
+            "tickets",
+            "created_at"
+        )
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
@@ -138,6 +140,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         fields = ("tickets",)
 
     def validate(self, data):
+        # Coleta todos os IDs de sessão referenciados no payload
         session_ids = {
             ticket_info['movie_session']
             for ticket_info in data.get('tickets', [])
@@ -145,7 +148,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         }
 
         now = timezone.now()
-        # QuerySet.exists() é eficiente
+        # Verifica se alguma sessão já ocorreu
         past_sessions = MovieSession.objects.filter(
             id__in=session_ids,
             show_time__lt=now
@@ -160,28 +163,42 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         from django.db import transaction
+        from django.db import IntegrityError  # Importa para capturar duplicatas
         ticket_data = validated_data.pop('tickets')
         user = self.context['request'].user
+
+        # Coleta todas as posições para checar duplicidade no payload e DB
+        new_tickets_info = []
+        for ticket_info in ticket_data:
+            # Garante que movie_session é o objeto buscado pelo PK RF no validate
+            session_id = ticket_info['movie_session'].id
+            new_tickets_info.append((session_id, ticket_info['row'], ticket_info['seat']))
+
+        # Checa duplicatas no payload (opcional mas bom)
+        if len(new_tickets_info) != len(set(new_tickets_info)):
+            raise ValidationError({"tickets": "Há ingressos duplicados (mesma sessão/fileira/assento) no seu pedido."})
 
         with transaction.atomic():
             order = Order.objects.create(user=user)
 
-            for ticket_info in ticket_data:
+            for session_id, row, seat in new_tickets_info:
                 try:
-                    # A validação de range e unique_together é feita no model.save() (via full_clean)
+                    # Cria o ticket, full_clean no save() chama model.clean() (range check)
                     Ticket.objects.create(
                         order=order,
-                        movie_session_id=ticket_info['movie_session'].id,
-                        # .id se for objeto, ou só o valor se for int/PK
-                        row=ticket_info['row'],
-                        seat=ticket_info['seat']
+                        movie_session_id=session_id,
+                        row=row,
+                        seat=seat
                     )
+                except IntegrityError:
+                    # Captura falha em unique_together ("movie_session", "row", "seat")
+                    raise ValidationError(
+                        {"tickets": f"Assento ({row}, {seat}) já está ocupado na sessão {session_id}."})
                 except ValidationError as e:
-                    # Captura validação do Model (range)
+                    # Captura falha de model.clean() (range check)
                     raise ValidationError({"tickets": f"Erro na validação de assento: {e.message_dict}"})
                 except Exception as e:
-                    # Captura UniqueConstraint (lugar já ocupado) ou outro erro
-                    raise ValidationError(
-                        {"tickets": "Erro ao reservar assento. Assento já ocupado ou sessão inválida."})
+                    # Captura qualquer outro erro inesperado
+                    raise ValidationError({"tickets": "Erro inesperado ao reservar assento."})
 
             return order

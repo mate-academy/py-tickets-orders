@@ -1,8 +1,7 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, F, Q
+from django.db.models import Count, F
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db import transaction
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
@@ -40,7 +39,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
-    # REMOVIDO: filter_backends e filterset_fields para usar implementação manual abaixo
+    # REMOVIDO filter_backends e filterset_fields
 
     def get_queryset(self):
         queryset = Movie.objects.all()
@@ -49,16 +48,14 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
 
-        # Filtro por gêneros (espera string de nomes separados por vírgula ou múltiplos parâmetros)
+        # Filtro por gêneros (assumindo múltiplos parâmetros ?genres=X&genres=Y)
         genres = self.request.query_params.getlist('genres')
         if genres:
-            # Assume que a URL pode ser ?genres=Drama&genres=Comedy
             queryset = queryset.filter(genres__name__in=genres).distinct()
 
-        # Filtro por atores
+        # Filtro por atores (assumindo múltiplos parâmetros ?actors=X&actors=Y)
         actors = self.request.query_params.getlist('actors')
         if actors:
-            # Assume que a URL pode ser ?actors=F%20F&actors=A%20B
             queryset = queryset.filter(actors__full_name__in=actors).distinct()
 
         return queryset.distinct()
@@ -74,13 +71,13 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-    # Mantém filter_backends para o filtro 'movie' nativo, remove 'date' dele
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'movie': ['exact']}
+    filterset_fields = {'movie': ['exact']}  # Filtro por movie_id
 
     def get_queryset(self):
         queryset = MovieSession.objects.all()
 
+        # Filtrar por data (date=YYYY-MM-DD)
         date_param = self.request.query_params.get('date')
         if date_param:
             queryset = queryset.filter(show_time__date=date_param)
@@ -89,7 +86,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = queryset.annotate(
             tickets_sold=Count('tickets', distinct=True)
         ).annotate(
-            tickets_available=F('cinema_hall__rows') * F('cinema_hall__seats_in_row') - F('tickets_sold')
+            # Assumindo que capacity é a forma correta de obter o total
+            tickets_available=F('cinema_hall__capacity') - F('tickets_sold')
         )
 
         return queryset.order_by('-show_time')

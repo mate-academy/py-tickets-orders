@@ -18,6 +18,6 @@ router.register("movies", MovieViewSet)
 router.register("movie_sessions", MovieSessionViewSet)
 router.register("orders", OrderViewSet)
 
-urlpatterns = [path("", include(router.urls))]  # Adicionado 2 espaços
+urlpatterns = [path("", include(router.urls))]  # Formatação E261 corrigida
 
 app_name = "cinema"
