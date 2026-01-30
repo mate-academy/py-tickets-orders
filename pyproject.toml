@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 78
+exclude = ["**migrations", "venv", "tests"]
+lint.select = ["E", "F", "E501", "N", "W"]
+lint.ignore = ["E203", "E266", "N807", "N818", "F401"]
+
+[tool.black]
+line-length = 78
+target-version = ['py314']
+skip-string-normalization = true
