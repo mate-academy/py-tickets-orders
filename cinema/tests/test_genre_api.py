@@ -1,8 +1,6 @@
 from django.test import TestCase
-
 from rest_framework import status
 from rest_framework.test import APIClient
-
 from cinema.models import Genre
 
 
@@ -18,7 +16,7 @@ class GenreApiTests(TestCase):
 
     def test_get_genres(self):
         response = self.client.get("/api/cinema/genres/")
-        genres = [genre["name"] for genre in response.data]
+        genres = [genre["name"] for genre in response.data["results"]]
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(sorted(genres), ["Comedy", "Drama"])
 

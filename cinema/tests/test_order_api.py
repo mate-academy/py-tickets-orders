@@ -1,10 +1,7 @@
 from datetime import datetime
-
 from django.test import TestCase
-
 from rest_framework.test import APIClient
 from rest_framework import status
-
 from cinema.models import (
     Movie,
     Genre,
@@ -68,6 +65,43 @@ class OrderApiTests(TestCase):
         self.assertEqual(movie_session["cinema_hall_name"], "White")
         self.assertEqual(movie_session["cinema_hall_capacity"], 140)
 
+    def test_create_order(self):
+        self.client.force_authenticate(user=self.user)
+        
+        payload = {
+            "tickets": [
+                {
+                    "row": 1,
+                    "seat": 1,
+                    "movie_session": self.movie_session.id,
+                },
+                {
+                    "row": 1,
+                    "seat": 2,
+                    "movie_session": self.movie_session.id,
+                },
+            ]
+        }
+        
+        response = self.client.post(
+            "/api/cinema/orders/",
+            data=payload,
+            format="json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Order.objects.count(), 2)
+        
+        new_order = Order.objects.get(id=response.data["id"])
+        self.assertEqual(new_order.user, self.user)
+        self.assertEqual(new_order.tickets.count(), 2)
+        
+        tickets = new_order.tickets.all()
+        self.assertEqual(tickets[0].row, 1)
+        self.assertEqual(tickets[0].seat, 1)
+        self.assertEqual(tickets[1].row, 1)
+        self.assertEqual(tickets[1].seat, 2)
+
     def test_movie_session_detail_tickets(self):
         response = self.client.get(
             f"/api/cinema/movie_sessions/{self.movie_session.id}/"
@@ -84,6 +118,6 @@ class OrderApiTests(TestCase):
         response = self.client.get(f"/api/cinema/movie_sessions/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            response.data[0]["tickets_available"],
+            response.data["results"][0]["tickets_available"],
             self.cinema_hall.capacity - 1,
         )
