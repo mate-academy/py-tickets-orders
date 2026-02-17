@@ -88,16 +88,20 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(read_only=True)
-    movie_session_id = serializers.PrimaryKeyRelatedField(
-        queryset=MovieSession.objects.all(),
-        source="movie_session",
-        write_only=True
+    movie_session = serializers.PrimaryKeyRelatedField(
+        queryset=MovieSession.objects.all()
     )
 
     class Meta:
         model = Ticket
-        fields = ("id", "row", "seat", "movie_session", "movie_session_id")
+        fields = ("id", "row", "seat", "movie_session")
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["movie_session"] = MovieSessionListSerializer(
+            instance.movie_session
+        ).data
+        return data
 
     def validate(self, attrs: dict) -> dict:
         movie_session = attrs["movie_session"]
