@@ -102,6 +102,28 @@ class Ticket(models.Model):
                     }
                 )
 
+    @staticmethod
+    def validate_seat(
+            seat: int,
+            seats_in_row: int,
+            row: int,
+            rows: int,
+            error_to_raise
+    ) -> None:
+        if not (1 <= seat <= seats_in_row):
+            raise error_to_raise(
+                {
+                    "seat": f"seat must be in "
+                            f"range [1, {seats_in_row}], not {seat}"
+                }
+            )
+        elif not (1 <= row <= rows):
+            raise error_to_raise(
+                {
+                    "row": f"row must be in range [1, {rows}], not {row}"
+                }
+            )
+
     def save(
         self,
         force_insert=False,

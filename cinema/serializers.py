@@ -88,17 +88,25 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(many=False)
+    movie_session = MovieSessionListSerializer(read_only=True)
+    movie_session_id = serializers.PrimaryKeyRelatedField(
+        queryset=MovieSession.objects.all(),
+        source="movie_session",
+        write_only=True
+    )
 
     class Meta:
         model = Ticket
-        fields = ("id", "row", "seat", "movie_session")
+        fields = ("id", "row", "seat", "movie_session", "movie_session_id")
 
     def validate(self, attrs: dict) -> dict:
+        movie_session = attrs["movie_session"]
         Ticket.validate_seat(
-            attrs["seat"].cinema_hall.seats_in_row,
-            attrs["row"].cinema_hall.rows,
-            serializers.ValidationError
+            seat=attrs["seat"],
+            seats_in_row=movie_session.cinema_hall.seats_in_row,
+            row=attrs["row"],
+            rows=movie_session.cinema_hall.rows,
+            error_to_raise=serializers.ValidationError,
         )
         return attrs
 
@@ -117,8 +125,9 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ("id", "tickets", "created_at")
 
     def create(self, validated_data: dict) -> Order:
+        tickets_data = validated_data.pop("tickets")
+        validated_data.setdefault("user", self.context["request"].user)
         with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)

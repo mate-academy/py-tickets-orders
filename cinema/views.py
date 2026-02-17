@@ -113,7 +113,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().prefetch_related("tickets")
+    queryset = (
+        Order.objects
+        .all()
+        .prefetch_related(
+            "tickets",
+            "tickets__movie_session__movie",
+            "tickets__movie_session__cinema_hall",
+        )
+    )
     serializer_class = OrderSerializer
 
     def get_queryset(self) -> QuerySet:
@@ -121,6 +129,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(
             self,
-            serializer: Type[serializers.BaseSerializer]
+            serializer: serializers.BaseSerializer
     ) -> None:
         serializer.save(user=self.request.user)
