@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Count, F
 from rest_framework import viewsets
 from rest_framework.serializers import Serializer
 
@@ -88,7 +88,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie_id = self.request.query_params.get("movie")
         date_str = self.request.query_params.get("date")
 
-        queryset = MovieSession.objects.all()
+        queryset = self.queryset
 
         if movie_id:
             queryset = queryset.filter(movie_id=movie_id)
@@ -99,6 +99,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             queryset = queryset.select_related("movie", "cinema_hall")
+
+        if self.action == "retrieve":
+            return queryset.annotate(
+                calc_available=(F("cinema_hall__rows") * F("cinema_hall__seats_in_row")) - Count("tickets")
+            ).select_related("movie", "cinema_hall").prefetch_related("tickets")
 
         return queryset.distinct()
 
