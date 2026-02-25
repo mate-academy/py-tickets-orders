@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db.models import QuerySet
 from rest_framework import viewsets
 from rest_framework.serializers import Serializer
@@ -81,6 +83,24 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def get_queryset(self) -> QuerySet:
+        movie_id = self.request.query_params.get("movie")
+        date_str = self.request.query_params.get("date")
+
+        queryset = MovieSession.objects.all()
+
+        if movie_id:
+            queryset = queryset.filter(movie_id=movie_id)
+
+        if date_str:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+            queryset = queryset.filter(show_time__date=date_obj)
+
+        if self.action == "list":
+            queryset = queryset.select_related("movie", "cinema_hall")
+
+        return queryset.distinct()
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
