@@ -1,6 +1,8 @@
+from django.db.models import QuerySet
 from rest_framework import viewsets
+from rest_framework.serializers import Serializer
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -12,6 +14,8 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
+    OrderSerializer,
+    OrderCreateSerializer,
 )
 
 
@@ -56,3 +60,24 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+
+    def get_queryset(self) -> QuerySet:
+        queryset = self.queryset.filter(user=self.request.user)
+        if self.action == "list":
+            return queryset.prefetch_related(
+            "tickets__movie_session__movie",
+            "tickets__movie_session__cinema_hall"
+            )
+        return queryset
+
+    def get_serializer_class(self) -> type[Serializer]:
+        if self.action == "create":
+            return OrderCreateSerializer
+        return OrderSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
