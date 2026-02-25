@@ -70,7 +70,6 @@ class MovieViewSet(viewsets.ModelViewSet):
         return queryset.distinct()
 
 
-
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
@@ -101,11 +100,19 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.select_related("movie", "cinema_hall")
 
         if self.action == "retrieve":
-            return queryset.annotate(
-                calc_available=(F("cinema_hall__rows") * F("cinema_hall__seats_in_row")) - Count("tickets")
-            ).select_related("movie", "cinema_hall").prefetch_related("tickets")
+            return (
+                queryset.annotate(
+                    calc_available=(
+                        F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                    )
+                    - Count("tickets")
+                )
+                .select_related("movie", "cinema_hall")
+                .prefetch_related("tickets")
+            )
 
         return queryset.distinct()
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -114,8 +121,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = self.queryset.filter(user=self.request.user)
         if self.action == "list":
             return queryset.prefetch_related(
-            "tickets__movie_session__movie",
-            "tickets__movie_session__cinema_hall"
+                "tickets__movie_session__movie", "tickets__movie_session__cinema_hall"
             )
         return queryset
 
