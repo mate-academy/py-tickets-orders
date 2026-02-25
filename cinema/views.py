@@ -2,8 +2,6 @@ from datetime import datetime
 
 from django.db.models import QuerySet, Count, F
 from rest_framework import viewsets
-from rest_framework.serializers import Serializer
-from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -114,9 +112,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .prefetch_related("tickets")
             )
 
-        if self.action == "retrieve":
-            queryset = queryset.prefetch_related("tickets")
-
         return queryset.distinct()
 
 
@@ -132,7 +127,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
         return queryset
 
-    def get_serializer_class(self) -> type[Serializer]:
+    def get_serializer_class(self) -> type:
         if self.action == "create":
             return OrderCreateSerializer
         return OrderSerializer
