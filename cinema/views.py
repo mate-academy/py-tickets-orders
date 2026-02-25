@@ -24,21 +24,25 @@ from cinema.serializers import (
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
+    pagination_class = None
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
+    pagination_class = None
     serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
+    pagination_class = None
     serializer_class = CinemaHallSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
+    pagination_class = None
     serializer_class = MovieSerializer
 
     def get_serializer_class(self):
@@ -73,6 +77,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
+    pagination_class = None
     serializer_class = MovieSessionSerializer
 
     def get_serializer_class(self):
@@ -115,15 +120,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return queryset.distinct()
 
 
-class OrderSetPagination(PageNumberPagination):
-    page_size = 3
-    page_size_query_param = "page_size"
-    max_page_size = 20
-
-
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
-    pagination_class = OrderSetPagination
 
     def get_queryset(self) -> QuerySet:
         queryset = self.queryset.filter(user=self.request.user)
