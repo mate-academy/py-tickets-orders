@@ -115,7 +115,6 @@ class OrderViewSet(
         "tickets__movie_session__movie", "tickets__movie_session__cinema_hall"
     )
     serializer_class = OrderSerializer
-    pagination_class = OrderPagination
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self) -> QuerySet:
