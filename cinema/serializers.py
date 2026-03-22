@@ -1,6 +1,16 @@
+from django.db import transaction
 from rest_framework import serializers
+from rest_framework.relations import PrimaryKeyRelatedField
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -24,7 +34,7 @@ class CinemaHallSerializer(serializers.ModelSerializer):
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors")
+        fields = "__all__"
 
 
 class MovieListSerializer(MovieSerializer):
@@ -35,6 +45,17 @@ class MovieListSerializer(MovieSerializer):
         many=True, read_only=True, slug_field="full_name"
     )
 
+    class Meta:
+        model = Movie
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "genres",
+            "actors"
+        )
+
 
 class MovieDetailSerializer(MovieSerializer):
     genres = GenreSerializer(many=True, read_only=True)
@@ -42,7 +63,14 @@ class MovieDetailSerializer(MovieSerializer):
 
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "genres",
+            "actors"
+        )
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
@@ -52,7 +80,10 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
-    movie_title = serializers.CharField(source="movie.title", read_only=True)
+    movie_title = serializers.CharField(
+        source="movie.title",
+        read_only=True
+    )
     cinema_hall_name = serializers.CharField(
         source="cinema_hall.name", read_only=True
     )
@@ -68,6 +99,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
+            "tickets_available"
         )
 
 
@@ -77,4 +109,77 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionListSerializer(read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = [
+            "id",
+            "row",
+            "seat",
+            "movie_session",
+        ]
+
+
+class TicketCreateSerializer(serializers.ModelSerializer):
+    movie_session = PrimaryKeyRelatedField(
+        queryset=MovieSession.objects.all()
+    )
+
+    class Meta:
+        model = Ticket
+        fields = [
+            "id",
+            "row",
+            "seat",
+            "movie_session",
+        ]
+
+    def validate(self, attrs: dict) -> dict:
+        movie_session = attrs["movie_session"]
+        cinema_hall = movie_session.cinema_hall
+
+        if not (1 <= attrs["row"] <= cinema_hall.rows):
+            raise serializers.ValidationError(
+                f"Choose row between 1 and {cinema_hall.rows}"
+            )
+
+        if not (1 <= attrs["seat"] <= cinema_hall.seats_in_row):
+            raise serializers.ValidationError(
+                f"Choose seat between 1 and {cinema_hall.seats_in_row}"
+            )
+        return attrs
+
+
+class OrderListSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "tickets",
+            "created_at",
+        ]
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    tickets = TicketCreateSerializer(many=True, read_only=False)
+
+    class Meta:
+        model = Order
+        fields = [
+            "tickets",
+        ]
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tickets = validated_data.pop("tickets")
+            order = Order.objects.create(**validated_data)
+            for ticket in tickets:
+                Ticket.objects.create(order=order, **ticket)
+            return order
