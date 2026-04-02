@@ -22,7 +22,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer, OrderCreateSerializer,
+    MovieListSerializer,
+    OrderSerializer,
+    OrderCreateSerializer,
 )
 
 
@@ -130,7 +132,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.select_related()
     serializer_class = OrderSerializer
-#    pagination_class = OrderPagination
 
     def get_serializer_class(self):
         if self.action == "create":
