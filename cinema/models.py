@@ -57,6 +57,16 @@ class MovieSession(models.Model):
     class Meta:
         ordering = ["-show_time"]
 
+    @property
+    def taken_places(self):
+        return [
+            {
+                "row": tick.row,
+                "seat": tick.seat
+            }
+            for tick in self.tickets.all()
+        ]
+
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
