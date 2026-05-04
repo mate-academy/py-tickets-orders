@@ -125,11 +125,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         fields = ("id", "tickets", "created_at")
 
     def create(self, validated_data):
-        print(validated_data)
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets", [])
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
-                print(ticket_data)
                 Ticket.objects.create(order=order, **ticket_data)
             return order

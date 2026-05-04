@@ -107,7 +107,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Order.objects.filter(user=self.request.user)
-        print("rrr", self.action)
         if self.action == "list":
             queryset = queryset.prefetch_related(
                 "tickets__movie_session__movie",
@@ -116,7 +115,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        print("rrr", self.action)
         serializer = self.serializer_class
         if self.action == "create":
             serializer = OrderCreateSerializer
