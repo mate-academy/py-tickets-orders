@@ -60,6 +60,18 @@ class MovieSession(models.Model):
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
+    @property
+    def taken_places(self):
+        taken_places = [
+            {
+                "row": ticket.row,
+                "seat": ticket.seat,
+            }
+            for ticket in self.tickets.all()
+        ]
+
+        return taken_places
+
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -85,22 +97,12 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        self.validate_ticket(
+            row=self.row,
+            seat=self.seat,
+            cinema_hall=self.movie_session.cinema_hall,
+            error_to_raise=ValidationError,
+        )
 
     def save(
         self,
@@ -118,6 +120,23 @@ class Ticket(models.Model):
         return (
             f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
         )
+
+    @staticmethod
+    def validate_ticket(row, seat, cinema_hall, error_to_raise):
+        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row"),
+        ]:
+            count_attrs = getattr(cinema_hall, cinema_hall_attr_name)
+            if not (1 <= ticket_attr_value <= count_attrs):
+                raise error_to_raise(
+                    {
+                        ticket_attr_name: f"{ticket_attr_name} "
+                        f"number must be in available range: "
+                        f"(1, {cinema_hall_attr_name}): "
+                        f"(1, {count_attrs})"
+                    }
+                )
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
