@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from django.db.models import Count, F
 
 from rest_framework import viewsets
@@ -24,21 +24,25 @@ from cinema.serializers import (
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
+    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+    pagination_class = None
 
     @staticmethod
     def _params_to_ints(query_string):
@@ -80,10 +84,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-
-    @staticmethod
-    def _str_to_date(date_str):
-        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -97,22 +98,25 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
 
-        show_time = self.request.query_params.get("date")
+        date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
-        if show_time:
-            show_date = self._str_to_date(show_time)
-            queryset = queryset.filter(show_time__date=show_date)
+        if date:
+            queryset = queryset.filter(show_time__date=date)
 
         if movie:
             queryset = queryset.filter(movie__id=movie)
 
-        if self.action in ("list"):
+        if self.action == "list":
             queryset = queryset.select_related(
                 "movie",
-                "cinema_hall"
+                "cinema_hall",
             ).annotate(
-                tickets_available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets")
+                tickets_available=(
+                        F("cinema_hall__rows")
+                        * F("cinema_hall__seats_in_row")
+                        - Count("tickets")
+                )
             )
 
         if self.action in ("retrieve"):
