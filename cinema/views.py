@@ -1,4 +1,3 @@
-from datetime import datetime
 from django.db.models import Count, F
 
 from rest_framework import viewsets
@@ -108,18 +107,18 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie__id=movie)
 
         if self.action == "list":
+            hall_capacity = (
+                F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+            )
+
             queryset = queryset.select_related(
                 "movie",
                 "cinema_hall",
             ).annotate(
-                tickets_available=(
-                        F("cinema_hall__rows")
-                        * F("cinema_hall__seats_in_row")
-                        - Count("tickets")
-                )
+                tickets_available=hall_capacity - Count("tickets")
             )
 
-        if self.action in ("retrieve"):
+        if self.action == "retrieve":
             queryset = queryset.select_related("movie")
 
         return queryset.distinct()
