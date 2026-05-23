@@ -136,7 +136,15 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderSetPagination
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        queryset = self.queryset
+        queryset = queryset.filter(user=self.request.user)
+
+        queryset = queryset.prefetch_related(
+            "tickets__movie_session__movie",
+            "tickets__movie_session__cinema_hall",
+        )
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
