@@ -136,3 +136,7 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    # No DEFAULT_PAGINATION_CLASS here — pagination only on OrderViewSet
+}
