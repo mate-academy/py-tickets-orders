@@ -78,16 +78,21 @@ class MovieViewSet(viewsets.ModelViewSet):
                 ).distinct()
         if actors:
             clean_actors = []
-            for a in actors:
-                clean_actors.extend(a.split(","))
+            for actor in actors:
+                clean_actors.extend(actor.split(","))
 
             if clean_actors[0].isdigit():
-                queryset = queryset.filter(actors__id__in=clean_actors).distinct()
+                queryset = queryset.filter(
+                    actors__id__in=clean_actors
+                ).distinct()
             else:
                 actor_queries = Q()
                 for actor_part in clean_actors:
-                    actor_queries |= Q(actors__first_name__icontains=actor_part) | Q(
-                        actors__last_name__icontains=actor_part)
+                    actor_queries |= Q(
+                        actors__first_name__icontains=actor_part
+                    ) | Q(
+                        actors__last_name__icontains=actor_part
+                    )
 
                 queryset = queryset.filter(actor_queries).distinct()
         return queryset
