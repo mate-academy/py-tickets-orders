@@ -84,6 +84,35 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
+    @staticmethod
+    def validate_ticket(row, seat, movie_session, error_to_raise):
+        if not (1 <= row <= movie_session.cinema_hall.rows):
+            raise error_to_raise({
+                "row": (
+                    f"Row number must be in available range: "
+                    f"(1, {movie_session.cinema_hall.rows})."
+                )
+            })
+
+        if not (1 <= seat <= movie_session.cinema_hall.seats_in_row):
+            raise error_to_raise({
+                "seat": (
+                    f"Seat number must be in available range: "
+                    f"(1, {movie_session.cinema_hall.seats_in_row})."
+                )
+            })
+
+        exists = Ticket.objects.filter(
+            movie_session=movie_session,
+            row=row,
+            seat=seat
+        ).exists()
+        if exists:
+            raise error_to_raise(
+                f"Seat {seat} in row {row} is already booked "
+                f"for this movie session."
+            )
+
     def clean(self):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (self.row, "row", "rows"),
@@ -95,19 +124,20 @@ class Ticket(models.Model):
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise ValidationError(
                     {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
+                        ticket_attr_name: (
+                            f"{ticket_attr_name} number must be in "
+                            f"available range: (1, {cinema_hall_attr_name}): "
+                            f"(1, {count_attrs})"
+                        )
                     }
                 )
 
     def save(
-        self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
     ):
         self.full_clean()
         super(Ticket, self).save(
@@ -116,7 +146,8 @@ class Ticket(models.Model):
 
     def __str__(self):
         return (
-            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+            f"{str(self.movie_session)} "
+            f"(row: {self.row}, seat: {self.seat})"
         )
 
     class Meta:
