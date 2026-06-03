@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
     "cinema",
     "user",
+
 ]
 
 MIDDLEWARE = [
@@ -136,3 +137,12 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+USE_TZ = True
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PAGINATION_CLASS": None,
+}
