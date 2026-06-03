@@ -33,26 +33,26 @@ class OrderPagination(PageNumberPagination):
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by("id")
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
-    queryset = Actor.objects.all()
+    queryset = Actor.objects.all().order_by("id")
     serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
-    queryset = CinemaHall.objects.all()
+    queryset = CinemaHall.objects.all().order_by("id")
     serializer_class = CinemaHallSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.prefetch_related("genres", "actors")
+    queryset = Movie.objects.prefetch_related("genres", "actors").order_by("id")
     serializer_class = MovieSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = super().get_queryset()
 
         title = self.request.query_params.get("title")
         if title:
@@ -79,11 +79,11 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all()
+    queryset = MovieSession.objects.all().order_by("id")
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = super().get_queryset()
 
         if self.action == "list":
             queryset = queryset.select_related(
@@ -121,13 +121,13 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.prefetch_related(
         "tickets__movie_session__movie",
         "tickets__movie_session__cinema_hall",
-    )
+    ).order_by("-created_at")
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = OrderPagination
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        return super().get_queryset().filter(user=self.request.user)
 
     def get_serializer_class(self):
         if self.action == "list":
