@@ -8,6 +8,9 @@ class CinemaHall(models.Model):
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
 
+    class Meta:
+        ordering = ["name"]
+
     @property
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
@@ -83,6 +86,30 @@ class Ticket(models.Model):
     )
     row = models.IntegerField()
     seat = models.IntegerField()
+
+    @staticmethod
+    def validate_ticket(row, seat, cinema_hall, movie_session, error_to_raise):
+        if not (1 <= row <= cinema_hall.rows):
+            raise error_to_raise({
+                "row": "Row number is out of valid range for this hall."
+            })
+
+        if not (1 <= seat <= cinema_hall.seats_in_row):
+            raise error_to_raise({
+                "seat": "Seat number is out of valid range for this hall."
+            })
+
+        ticket_exists = Ticket.objects.filter(
+            movie_session=movie_session,
+            row=row,
+            seat=seat
+        ).exists()
+        if ticket_exists:
+            raise error_to_raise({
+                "non_field_errors": (
+                    "This seat is already taken for this movie session."
+                )
+            })
 
     def clean(self):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
