@@ -136,7 +136,9 @@ class OrderSerializer(serializers.ModelSerializer):
             place = (ticket["movie_session"], ticket["row"], ticket["seat"])
             if place in ticket_places:
                 raise serializers.ValidationError(
-                    {"tickets": "You cannot book the same seat twice in one order."}
+                    {
+                        "tickets": "You cannot book the same "
+                                   "seat twice in one order."}
                 )
             ticket_places.append(place)
         return attrs

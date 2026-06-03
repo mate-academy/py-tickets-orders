@@ -8,7 +8,7 @@ from cinema.views import (
     MovieSessionViewSet,
     MovieViewSet,
     OrderViewSet,
-    )
+)
 
 router = routers.DefaultRouter()
 router.register("genres", GenreViewSet)
