@@ -1,6 +1,15 @@
+from django.db import transaction
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket,
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -59,6 +68,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -68,13 +78,121 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
+            "tickets_available",
         )
+
+
+class TakenPlaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TakenPlaceSerializer(
+        source="tickets", many=True, read_only=True
+    )
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
+
+
+class TicketListSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionListSerializer(read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class TicketCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat", "movie_session")
+
+    def validate(self, attrs):
+        movie_session = attrs["movie_session"]
+        cinema_hall = movie_session.cinema_hall
+        row = attrs["row"]
+        seat = attrs["seat"]
+
+        if not 1 <= row <= cinema_hall.rows:
+            raise serializers.ValidationError(
+                {
+                    "row": "row number must be in available range: "
+                    f"(1, rows): (1, {cinema_hall.rows})"
+                }
+            )
+
+        if not 1 <= seat <= cinema_hall.seats_in_row:
+            raise serializers.ValidationError(
+                {
+                    "seat": "seat number must be in available range: "
+                    f"(1, seats_in_row): (1, {cinema_hall.seats_in_row})"
+                }
+            )
+
+        if Ticket.objects.filter(
+            movie_session=movie_session,
+            row=row,
+            seat=seat,
+        ).exists():
+            raise serializers.ValidationError(
+                "This place is already taken for this movie session."
+            )
+
+        return attrs
+
+
+class OrderListSerializer(serializers.ModelSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    tickets = TicketCreateSerializer(many=True, allow_empty=False)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
+        read_only_fields = ("id", "created_at")
+
+    def validate_tickets(self, tickets):
+        seen_places = set()
+
+        for ticket in tickets:
+            place = (
+                ticket["movie_session"].id,
+                ticket["row"],
+                ticket["seat"],
+            )
+
+            if place in seen_places:
+                raise serializers.ValidationError(
+                    "Duplicate tickets are not allowed in one order."
+                )
+
+            seen_places.add(place)
+
+        return tickets
+
+    def create(self, validated_data):
+        tickets_data = validated_data.pop("tickets")
+
+        with transaction.atomic():
+            order = Order.objects.create(user=self.context["request"].user)
+            Ticket.objects.bulk_create(
+                Ticket(order=order, **ticket_data)
+                for ticket_data in tickets_data
+            )
+
+        return order
+
+    def to_representation(self, instance):
+        return OrderListSerializer(instance, context=self.context).data
