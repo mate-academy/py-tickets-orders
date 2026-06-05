@@ -83,7 +83,9 @@ class Ticket(models.Model):
         unique_together = ("movie_session", "row", "seat")
 
     def __str__(self):
-        return f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+        return (
+            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+        )
 
     @staticmethod
     def validate_ticket(row, seat, cinema_hall, error_to_raise):
