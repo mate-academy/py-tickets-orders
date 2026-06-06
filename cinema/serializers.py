@@ -1,6 +1,15 @@
+from django.db import transaction
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Ticket,
+    Order
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -60,6 +69,55 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         source="cinema_hall.capacity", read_only=True
     )
 
+    tickets_available = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = MovieSession
+        fields = (
+            "id",
+            "show_time",
+            "movie_title",
+            "cinema_hall_name",
+            "cinema_hall_capacity",
+            "tickets_available",
+        )
+
+
+class TicketPlaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
+
+
+class MovieSessionDetailSerializer(MovieSessionSerializer):
+    movie = MovieListSerializer(many=False, read_only=True)
+    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TicketPlaceSerializer(
+        source="tickets",
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = MovieSession
+        fields = (
+            "id",
+            "show_time",
+            "movie",
+            "cinema_hall",
+            "taken_places"
+        )
+
+
+class MovieSessionSmallSerializer(serializers.ModelSerializer):
+    movie_title = serializers.CharField(source="movie.title", read_only=True)
+    cinema_hall_name = serializers.CharField(
+        source="cinema_hall.name", read_only=True
+    )
+    cinema_hall_capacity = serializers.IntegerField(
+        source="cinema_hall.capacity", read_only=True
+    )
+
     class Meta:
         model = MovieSession
         fields = (
@@ -71,10 +129,63 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
 
-class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+class TicketSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionSmallSerializer(read_only=True)
 
     class Meta:
-        model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class TicketCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat", "movie_session")
+
+    def validate(self, attrs):
+        movie_session = attrs["movie_session"]
+        row = attrs["row"]
+        seat = attrs["seat"]
+
+        cinema_hall = movie_session.cinema_hall
+
+        if not (1 <= row <= cinema_hall.rows):
+            raise serializers.ValidationError(
+                {"row": f"row must be in range [1, {cinema_hall.rows}]"}
+            )
+
+        if not (1 <= seat <= cinema_hall.seats_in_row):
+            raise serializers.ValidationError(
+                {"seat": f"seat must be in range [1, {cinema_hall.seats_in_row}]"}  # noqa: E501
+            )
+
+        return attrs
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    tickets = TicketCreateSerializer(many=True, allow_empty=False)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
+        read_only_fields = ("id", "created_at")
+
+    def create(self, validated_data):
+        tickets_data = validated_data.pop("tickets")
+        user = self.context["request"].user
+
+        with transaction.atomic():
+            order = Order.objects.create(user=user)
+
+            for ticket_data in tickets_data:
+                Ticket.objects.create(order=order, **ticket_data)
+
+        return order
