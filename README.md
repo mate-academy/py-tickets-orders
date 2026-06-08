@@ -157,3 +157,7 @@ Optional tasks:
 - Provide validation for creating tickets on serializer level
 
 ### Note: Check your code using this [checklist](checklist.md) before pushing your solution.
+
+uvx ruff check . --line-length 79
+uvx ruff format . --check --line-length 79
+python manage.py test
