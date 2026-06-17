@@ -118,6 +118,7 @@ class TicketSerializer(serializers.ModelSerializer):
             attrs["movie_session"],
             serializers.ValidationError,
         )
+        return attrs
 
 
 class TicketListSerializer(TicketSerializer):
@@ -133,7 +134,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ("id", "tickets" , "created_at")
+        fields = ("id", "tickets", "created_at")
 
     def create(self, validated_data):
         with transaction.atomic():
