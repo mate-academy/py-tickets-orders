@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -16,6 +17,12 @@ from cinema.serializers import (
     OrderSerializers,
     TicketSerializer,
 )
+
+
+class OrderPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = "page_size"
+    max_page_size = 100
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -64,6 +71,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializers
+    pagination_class = OrderPagination
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
