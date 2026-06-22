@@ -1,3 +1,6 @@
+from datetime import datetime, time, timedelta
+from django.utils.dateparse import parse_date
+
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -90,7 +93,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie_id:
             queryset = queryset.filter(movie_id=movie_id)
         if date:
-            queryset = queryset.filter(show_time__date=date)
+            parsed_date = parse_date(date)
+            if parsed_date:
+                queryset = queryset.filter(
+                    show_time__gte=datetime.combine(parsed_date, time.min),
+                    show_time__lt=datetime.combine(parsed_date, time.max)
+                    + timedelta(seconds=1),
+                )
 
         return queryset
 
