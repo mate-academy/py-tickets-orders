@@ -31,7 +31,7 @@ class Actor(models.Model):
         return self.first_name + " " + self.last_name
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
 
@@ -60,6 +60,13 @@ class MovieSession(models.Model):
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
+    @property
+    def taken_places(self) -> list[dict[str, int]]:
+        return [
+            {"row": ticket.row, "seat": ticket.seat}
+            for ticket in self.tickets.all()
+        ]
+
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -84,23 +91,28 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    @staticmethod
+    def validate_place(
+            value: int,
+            max_value: int,
+            field_name: str,
+            error_to_raise
+    ) -> None:
+        if not (1 <= value <= max_value):
+            raise error_to_raise(
+                {
+                    field_name: (f"{field_name} must be in range"
+                                 f"[1, {max_value}], not {value}"
+                                 )
+                }
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+
+    def clean(self):
+        hall = self.movie_session.cinema_hall
+        Ticket.validate_place(
+            self.row, hall.rows, "row", ValidationError)
+        Ticket.validate_place(
+            self.seat, hall.seats_in_row, "seat", ValidationError)
 
     def save(
         self,
@@ -120,4 +132,9 @@ class Ticket(models.Model):
         )
 
     class Meta:
-        unique_together = ("movie_session", "row", "seat")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["movie_session", "row", "seat"],
+                name="unique_ticket_per_session_row_seat"
+            )
+        ]
