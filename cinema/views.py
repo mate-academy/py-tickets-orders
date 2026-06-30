@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from django.db.models import (
     Q,
     F,
-    Count,
+    Count
 )
 
 
@@ -12,7 +12,7 @@ from cinema.models import (
     CinemaHall,
     Movie,
     MovieSession,
-    Order,
+    Order
 )
 
 from cinema.serializers import (
@@ -26,7 +26,7 @@ from cinema.serializers import (
     MovieSessionDetailSerializer,
     MovieListSerializer,
     OrderSerializer,
-    OrderListSerializer,
+    OrderListSerializer
 )
 
 
