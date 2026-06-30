@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import (
     Q,
     F,
@@ -66,13 +67,22 @@ class MovieViewSet(viewsets.ModelViewSet):
         title = self.request.query_params.get("title")
 
         if actors:
+            actors_ids = [
+                int(str_id)
+                for str_id
+                in actors.split(",")
+            ]
             queryset = queryset.filter(
-                Q(actors__first_name__icontains=actors)
-                | Q(actors__last_name__icontains=actors)
+                actors__id__in=actors_ids,
             )
         if genres:
+            genres_ids = [
+                int(str_id)
+                for str_id
+                in genres.split(",")
+            ]
             queryset = queryset.filter(
-                genres__name__icontains=genres
+                genres__id__in=genres_ids,
             )
         if title:
             queryset = queryset.filter(
@@ -130,9 +140,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return queryset.distinct()
 
 
+class OrderPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = OrderPagination
 
     def get_serializer_class(self):
         if (
@@ -148,7 +165,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             queryset = queryset.prefetch_related(
-                "tickets",
+                "tickets"
             )
 
         queryset = queryset.filter(user=self.request.user)

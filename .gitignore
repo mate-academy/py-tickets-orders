@@ -10,3 +10,4 @@ venv/
 app/db.sqlite3
 .sqlite
 .db3
+db.sqlite3
