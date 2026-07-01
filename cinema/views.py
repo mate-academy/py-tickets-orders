@@ -1,5 +1,4 @@
 from django.db.models import Count, F, IntegerField, ExpressionWrapper
-from rest_framework.pagination import PageNumberPagination
 from rest_framework import viewsets
 
 from cinema.models import (
@@ -24,10 +23,6 @@ from cinema.serializers import (
     OrderListSerializer,
     OrderCreateSerializer,
 )
-
-
-class OrderPagination(PageNumberPagination):
-    page_size = 3
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -139,7 +134,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         "tickets__movie_session__cinema_hall",
     )
     serializer_class = OrderListSerializer
-    pagination_class = OrderPagination
 
     def get_queryset(self):
         queryset = self.queryset
