@@ -1,29 +1,37 @@
-from rest_framework import viewsets, mixins, pagination
+from typing import Type
+
+from django.db.models import Count, F
+from rest_framework import mixins, viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import F, Count
+from rest_framework.serializers import Serializer
 
 from cinema.models import (
-    Genre,
     Actor,
     CinemaHall,
+    Genre,
     Movie,
     MovieSession,
-    Order,
+    Order
 )
-
 from cinema.serializers import (
-    GenreSerializer,
     ActorSerializer,
     CinemaHallSerializer,
-    MovieSerializer,
-    MovieSessionSerializer,
-    MovieSessionListSerializer,
+    GenreSerializer,
     MovieDetailSerializer,
-    MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderSerializer,
+    MovieSerializer,
+    MovieSessionDetailSerializer,
+    MovieSessionListSerializer,
+    MovieSessionSerializer,
     OrderListSerializer,
+    OrderSerializer
 )
+
+
+class OrderPagination(PageNumberPagination):
+    page_size = 10
+    max_page_size = 100
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -68,7 +76,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieListSerializer
 
@@ -87,7 +95,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 - Count("tickets")
             )
         )
-        .order_by("id")
     )
     serializer_class = MovieSessionSerializer
 
@@ -104,7 +111,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return MovieSessionListSerializer
 
@@ -114,26 +121,22 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
 
-class OrderPagination(pagination.PageNumberPagination):
-    page_size = 10
-    max_page_size = 100
-
-
 class OrderViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     viewsets.GenericViewSet,
 ):
-    pagination_class = OrderPagination
-    permission_classes = [IsAuthenticated]
     queryset = Order.objects.prefetch_related(
-        "tickets__movie_session__movie", "tickets__movie_session__cinema_hall"
+        "tickets__movie_session__movie",
+        "tickets__movie_session__cinema_hall"
     )
+    permission_classes = (IsAuthenticated,)
+    pagination_class = OrderPagination
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.action == "list":
             return OrderListSerializer
         return OrderSerializer
