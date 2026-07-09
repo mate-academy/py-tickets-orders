@@ -125,6 +125,7 @@ class OrderViewSet(
     viewsets.GenericViewSet,
 ):
     pagination_class = OrderPagination
+    permission_classes = [IsAuthenticated]
     queryset = Order.objects.prefetch_related(
         "tickets__movie_session__movie", "tickets__movie_session__cinema_hall"
     )
