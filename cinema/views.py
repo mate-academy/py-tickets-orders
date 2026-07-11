@@ -1,5 +1,6 @@
 from django.db.models import F, Count
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -99,8 +100,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
+class OrderPagination(PageNumberPagination):
+    page_size = 1
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
+    pagination_class = OrderPagination
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).prefetch_related(
