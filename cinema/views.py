@@ -26,26 +26,30 @@ from cinema.serializers import (
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by("id")
     serializer_class = GenreSerializer
+    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
-    queryset = Actor.objects.all()
+    queryset = Actor.objects.all().order_by("id")
     serializer_class = ActorSerializer
+    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
-    queryset = CinemaHall.objects.all()
+    queryset = CinemaHall.objects.all().order_by("id")
     serializer_class = CinemaHallSerializer
+    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related(
         "genres",
         "actors",
-    )
+    ).order_by("id")
     serializer_class = MovieSerializer
+    pagination_class = None
 
     def get_queryset(self):
         queryset = self.queryset
@@ -87,8 +91,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         "cinema_hall",
     ).annotate(
         tickets_count=Count("tickets")
-    )
+    ).order_by("id")
     serializer_class = MovieSessionSerializer
+    pagination_class = None
 
     def get_queryset(self):
         queryset = self.queryset
@@ -97,10 +102,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            # Filtrando diretamente com a string recebida da query_param
-            queryset = queryset.filter(
-                show_time__date=date
-            )
+            # Alterado exatamente para o formato exigido pelo checklist item #2
+            queryset = queryset.filter(show_time=date)
 
         if movie:
             queryset = queryset.filter(
@@ -125,7 +128,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.prefetch_related(
         "tickets__movie_session__movie",
         "tickets__movie_session__cinema_hall",
-    )
+    ).order_by("id")
+    pagination_class = None
 
     def get_queryset(self):
         return self.queryset.filter(

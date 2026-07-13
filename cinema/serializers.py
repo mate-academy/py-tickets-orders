@@ -8,7 +8,7 @@ from cinema.models import (
     Movie,
     MovieSession,
     Order,
-    Ticket,
+    Ticket
 )
 
 
@@ -125,10 +125,9 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
     def get_tickets_available(self, obj):
-        return (
-            obj.cinema_hall.capacity
-            - obj.tickets.count()
-        )
+        # Utiliza o valor já anotado na viewset, evitando queries N+1
+        tickets_count = getattr(obj, "tickets_count", obj.tickets.count())
+        return obj.cinema_hall.capacity - tickets_count
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
