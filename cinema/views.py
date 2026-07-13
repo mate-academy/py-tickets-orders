@@ -108,7 +108,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            queryset = queryset.filter(show_time=date)
+            # Usando __date para fazer a busca correta comparando apenas a data
+            # e evitando o problema de timezone com naive datetimes dos testes
+            queryset = queryset.filter(show_time__date=date)
 
         if movie:
             queryset = queryset.filter(
@@ -133,7 +135,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         "tickets__movie_session__movie",
         "tickets__movie_session__cinema_hall",
     ).order_by("id")
-    # Ativa explicitamente a paginação apenas para os Pedidos
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
