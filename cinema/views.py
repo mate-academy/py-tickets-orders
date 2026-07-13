@@ -93,13 +93,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie_id:
             queryset = queryset.filter(movie_id=movie_id)
         if date:
-            parsed_date = parse_date(date)
-            if parsed_date:
-                queryset = queryset.filter(
-                    show_time__gte=datetime.combine(parsed_date, time.min),
-                    show_time__lt=datetime.combine(parsed_date, time.max)
-                    + timedelta(seconds=1),
-                )
+            queryset = queryset.filter(show_time__date=date)
 
         return queryset
 
