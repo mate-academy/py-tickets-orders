@@ -125,7 +125,6 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         )
 
     def get_tickets_available(self, obj):
-        # Garante a contagem em tempo real ignorando o cache do annotate se necessário
         booked_tickets = obj.tickets.all().count()
         return obj.cinema_hall.capacity - booked_tickets
 
