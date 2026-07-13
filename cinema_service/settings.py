@@ -128,7 +128,7 @@ USE_I18N = True
 
 # Alterado para True para evitar bugs de fuso horário
 # em filtros de data (__date)
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
