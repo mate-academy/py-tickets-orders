@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.db.models import Count
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -67,7 +65,8 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return MovieSerializer
 
-    class MovieSessionViewSet(viewsets.ModelViewSet):
+
+class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related(
         "movie",
         "cinema_hall",
@@ -83,13 +82,9 @@ class MovieViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            show_date = datetime.strptime(
-                date,
-                "%Y-%m-%d",
-            ).date()
-
+            # Filtrando diretamente com a string recebida da query_param
             queryset = queryset.filter(
-                show_time__date=show_date
+                show_time__date=date
             )
 
         if movie:
@@ -107,25 +102,6 @@ class MovieViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
-
-    class OrderViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticated,)
-
-    queryset = Order.objects.prefetch_related(
-        "tickets__movie_session__movie",
-        "tickets__movie_session__cinema_hall",
-    )
-
-    def get_queryset(self):
-        return self.queryset.filter(
-            user=self.request.user
-        )
-
-    def get_serializer_class(self):
-        if self.action == "create":
-            return OrderCreateSerializer
-
-        return OrderSerializer
 
 
 class OrderViewSet(viewsets.ModelViewSet):
