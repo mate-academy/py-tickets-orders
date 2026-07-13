@@ -25,6 +25,21 @@ from cinema.serializers import (
 )
 
 
+class GenreViewSet(viewsets.ModelViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class ActorViewSet(viewsets.ModelViewSet):
+    queryset = Actor.objects.all()
+    serializer_class = ActorSerializer
+
+
+class CinemaHallViewSet(viewsets.ModelViewSet):
+    queryset = CinemaHall.objects.all()
+    serializer_class = CinemaHallSerializer
+
+
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related(
         "genres",
