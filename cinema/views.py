@@ -1,6 +1,7 @@
 from django.db.models import Count
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from cinema.models import (
     Actor,
@@ -28,18 +29,21 @@ from cinema.serializers import (
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all().order_by("id")
     serializer_class = GenreSerializer
+    permission_classes = (AllowAny,)
     pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all().order_by("id")
     serializer_class = ActorSerializer
+    permission_classes = (AllowAny,)
     pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all().order_by("id")
     serializer_class = CinemaHallSerializer
+    permission_classes = (AllowAny,)
     pagination_class = None
 
 
@@ -49,6 +53,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         "actors",
     ).order_by("id")
     serializer_class = MovieSerializer
+    permission_classes = (AllowAny,)
     pagination_class = None
 
     def get_queryset(self):
@@ -93,6 +98,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         tickets_count=Count("tickets")
     ).order_by("id")
     serializer_class = MovieSessionSerializer
+    permission_classes = (AllowAny,)
     pagination_class = None
 
     def get_queryset(self):
@@ -102,7 +108,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            # Alterado exatamente para o formato exigido pelo checklist item #2
             queryset = queryset.filter(show_time=date)
 
         if movie:
@@ -124,12 +129,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
-
     queryset = Order.objects.prefetch_related(
         "tickets__movie_session__movie",
         "tickets__movie_session__cinema_hall",
     ).order_by("id")
-    pagination_class = None
+    # Ativa explicitamente a paginação apenas para os Pedidos
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         return self.queryset.filter(
