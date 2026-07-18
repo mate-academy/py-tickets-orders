@@ -2,7 +2,14 @@ from django.db.models import QuerySet
 from rest_framework import viewsets, pagination
 from rest_framework.exceptions import NotAuthenticated
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order
+)
 
 from cinema.serializers import (
     GenreSerializer,
