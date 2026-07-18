@@ -1,7 +1,6 @@
 from django.db.models import QuerySet
 from rest_framework import viewsets, pagination
 from rest_framework.exceptions import NotAuthenticated
-from rest_framework.request import Request
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -14,7 +13,8 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderSerializer,
+    MovieListSerializer,
+    OrderSerializer,
 )
 
 
@@ -67,7 +67,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
-        request: Request = self.request
         queryset = self.queryset.prefetch_related(
             "tickets",
             "cinema_hall",

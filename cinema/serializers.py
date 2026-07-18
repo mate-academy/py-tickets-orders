@@ -76,8 +76,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     def to_representation(self, instance: MovieSession) -> dict:
         data = super().to_representation(instance)
         capacity = (
-                instance.cinema_hall.rows *
-                instance.cinema_hall.seats_in_row
+            instance.cinema_hall.rows * instance.cinema_hall.seats_in_row
         )
         data["cinema_hall_capacity"] = capacity
         tickets_count = instance.tickets.count()
@@ -109,6 +108,7 @@ class TicketListSerializer(TicketSerializer):
         many=False,
         read_only=True
     )
+
     class Meta:
         model = Ticket
         fields = ("id", "movie_session", "row", "seat")
