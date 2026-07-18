@@ -8,7 +8,7 @@ from cinema.models import (
     CinemaHall,
     Movie,
     MovieSession,
-    Order
+    Order,
 )
 
 from cinema.serializers import (
