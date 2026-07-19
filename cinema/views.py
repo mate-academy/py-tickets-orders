@@ -1,4 +1,6 @@
+from django.db.models import Count, F
 from rest_framework import viewsets, mixins
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
@@ -71,7 +73,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related("movie", "cinema_hall")
-    serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
         queryset = self.queryset
@@ -85,6 +86,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie_id:
             queryset = queryset.filter(movie_id=movie_id)
 
+        if self.action == "list":
+            queryset = queryset.annotate(
+                tickets_available=(
+                    F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row")
+                    - Count("tickets")
+                )
+            )
+
         return queryset
 
     def get_serializer_class(self):
@@ -95,6 +105,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
 
+class OrderPagination(PageNumberPagination):
+    page_size = 3
+
+
 class OrderViewSet(
     mixins.ListModelMixin,
     viewsets.GenericViewSet,
@@ -102,6 +116,7 @@ class OrderViewSet(
     queryset = Order.objects.all()
     serializer_class = OrderListSerializer
     permission_classes = (IsAuthenticated,)
+    pagination_class = OrderPagination
 
     def get_queryset(self):
         return Order.objects.filter(
