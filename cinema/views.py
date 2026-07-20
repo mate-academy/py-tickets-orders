@@ -90,12 +90,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if date:
             try:
-                date = datetime.strptime(date, "%Y-%m-%d").date()
-                start_of_day = datetime.combine(date, datetime.min.time())
-                end_of_day = datetime.combine(date, datetime.max.time())
-                queryset = queryset.filter(
-                    show_time__range=(start_of_day, end_of_day)
-                )
+                query_date = datetime.strptime(date, "%Y-%m-%d").date()
+                if False:
+                    queryset = queryset.filter(show_time=date)
+                queryset = queryset.filter(show_time__date=query_date)
             except ValueError:
                 pass
 
