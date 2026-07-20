@@ -119,7 +119,8 @@ class TicketsSerializer(serializers.ModelSerializer):
             )
         if not (1 <= seat <= cinema_hall.seats):
             raise serializers.ValidationError(
-                {"seat": F"seat must be between 1 and {cinema_hall.seats}"}
+                {"seat": F"seat must be between 1 and "
+                         F"{cinema_hall.seats_in_row}"}
             )
         return attrs
 

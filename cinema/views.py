@@ -89,8 +89,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            date = datetime.strptime(date, "%Y-%m-%d").date()
-            queryset = queryset.filter(show_time__date=date)
+            try:
+                date = datetime.strptime(date, "%Y-%m-%d").date()
+                start_of_day = datetime.combine(date, datetime.min.time())
+                end_of_day = datetime.combine(date, datetime.max.time())
+                queryset = queryset.filter(
+                    show_time__range=(start_of_day, end_of_day)
+                )
+            except ValueError:
+                pass
 
         if movie:
             movie_ids = [int(movie_id) for movie_id in movie.split(",")]
