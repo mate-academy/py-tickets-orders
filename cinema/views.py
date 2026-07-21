@@ -96,8 +96,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if movie:
             queryset = queryset.filter(movie__id=movie)
-            # ou simplesmente:
-            # queryset = queryset.filter(movie_id=movie)
 
         return queryset
 
