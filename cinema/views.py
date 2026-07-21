@@ -1,6 +1,8 @@
-from django.db.models import Count, F
+from django.db.models import Count
+
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+
 from cinema.pagination import OrderPagination
 
 from cinema.models import (
@@ -28,17 +30,17 @@ from cinema.serializers import (
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by("id")
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
-    queryset = Actor.objects.all()
+    queryset = Actor.objects.all().order_by("id")
     serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
-    queryset = CinemaHall.objects.all()
+    queryset = CinemaHall.objects.all().order_by("id")
     serializer_class = CinemaHallSerializer
 
 
@@ -63,15 +65,13 @@ class MovieViewSet(viewsets.ModelViewSet):
             )
 
         if genres:
-            genre_ids = genres.split(",")
             queryset = queryset.filter(
-                genres__id__in=genre_ids
+                genres__id__in=genres.split(",")
             )
 
         if actors:
-            actor_ids = actors.split(",")
             queryset = queryset.filter(
-                actors__id__in=actor_ids
+                actors__id__in=actors.split(",")
             )
 
         return queryset.distinct()
@@ -87,17 +87,20 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.select_related(
-        "movie",
-        "cinema_hall",
-    ).annotate(
-        tickets_count=Count("tickets")
-    )
+    queryset = MovieSession.objects.all()
 
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = MovieSession.objects.select_related(
+            "movie",
+            "cinema_hall",
+        ).annotate(
+            tickets_count=Count(
+                "tickets",
+                distinct=True,
+            )
+        ).order_by("id")
 
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
@@ -125,7 +128,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated,
+    )
+
     pagination_class = OrderPagination
 
     queryset = Order.objects.prefetch_related(
@@ -145,4 +151,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         return OrderSerializer
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(
+            user=self.request.user
+        )
