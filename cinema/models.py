@@ -128,4 +128,6 @@ class Ticket(models.Model):
             update_fields)
 
     def __str__(self):
-        return f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+        return (f"{str(self.movie_session)} "
+                f"(row: {self.row}, "
+                f"seat: {self.seat})")
