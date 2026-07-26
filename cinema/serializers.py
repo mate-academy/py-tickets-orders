@@ -122,16 +122,23 @@ class MovieSessionForTicketSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionForTicketSerializer()
+    movie_session = serializers.PrimaryKeyRelatedField(
+        queryset=MovieSession.objects.all()
+    )
 
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
 
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep["movie_session"] = MovieSessionForTicketSerializer(
+            instance.movie_session
+        ).data
+        return rep
+    
     def validate(self, data):
-        movie_session = MovieSession.objects.get(
-            id=data["movie_session"]["id"]
-        )
+        movie_session = data["movie_session"]
         Ticket.validate_seat(
             data.get("row"), data.get("seat"), movie_session.cinema_hall
         )
