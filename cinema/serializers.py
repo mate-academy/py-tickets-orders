@@ -136,7 +136,7 @@ class TicketSerializer(serializers.ModelSerializer):
             instance.movie_session
         ).data
         return rep
-    
+
     def validate(self, data):
         movie_session = data["movie_session"]
         Ticket.validate_seat(
