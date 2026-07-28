@@ -1,4 +1,4 @@
-from django.db.models import Q, F
+from django.db.models import F
 from django.db.models.aggregates import Count
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -22,25 +22,25 @@ from cinema.serializers import (
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
+    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
-
-    @staticmethod
-    def _params_to_name(query_string):
-        return [name for name in query_string.split(",")]
+    pagination_class = None
 
     @staticmethod
     def _params_to_int(query_string):
@@ -80,6 +80,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+    pagination_class = None
 
     def get_queryset(self):
         capacity = F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
@@ -94,7 +95,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             )
         )
         date_query_params = self.request.query_params.get("date")
-        print(date_query_params)
         movie_query_params = self.request.query_params.get("movie")
         if date_query_params:
             queryset = queryset.filter(show_time__date=date_query_params)
