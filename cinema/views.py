@@ -63,7 +63,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if title:
             queryset = queryset.filter(title__icontains=title.strip())
-            print(queryset.query)
 
         return queryset.distinct()
 
@@ -88,7 +87,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if movie:
             queryset = queryset.filter(movie__id=int(movie))
-            print(queryset.query)
 
         if date:
             queryset = queryset.filter(show_time__date=date)
