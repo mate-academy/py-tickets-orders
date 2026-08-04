@@ -175,10 +175,9 @@ class OrderSerializer(serializers.ModelSerializer):
         tickets = attrs.get("tickets", [])
 
         ticket_places = [
-            (ticket["row"],
-            ticket["seat"],
-            ticket["movie_session"])
-            for ticket in tickets]
+            (ticket["row"], ticket["seat"], ticket["movie_session"])
+            for ticket in tickets
+        ]
         if len(ticket_places) != len(set(ticket_places)):
             raise ValidationError(
                 "There are duplicate seats in your order."

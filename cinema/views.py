@@ -48,7 +48,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     @staticmethod
-    def params_to_inst(qs:str) -> list[int]:
+    def params_to_inst(qs: str) -> list[int]:
         return [int(str_id)
                 for str_id in qs.split(",")
                 if str_id.isdigit()
@@ -113,9 +113,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 .select_related("movie", "cinema_hall")
                 .annotate(
                     tickets_available=(
-                            F("cinema_hall__rows") *
-                            F("cinema_hall__seats_in_row")
-                            - Count("tickets")
+                            F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets")
                     )
                 )
             )
