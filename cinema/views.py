@@ -109,7 +109,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             total_seats = (
-                    F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
             )
             queryset = (
                 queryset.annotate(
