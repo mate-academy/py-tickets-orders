@@ -52,7 +52,7 @@ class MovieSessionApiTests(TestCase):
         self.assertEqual(movie_sessions.status_code, status.HTTP_200_OK)
         for field in movie_session:
             self.assertEqual(
-                movie_sessions.data[0][field], movie_session[field]
+                movie_sessions.data["results"][0][field], movie_session[field]
             )
 
     def test_get_movie_sessions_filtered_by_date(self):

@@ -39,7 +39,7 @@ class MovieApiTests(TestCase):
         print(movies.data)
         self.assertEqual(movies.status_code, status.HTTP_200_OK)
         for field in titanic:
-            self.assertEqual(movies.data[0][field], titanic[field])
+            self.assertEqual(movies.data["results"][0][field], titanic[field])
 
     def test_get_movies_with_genres_filtering(self):
         movies = self.client.get(
