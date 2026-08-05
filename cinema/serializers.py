@@ -1,6 +1,16 @@
+from django.db import transaction
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -24,7 +34,14 @@ class CinemaHallSerializer(serializers.ModelSerializer):
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "genres",
+            "actors"
+        )
 
 
 class MovieListSerializer(MovieSerializer):
@@ -59,6 +76,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
     cinema_hall_capacity = serializers.IntegerField(
         source="cinema_hall.capacity", read_only=True
     )
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = MovieSession
@@ -68,13 +86,112 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity",
+            "tickets_available",
         )
+
+
+class TicketTakenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
-    cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    cinema_hall = CinemaHallSerializer(
+        many=False,
+        read_only=True
+    )
+    taken_places = TicketTakenSerializer(
+        source="tickets",
+        read_only=True,
+        many=True
+    )
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = (
+            "id",
+            "show_time",
+            "movie",
+            "cinema_hall",
+            "taken_places",
+        )
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    movie_session = MovieSessionListSerializer(
+        read_only=True
+    )
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "movie_session", "row", "seat")
+
+    def validate(self, attrs):
+        row = attrs.get("row")
+        seat = attrs.get("seat")
+        movie_session = attrs.get("movie_session")
+
+        cinema_hall = movie_session.cinema_hall
+
+        if not (1 <= row <= cinema_hall.rows):
+            raise serializers.ValidationError(
+                {"row": "Row number must be in available range: (1, rows)"}
+            )
+        if not (1 <= seat <= cinema_hall.seats_in_row):
+            raise serializers.ValidationError(
+                {"seat": "Seat number must be in available range:"
+                         "(1, seats_in_row)"}
+            )
+
+        ticket_exists = Ticket.objects.filter(
+            movie_session=movie_session,
+            row=row,
+            seat=seat
+        ).exists()
+
+        if ticket_exists:
+            raise ValidationError(
+                {"seat": "Ticket for this seat already exists"}
+            )
+
+        return attrs
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source="user.username")
+    tickets = TicketSerializer(
+        many=True,
+        read_only=False,
+        allow_empty=False
+    )
+
+    class Meta:
+        model = Order
+        fields = ("id", "created_at", "user", "tickets")
+
+    def validate(self, attrs):
+        tickets = attrs.get("tickets", [])
+
+        ticket_places = [
+            (ticket["row"], ticket["seat"], ticket["movie_session"])
+            for ticket in tickets
+        ]
+        if len(ticket_places) != len(set(ticket_places)):
+            raise ValidationError(
+                "There are duplicate seats in your order."
+            )
+
+        return attrs
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tickets_data = validated_data.pop("tickets")
+            order = Order.objects.create(**validated_data)
+            for ticket_data in tickets_data:
+                Ticket.objects.create(
+                    order=order,
+                    **ticket_data
+                )
+            return order
