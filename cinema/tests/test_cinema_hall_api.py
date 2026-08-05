@@ -41,7 +41,7 @@ class CinemaHallApiTests(TestCase):
             "capacity": 48,
         }
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[1]["name"], vip_hall["name"])
+        self.assertEqual(response.data["results"][1]["name"], vip_hall["name"])
         self.assertEqual(response.data[1]["rows"], vip_hall["rows"])
         self.assertEqual(
             response.data[1]["seats_in_row"], vip_hall["seats_in_row"]
