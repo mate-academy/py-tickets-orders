@@ -27,6 +27,12 @@ class MovieApiTests(TestCase):
         self.movie.genres.add(self.comedy)
         self.movie.actors.add(self.actress)
 
+        self.movie2 = Movie.objects.create(
+            title="Sample Movie",
+            description="Sample description",
+            duration=100,
+        )
+
     def test_get_movies(self):
         movies = self.client.get("/api/cinema/movies/")
         titanic = {
@@ -80,7 +86,7 @@ class MovieApiTests(TestCase):
         )
         db_movies = Movie.objects.all()
         self.assertEqual(movies.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(db_movies.count(), 2)
+        self.assertEqual(db_movies.count(), 3)
         self.assertEqual(db_movies.filter(title="Superman").count(), 1)
 
     def test_post_invalid_movies(self):
