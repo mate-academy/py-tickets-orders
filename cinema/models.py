@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 
@@ -84,12 +85,15 @@ class Ticket(models.Model):
     seat = models.IntegerField()
 
     @staticmethod
-    def validate_ticket(row: int, seat: int, cinema_hall, error_to_raise):
+    def validate_ticket(row: int, seat: int, movie_session, error_to_raise):
+        if not movie_session or not hasattr(movie_session, "cinema_hall") or not movie_session.cinema_hall:
+            return
+
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
         ]:
-            count_attrs = getattr(cinema_hall, cinema_hall_attr_name)
+            count_attrs = getattr(movie_session.cinema_hall, cinema_hall_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise error_to_raise(
                     {
@@ -105,7 +109,7 @@ class Ticket(models.Model):
             self.row,
             self.seat,
             self.movie_session.cinema_hall,
-            ValueError
+            ValidationError
         )
 
     def save(self, *args, **kwargs):

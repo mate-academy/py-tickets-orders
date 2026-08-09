@@ -1,5 +1,6 @@
 from django.db.models import Count, F
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import (
     Genre,
@@ -66,17 +67,17 @@ class MovieViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(title__icontains=title)
 
         if genres:
-            genres = self._params_to_ints(genres)
-            queryset = queryset.filter(genres__id__in=genres)
+            genre_ids = [int(pk) for pk in genres.split(",")]
+            queryset = queryset.filter(genres__id__in=genre_ids).distinct()
 
         if actors:
-            actors = self._params_to_ints(actors)
-            queryset = queryset.filter(actors__id__in=actors)
+            actor_ids = [int(pk) for pk in actors.split(",")]
+            queryset = queryset.filter(actors__id__in=actor_ids).distinct()
 
         if self.action in ("list", "retrieve"):
-            queryset = queryset.prefetch_related("actors")
-            queryset = queryset.prefetch_related("genres")
-        return queryset
+            queryset = queryset.prefetch_related("actors", "genres")
+
+        return queryset.distinct()
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -126,12 +127,19 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+class OrderViewSetPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "page_size"
+    max_page_size = 5
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = OrderViewSetPagination
 
     def get_queryset(self):
-        queryset = self.queryset.filter(user=self.request.user)
+        queryset = self.queryset.filter(user=self.request.user).prefetch_related("tickets__movie_session__movie")
 
         if self.action in ("list", "retrieve"):
             queryset = queryset.prefetch_related(
