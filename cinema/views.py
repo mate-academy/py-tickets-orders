@@ -21,28 +21,32 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderSerializer,
+    OrderSerializer, OrderListSerializer,
 )
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
+    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+    pagination_class = None
 
     @staticmethod
     def _params_to_ints(query_string):
@@ -83,6 +87,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -127,31 +132,24 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class OrderViewSetPagination(PageNumberPagination):
-    page_size = 1
-    page_size_query_param = "page_size"
-    max_page_size = 5
-
-
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    pagination_class = OrderViewSetPagination
+
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return OrderListSerializer
+        return OrderSerializer
 
     def get_queryset(self):
-        queryset = self.queryset.filter(
+        return self.queryset.filter(
             user=self.request.user
-        ).prefetch_related("tickets__movie_session__movie")
-
-        if self.action in ("list", "retrieve"):
-            queryset = queryset.prefetch_related(
-                "tickets",
-                "tickets__movie_session",
-                "tickets__movie_session__movie",
-                "tickets__movie_session__cinema_hall"
-            )
-
-        return queryset
+        ).prefetch_related(
+            "tickets",
+            "tickets__movie_session",
+            "tickets__movie_session__movie",
+            "tickets__movie_session__cinema_hall"
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

@@ -117,7 +117,9 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    movie_session = MovieSessionListSerializer(read_only=True)
+    movie_session = serializers.PrimaryKeyRelatedField(
+        queryset=MovieSession.objects.all()
+    )
 
     class Meta:
         model = Ticket
@@ -131,6 +133,10 @@ class TicketSerializer(serializers.ModelSerializer):
             error_to_raise=serializers.ValidationError
         )
         return attrs
+
+
+class TicketListSerializer(TicketSerializer):
+    movie_session = MovieSessionListSerializer(read_only=True)
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -149,3 +155,7 @@ class OrderSerializer(serializers.ModelSerializer):
             for ticket_data in tickets_data:
                 Ticket.objects.create(order=order, **ticket_data)
             return order
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)

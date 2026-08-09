@@ -113,7 +113,7 @@ class Ticket(models.Model):
         Ticket.validate_ticket(
             self.row,
             self.seat,
-            self.movie_session.cinema_hall,
+            self.movie_session,
             ValidationError
         )
 
