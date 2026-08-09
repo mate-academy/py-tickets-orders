@@ -86,14 +86,19 @@ class Ticket(models.Model):
 
     @staticmethod
     def validate_ticket(row: int, seat: int, movie_session, error_to_raise):
-        if not movie_session or not hasattr(movie_session, "cinema_hall") or not movie_session.cinema_hall:
+        if not movie_session or not hasattr(
+                movie_session, "cinema_hall"
+        ) or not movie_session.cinema_hall:
             return
 
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
         ]:
-            count_attrs = getattr(movie_session.cinema_hall, cinema_hall_attr_name)
+            count_attrs = getattr(
+                movie_session.cinema_hall,
+                cinema_hall_attr_name
+            )
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise error_to_raise(
                     {
