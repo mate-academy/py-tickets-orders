@@ -26,27 +26,29 @@ from cinema.serializers import (
     TicketSerializer,
 )
 
-from cinema.pagination import OrderPagination
-
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    pagination_class = None
 
 
 class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+    pagination_class = None
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
+    pagination_class = None
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+    pagination_class = None
 
     def get_queryset(self):
         queryset = Movie.objects.all()
@@ -77,6 +79,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+    pagination_class = None
 
     def get_queryset(self):
         queryset = MovieSession.objects.all()
@@ -86,7 +89,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie_id:
             queryset = queryset.filter(movie__id=movie_id)
         if date:
-            date = datetime.date(*list(map(int, date.split("-"))))
             queryset = queryset.filter(show_time__date=date)
 
         return queryset
@@ -105,7 +107,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    pagination_class = OrderPagination
+
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
@@ -124,3 +126,4 @@ class OrderViewSet(viewsets.ModelViewSet):
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
+    pagination_class = None
