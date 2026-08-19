@@ -1,4 +1,4 @@
-from django.core.exceptions import ValidationError  # ИСПРАВЛЕНО: правильный импорт для full_clean()
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from rest_framework import serializers
 
