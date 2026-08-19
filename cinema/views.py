@@ -2,8 +2,6 @@ from datetime import datetime
 from django.db.models import Count, F
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -44,9 +42,6 @@ class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
     pagination_class = None
-    filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ["genres", "actors"]
-    search_fields = ["title"]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -80,8 +75,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
     pagination_class = None
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["movie"]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -94,14 +87,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date_obj)
 
         if movie:
-            try:
-                movie_id = int(movie)
-                if movie_id > 0:
-                    queryset = queryset.filter(movie_id=movie_id)
-                else:
-                    queryset = queryset.none()
-            except ValueError:
-                queryset = queryset.none()
+            queryset = queryset.filter(movie_id=int(movie))
 
         if self.action == "list":
             queryset = queryset.select_related(
@@ -136,7 +122,6 @@ class OrderViewSet(
         "tickets__movie_session__movie",
     )
     permission_classes = (IsAuthenticated,)
-    pagination_class = None
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
