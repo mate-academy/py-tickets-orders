@@ -14,7 +14,9 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer, OrderListSerializer, OrderSerializer,
+    MovieListSerializer,
+    OrderListSerializer,
+    OrderSerializer,
 )
 
 
@@ -83,11 +85,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie_id=int(movie))
 
         if self.action == "list":
-            queryset = queryset.select_related("cinema_hall", "movie").annotate(
+            queryset = queryset.select_related(
+                "cinema_hall", "movie"
+            ).annotate(
                 tickets_available=(
-                        F("cinema_hall__rows")
-                        * F("cinema_hall__seats_in_row")
-                        - Count("tickets")
+                    F("cinema_hall__rows")
+                    * F("cinema_hall__seats_in_row")
+                    - Count("tickets")
                 )
             )
 
