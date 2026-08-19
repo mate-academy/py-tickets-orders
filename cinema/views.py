@@ -45,8 +45,8 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
     pagination_class = None
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['genres', 'actors']
-    search_fields = ['title']
+    filterset_fields = ["genres", "actors"]
+    search_fields = ["title"]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -81,7 +81,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
     pagination_class = None
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['movie', 'show_time__date']
+    filterset_fields = ["movie", "show_time__date"]
 
     def get_queryset(self):
         queryset = self.queryset
