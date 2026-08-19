@@ -1,10 +1,10 @@
 from datetime import datetime
+
 from django.db.models import Count, F
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
-
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -83,8 +83,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
-            queryset = queryset.filter(show_time__date=date_obj)
+            date_obj = datetime.strptime(date, "%Y-%m-%d")
+            queryset = queryset.filter(show_time=date_obj)
 
         if movie:
             queryset = queryset.filter(movie_id=int(movie))
