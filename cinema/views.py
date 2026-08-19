@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 from django.db.models import Count, F
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -61,7 +61,7 @@ class MovieViewSet(
     viewsets.mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
-    queryset = Movie.objects.all()
+    queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
@@ -79,18 +79,18 @@ class MovieViewSet(
 
     def get_queryset(self):
         queryset = self.queryset
-        actors = self.request.query_params.get("actors")
-        genres = self.request.query_params.get("genres")
         title = self.request.query_params.get("title")
+        genres = self.request.query_params.get("genres")
+        actors = self.request.query_params.get("actors")
 
-        if actors:
-            actors_ids = self._params_to_ints(actors)
-            queryset = queryset.filter(actors__id__in=actors_ids)
+        if title:
+            queryset = queryset.filter(title__icontains=title)
         if genres:
             genres_ids = self._params_to_ints(genres)
             queryset = queryset.filter(genres__id__in=genres_ids)
-        if title:
-            queryset = queryset.filter(title__icontains=title)
+        if actors:
+            actors_ids = self._params_to_ints(actors)
+            queryset = queryset.filter(actors__id__in=actors_ids)
 
         return queryset.distinct()
 
