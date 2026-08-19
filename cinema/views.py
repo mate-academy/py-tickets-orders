@@ -103,14 +103,17 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
-class OrderViewSet(mixins.ListModelMixin,
+class OrderViewSet(
+    mixins.ListModelMixin,
     mixins.CreateModelMixin,
-    viewsets.GenericViewSet,):
+    viewsets.GenericViewSet,
+):
     queryset = Order.objects.prefetch_related(
         "tickets__movie_session__cinema_hall",
-        "tickets__movie_session__movie"
+        "tickets__movie_session__movie",
     )
     permission_classes = (IsAuthenticated,)
+
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
