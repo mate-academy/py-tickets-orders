@@ -102,6 +102,7 @@ class TicketSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(e.message_dict)
         return data
 
+
 class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer(many=False, read_only=True)
 
