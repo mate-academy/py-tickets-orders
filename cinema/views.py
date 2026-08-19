@@ -81,7 +81,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
     pagination_class = None
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["movie", "show_time__date"]
+    filterset_fields = ["movie"]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -94,7 +94,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(show_time__date=date_obj)
 
         if movie:
-            queryset = queryset.filter(movie_id=int(movie))
+            try:
+                movie_id = int(movie)
+                if movie_id > 0:
+                    queryset = queryset.filter(movie_id=movie_id)
+                else:
+                    queryset = queryset.none()
+            except ValueError:
+                queryset = queryset.none()
 
         if self.action == "list":
             queryset = queryset.select_related(
