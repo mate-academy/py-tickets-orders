@@ -124,7 +124,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 
 class OrderPagination(PageNumberPagination):
-    page_size = 2
     max_page_size = 100
 
 
