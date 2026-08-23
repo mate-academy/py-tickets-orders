@@ -1,4 +1,6 @@
+from django.db.models import Q
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -30,9 +32,15 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
+class MovieSetPagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "page_size"
+    max_page_size = 10
+
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
+    pagination_class = MovieSetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -42,6 +50,19 @@ class MovieViewSet(viewsets.ModelViewSet):
             return MovieDetailSerializer
 
         return MovieSerializer
+
+    def get_queryset(self):
+        title = self.request.query_params.get("title")
+        genres = self.request.query_params.get("genres")
+        actors = self.request.query_params.get("actors")
+        queryset = self.queryset
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+        if actors:
+            queryset = queryset.filter(Q(actors__first_name__icontains=actors) | Q(actors__last_name__icontains=actors))
+        if genres:
+            queryset = queryset.filter(genres__name=genres)
+        return queryset
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
