@@ -83,13 +83,13 @@ class TicketSerializer(serializers.ModelSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    tickets = SerializerMethodField()
+    taken_places = SerializerMethodField()
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall", "tickets")
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
 
-    def get_tickets(self, obj):
+    def get_taken_places(self, obj):
         return [
             {
                 "row": ticket.row,
