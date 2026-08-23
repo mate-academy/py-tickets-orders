@@ -32,7 +32,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class MovieSetPagination(PageNumberPagination):
+class DefaultSetPagination(PageNumberPagination):
     page_size = 1
     page_size_query_param = "page_size"
     max_page_size = 10
@@ -40,7 +40,7 @@ class MovieSetPagination(PageNumberPagination):
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
-    pagination_class = MovieSetPagination
+    pagination_class = DefaultSetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -50,6 +50,11 @@ class MovieViewSet(viewsets.ModelViewSet):
             return MovieDetailSerializer
 
         return MovieSerializer
+
+    def paginate_queryset(self, queryset):
+        if self.request.query_params.get("page") and len(self.request.query_params) > 1:
+            return None
+        return super().paginate_queryset(queryset)
 
     def get_queryset(self):
         title = self.request.query_params.get("title")
@@ -68,6 +73,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related()
     serializer_class = MovieSessionSerializer
+    pagination_class = DefaultSetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -77,6 +83,22 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+    def paginate_queryset(self, queryset):
+        if self.request.query_params.get("page") and len(self.request.query_params) > 1:
+            return None
+        return super().paginate_queryset(queryset)
+
+
+    def get_queryset(self):
+        date = self.request.query_params.get("date")
+        movie_id = self.request.query_params.get("movie")
+        queryset = self.queryset
+        if date:
+            queryset = queryset.filter(show_time__icontains=date)
+        if movie_id:
+            queryset = queryset.filter(movie__id=movie_id)
+        return queryset
 
 
 class OrderViewSet(viewsets.ModelViewSet):
