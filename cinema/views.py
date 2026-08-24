@@ -37,6 +37,7 @@ class OrderSetPagination(PageNumberPagination):
     page_size_query_param = "page_size"
     max_page_size = 10
 
+
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
@@ -51,7 +52,8 @@ class MovieViewSet(viewsets.ModelViewSet):
         return MovieSerializer
 
     def paginate_queryset(self, queryset):
-        if self.request.query_params.get("page") and len(self.request.query_params) > 1:
+        if (self.request.query_params.get("page")
+                and len(self.request.query_params) > 1):
             return None
         return super().paginate_queryset(queryset)
 
@@ -85,10 +87,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return MovieSessionSerializer
 
     def paginate_queryset(self, queryset):
-        if self.request.query_params.get("page") and len(self.request.query_params) > 1:
+        if (self.request.query_params.get("page")
+                and len(self.request.query_params) > 1):
             return None
         return super().paginate_queryset(queryset)
-
 
     def get_queryset(self):
         date = self.request.query_params.get("date")

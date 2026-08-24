@@ -1,9 +1,16 @@
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
-from rest_framework.relations import SlugRelatedField
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -81,6 +88,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 class TicketSerializer(serializers.ModelSerializer):
     movie_session = MovieSessionListSerializer(many=False, read_only=False)
+
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
