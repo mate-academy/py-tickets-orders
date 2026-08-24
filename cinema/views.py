@@ -32,7 +32,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
     serializer_class = CinemaHallSerializer
 
 
-class DefaultSetPagination(PageNumberPagination):
+class OrderSetPagination(PageNumberPagination):
     page_size = 1
     page_size_query_param = "page_size"
     max_page_size = 10
@@ -40,7 +40,6 @@ class DefaultSetPagination(PageNumberPagination):
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
-    pagination_class = DefaultSetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -73,7 +72,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.select_related()
     serializer_class = MovieSessionSerializer
-    pagination_class = DefaultSetPagination
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -107,6 +105,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         "tickets__movie_session__cinema_hall",
     )
     serializer_class = OrderSerializer
+    pagination_class = OrderSetPagination
 
     def get_queryset(self):
         queryset = self.queryset.filter(user=self.request.user)
