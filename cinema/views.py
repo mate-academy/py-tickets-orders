@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -63,9 +63,11 @@ class MovieViewSet(viewsets.ModelViewSet):
         if title:
             queryset = queryset.filter(title__icontains=title)
         if actors:
-            queryset = queryset.filter(Q(actors__first_name__icontains=actors) | Q(actors__last_name__icontains=actors))
+            actors = [int(actor) for actor in actors.split(",")]
+            queryset = queryset.filter(actors__id__in=actors)
         if genres:
-            queryset = queryset.filter(genres__name=genres)
+            genres = [int(genre) for genre in genres.split(",")]
+            queryset = queryset.filter(genres__id__in=genres)
         return queryset
 
 
@@ -90,13 +92,16 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         date = self.request.query_params.get("date")
-        movie_id = self.request.query_params.get("movie")
+        movies_id = self.request.query_params.get("movie")
+        print(movies_id)
         queryset = self.queryset
         if date:
-            queryset = queryset.filter(show_time__icontains=date)
-        if movie_id:
-            queryset = queryset.filter(movie__id=movie_id)
-        return queryset
+            date = parse_date(date)
+            queryset = queryset.filter(show_time__date=date)
+        if movies_id:
+            movies_id = [int(movie_id) for movie_id in movies_id.split(",")]
+            queryset = queryset.filter(movie_id__in=movies_id)
+        return queryset.distinct()
 
 
 class OrderViewSet(viewsets.ModelViewSet):
