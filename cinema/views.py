@@ -1,5 +1,6 @@
 from django.db.models import Count, F
 from rest_framework import mixins, viewsets
+from datetime import datetime
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
@@ -94,7 +95,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            queryset = queryset.filter(show_time__date=date)
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+            queryset = queryset.filter(show_time__date=date_obj)
 
         if movie:
             queryset = queryset.filter(movie_id=movie)

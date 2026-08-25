@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+
 from .models import (
     Actor,
     CinemaHall,
@@ -121,19 +122,25 @@ class TicketListSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        Ticket.validate_ticket(
-            attrs["row"],
-            attrs["seat"],
-            attrs["movie_session"].cinema_hall,
-            ValidationError,
-        )
-        return data
+    movie_session = serializers.PrimaryKeyRelatedField(
+        queryset=MovieSession.objects.all()
+    )
 
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
+
+    def validate(self, attrs):
+        movie_session = attrs["movie_session"]
+        cinema_hall = movie_session.cinema_hall
+
+        Ticket.validate_ticket(
+            attrs["row"],
+            attrs["seat"],
+            cinema_hall,
+            serializers.ValidationError
+        )
+        return attrs
 
 
 class OrderListSerializer(serializers.ModelSerializer):
