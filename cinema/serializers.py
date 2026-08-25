@@ -27,7 +27,13 @@ class ActorSerializer(serializers.ModelSerializer):
 class CinemaHallSerializer(serializers.ModelSerializer):
     class Meta:
         model = CinemaHall
-        fields = ("id", "name", "rows", "seats_in_row", "capacity")
+        fields = (
+            "id",
+            "name",
+            "rows",
+            "seats_in_row",
+            "capacity",
+        )
 
 
 class MovieSerializer(serializers.ModelSerializer):
@@ -57,14 +63,25 @@ class MovieListSerializer(MovieSerializer):
 
 
 class MovieDetailSerializer(MovieSerializer):
-    genres = GenreSerializer(many=True, read_only=True)
-    actors = ActorSerializer(many=True, read_only=True)
+    genres = GenreSerializer(
+        many=True,
+        read_only=True,
+    )
+    actors = ActorSerializer(
+        many=True,
+        read_only=True,
+    )
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = (
+            "id",
+            "show_time",
+            "movie",
+            "cinema_hall",
+        )
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
@@ -80,7 +97,9 @@ class MovieSessionListSerializer(MovieSessionSerializer):
         source="cinema_hall.capacity",
         read_only=True,
     )
-    tickets_available = serializers.IntegerField(read_only=True)
+    tickets_available = serializers.IntegerField(
+        read_only=True,
+    )
 
     class Meta:
         model = MovieSession
@@ -95,8 +114,12 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieListSerializer(read_only=True)
-    cinema_hall = CinemaHallSerializer(read_only=True)
+    movie = MovieListSerializer(
+        read_only=True,
+    )
+    cinema_hall = CinemaHallSerializer(
+        read_only=True,
+    )
     taken_places = serializers.SerializerMethodField()
 
     class Meta:
@@ -110,7 +133,12 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
         )
 
     def get_taken_places(self, obj):
-        return obj.tickets.values("row", "seat")
+        return list(
+            obj.tickets.values(
+                "row",
+                "seat",
+            )
+        )
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -125,26 +153,27 @@ class TicketSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         movie_session = attrs["movie_session"]
-
         row = attrs["row"]
         seat = attrs["seat"]
 
-        if not 1 <= row <= movie_session.cinema_hall.rows:
+        cinema_hall = movie_session.cinema_hall
+
+        if not 1 <= row <= cinema_hall.rows:
             raise serializers.ValidationError(
                 {
                     "row": (
                         f"Row must be in range "
-                        f"1-{movie_session.cinema_hall.rows}"
+                        f"1-{cinema_hall.rows}"
                     )
                 }
             )
 
-        if not 1 <= seat <= movie_session.cinema_hall.seats_in_row:
+        if not 1 <= seat <= cinema_hall.seats_in_row:
             raise serializers.ValidationError(
                 {
                     "seat": (
                         f"Seat must be in range "
-                        f"1-{movie_session.cinema_hall.seats_in_row}"
+                        f"1-{cinema_hall.seats_in_row}"
                     )
                 }
             )
@@ -174,7 +203,35 @@ class OrderSerializer(serializers.ModelSerializer):
             "tickets",
             "created_at",
         )
-        read_only_fields = ("created_at",)
+        read_only_fields = (
+            "id",
+            "created_at",
+        )
+
+    def validate(self, attrs):
+        tickets = attrs["tickets"]
+        places = set()
+
+        for ticket in tickets:
+            place = (
+                ticket["movie_session"].id,
+                ticket["row"],
+                ticket["seat"],
+            )
+
+            if place in places:
+                raise serializers.ValidationError(
+                    {
+                        "tickets": (
+                            "You cannot book the same place "
+                            "twice in one order."
+                        )
+                    }
+                )
+
+            places.add(place)
+
+        return attrs
 
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
@@ -195,7 +252,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class TicketListSerializer(TicketSerializer):
-    movie_session = MovieSessionListSerializer(read_only=True)
+    movie_session = MovieSessionListSerializer(
+        read_only=True,
+    )
 
 
 class OrderListSerializer(OrderSerializer):
