@@ -39,8 +39,8 @@ class Movie(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     duration = models.IntegerField()
-    genres = models.ManyToManyField(Genre)
-    actors = models.ManyToManyField(Actor)
+    genres = models.ManyToManyField(to=Genre, related_name="movies")
+    actors = models.ManyToManyField(to=Actor, related_name="movies")
 
     class Meta:
         ordering = ["title"]
@@ -51,8 +51,12 @@ class Movie(models.Model):
 
 class MovieSession(models.Model):
     show_time = models.DateTimeField()
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE)
+    movie = models.ForeignKey(
+        to=Movie, on_delete=models.CASCADE, related_name="movie_sessions"
+    )
+    cinema_hall = models.ForeignKey(
+        to=CinemaHall, on_delete=models.CASCADE, related_name="movie_sessions"
+    )
 
     class Meta:
         ordering = ["-show_time"]
@@ -64,7 +68,9 @@ class MovieSession(models.Model):
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="orders"
     )
 
     def __str__(self):
@@ -76,22 +82,23 @@ class Order(models.Model):
 
 class Ticket(models.Model):
     movie_session = models.ForeignKey(
-        MovieSession, on_delete=models.CASCADE, related_name="tickets"
+        to=MovieSession, on_delete=models.CASCADE, related_name="tickets"
     )
     order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="tickets"
+        to=Order, on_delete=models.CASCADE, related_name="tickets"
     )
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
+    @staticmethod
+    def validate_row_seat_within_cinema_hall(
+        row: int, seat: int, cinema_hall: CinemaHall, error_to_raise
+    ):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row"),
         ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
-            )
+            count_attrs = getattr(cinema_hall, cinema_hall_attr_name)
             if not (1 <= ticket_attr_value <= count_attrs):
                 raise ValidationError(
                     {
@@ -101,6 +108,14 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
+
+    def clean(self):
+        Ticket.validate_row_seat_within_cinema_hall(
+            self.row,
+            self.seat,
+            self.movie_session.cinema_hall,
+            ValidationError
+        )
 
     def save(
         self,
@@ -115,9 +130,9 @@ class Ticket(models.Model):
         )
 
     def __str__(self):
-        return (
-            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
-        )
+        return (f"{str(self.movie_session)} "
+                f"(row: {self.row}, seat: {self.seat})"
+                )
 
     class Meta:
         unique_together = ("movie_session", "row", "seat")
