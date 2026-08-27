@@ -84,23 +84,36 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
-        for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
-        ]:
-            count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+    @staticmethod
+    def validate_ticket(
+        seat: int, seats_in_row: int, row: int, rows: int, error_to_raise
+    ):
+        if not (1 <= seat <= seats_in_row):
+            raise error_to_raise(
+                {
+                    "seat": (
+                        f"seat must be in range [1, "
+                        f"{seats_in_row}], got {seat}"
+                    )
+                }
             )
-            if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
-                    {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                        f"number must be in available range: "
-                        f"(1, {cinema_hall_attr_name}): "
-                        f"(1, {count_attrs})"
-                    }
-                )
+        if not (1 <= row <= rows):
+            raise error_to_raise(
+                {
+                    "row": (
+                        f"row must be in range [1, {rows}], got {row}"
+                    )
+                }
+            )
+
+    def clean(self):
+        Ticket.validate_ticket(
+            self.seat,
+            self.movie_session.cinema_hall.seats_in_row,
+            self.row,
+            self.movie_session.cinema_hall.rows,
+            ValidationError,
+        )
 
     def save(
         self,
@@ -110,14 +123,18 @@ class Ticket(models.Model):
         update_fields=None,
     ):
         self.full_clean()
-        super(Ticket, self).save(
+        return super().save(
             force_insert, force_update, using, update_fields
         )
 
     def __str__(self):
-        return (
-            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
-        )
+        return (f"{str(self.movie_session)} "
+                f"(row: {self.row}, seat: {self.seat})")
 
     class Meta:
-        unique_together = ("movie_session", "row", "seat")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["movie_session", "row", "seat"],
+                name="unique_ticket_seat_booking",
+            )
+        ]
