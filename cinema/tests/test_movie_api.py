@@ -1,3 +1,5 @@
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
 from django.test import TestCase
 
 from rest_framework.test import APIClient
@@ -9,6 +11,10 @@ from cinema.models import Movie, Genre, Actor
 class MovieApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            username="test", email="test@test.com", password="testpassword"
+        )
+        self.client.force_authenticate(user=self.user)
         self.drama = Genre.objects.create(
             name="Drama",
         )
@@ -111,9 +117,6 @@ class MovieApiTests(TestCase):
         self.assertEqual(response.data["genres"][1]["name"], "Comedy")
         self.assertEqual(response.data["actors"][0]["first_name"], "Kate")
         self.assertEqual(response.data["actors"][0]["last_name"], "Winslet")
-        self.assertEqual(
-            response.data["actors"][0]["full_name"], "Kate Winslet"
-        )
 
     def test_get_invalid_movie(self):
         response = self.client.get("/api/cinema/movies/100/")

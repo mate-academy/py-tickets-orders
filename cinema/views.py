@@ -1,14 +1,15 @@
-from datetime import datetime
-from django.db.models import Count, F
+﻿from django.db.models import Count, F
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
-from cinema.permissions import IsAdminOrIfAuthenticatedReadOnly
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -25,45 +26,28 @@ from cinema.serializers import (
 )
 
 
-class GenreViewSet(
-    viewsets.mixins.CreateModelMixin,
-    viewsets.mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
+class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
 
-class ActorViewSet(
-    viewsets.mixins.CreateModelMixin,
-    viewsets.mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
+class ActorViewSet(viewsets.ModelViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
 
-class CinemaHallViewSet(
-    viewsets.mixins.CreateModelMixin,
-    viewsets.mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
+class CinemaHallViewSet(viewsets.ModelViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
 
-class MovieViewSet(
-    viewsets.mixins.CreateModelMixin,
-    viewsets.mixins.ListModelMixin,
-    viewsets.mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet,
-):
+class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -98,7 +82,7 @@ class MovieViewSet(
         methods=["POST"],
         detail=True,
         url_path="upload-image",
-        permission_classes=[IsAdminUser],
+        permission_classes=[IsAuthenticatedOrReadOnly],
     )
     def upload_image(self, request, pk=None):
         movie = self.get_object()
@@ -136,7 +120,7 @@ class MovieViewSet(
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -162,7 +146,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            queryset = queryset.filter(show_time=date)
+            queryset = queryset.filter(show_time__date=date)
         if movie:
             queryset = queryset.filter(movie_id=movie)
 

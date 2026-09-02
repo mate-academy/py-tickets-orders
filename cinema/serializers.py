@@ -1,4 +1,4 @@
-from django.db import transaction
+﻿from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from cinema.models import (
@@ -40,7 +40,6 @@ class MovieSerializer(serializers.ModelSerializer):
             "duration",
             "genres",
             "actors",
-            "image",
         )
         read_only_fields = ("id", "image")
 
@@ -67,7 +66,6 @@ class MovieListSerializer(MovieSerializer):
             "duration",
             "genres",
             "actors",
-            "image",
         )
 
 
@@ -83,7 +81,25 @@ class MovieDetailSerializer(MovieSerializer):
             "duration",
             "genres",
             "actors",
-            "image",
+        )
+
+
+class MovieSessionMovieSerializer(MovieSerializer):
+    genres = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="name"
+    )
+    actors = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="full_name"
+    )
+
+    class Meta(MovieSerializer.Meta):
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "genres",
+            "actors",
         )
 
 
@@ -150,7 +166,7 @@ class TicketSeatSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionDetailSerializer(MovieSessionSerializer):
-    movie = MovieDetailSerializer(read_only=True)
+    movie = MovieSessionMovieSerializer(read_only=True)
     cinema_hall = CinemaHallSerializer(read_only=True)
     taken_places = TicketSeatSerializer(
         source="tickets", many=True, read_only=True

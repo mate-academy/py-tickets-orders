@@ -1,3 +1,5 @@
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
 import datetime
 
 from django.test import TestCase
@@ -5,12 +7,16 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from cinema.models import Movie, Genre, Actor, MovieSession, CinemaHall, Ticket
+from cinema.models import Movie, Genre, Actor, MovieSession, CinemaHall
 
 
 class MovieSessionApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            username="test", email="test@test.com", password="testpassword"
+        )
+        self.client.force_authenticate(user=self.user)
         drama = Genre.objects.create(
             name="Drama",
         )
