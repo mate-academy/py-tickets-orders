@@ -3,7 +3,6 @@ from rest_framework.test import APIClient
 from django.test import TestCase
 
 from rest_framework import status
-from rest_framework.test import APIClient
 
 from cinema.models import Actor
 
@@ -22,7 +21,7 @@ class ActorApiTests(TestCase):
         response = self.client.get("/api/cinema/actors/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         actors_full_names = [
-            f"{actor['first_name']} {actor['last_name']}"
+            f"{actor["first_name"]} {actor["last_name"]}"
             for actor in response.data
         ]
         self.assertEqual(
