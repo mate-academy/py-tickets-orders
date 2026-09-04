@@ -1,8 +1,7 @@
-from django.contrib.auth import get_user_model
-from rest_framework.test import APIClient
 from django.test import TestCase
 
 from rest_framework import status
+from rest_framework.test import APIClient
 
 from cinema.models import Actor
 
@@ -10,20 +9,13 @@ from cinema.models import Actor
 class ActorApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = get_user_model().objects.create_user(
-            username="test", email="test@test.com", password="testpassword"
-        )
-        self.client.force_authenticate(user=self.user)
         Actor.objects.create(first_name="George", last_name="Clooney")
         Actor.objects.create(first_name="Keanu", last_name="Reeves")
 
     def test_get_actors(self):
         response = self.client.get("/api/cinema/actors/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        actors_full_names = [
-            actor["full_name"]
-            for actor in response.data
-        ]
+        actors_full_names = [actor["full_name"] for actor in response.data]
         self.assertEqual(
             sorted(actors_full_names), ["George Clooney", "Keanu Reeves"]
         )

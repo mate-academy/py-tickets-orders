@@ -1,7 +1,6 @@
-from django.contrib.auth import get_user_model
-from rest_framework.test import APIClient
 from django.test import TestCase
 
+from rest_framework.test import APIClient
 from rest_framework import status
 
 from cinema.models import CinemaHall
@@ -10,10 +9,6 @@ from cinema.models import CinemaHall
 class CinemaHallApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = get_user_model().objects.create_user(
-            username="test", email="test@test.com", password="testpassword"
-        )
-        self.client.force_authenticate(user=self.user)
         CinemaHall.objects.create(
             name="Blue",
             rows=15,
