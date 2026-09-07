@@ -131,6 +131,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         order = Order.objects.create(**validated_data)
 
         for ticket_data in tickets_data:
-            Ticket.objects.create(order=order, **ticket_data)
+            Ticket.objects.create(order=order, **ticket_data.validated_data)
 
         return order
