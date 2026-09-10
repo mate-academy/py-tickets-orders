@@ -19,22 +19,26 @@ from cinema.serializers import (
 )
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class NoPaginationViewSet(viewsets.ModelViewSet):
+    pagination_class = None
+
+
+class GenreViewSet(NoPaginationViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
-class ActorViewSet(viewsets.ModelViewSet):
+class ActorViewSet(NoPaginationViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
 
 
-class CinemaHallViewSet(viewsets.ModelViewSet):
+class CinemaHallViewSet(NoPaginationViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
 
 
-class MovieViewSet(viewsets.ModelViewSet):
+class MovieViewSet(NoPaginationViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
@@ -72,7 +76,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         return queryset.distinct()
 
 
-class MovieSessionViewSet(viewsets.ModelViewSet):
+class MovieSessionViewSet(NoPaginationViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
