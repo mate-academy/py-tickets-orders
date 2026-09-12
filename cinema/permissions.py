@@ -1,10 +1,10 @@
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class IsAdminOrIfAuthenticatedReadOnly(IsAuthenticatedOrReadOnly):
+class IsAdminOrIfAuthenticatedReadOnly(BasePermission):
     def has_permission(self, request, view):
         return bool(
-            request.method in self.SAFE_METHODS
+            request.method in SAFE_METHODS
             and request.user
             and request.user.is_authenticated
             or request.user
