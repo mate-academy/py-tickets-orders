@@ -1,5 +1,7 @@
-from django.db.models import Count, F
+from datetime import datetime
 
+from django.db.models import Count, F
+from django.utils.dateparse import parse_date
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 
@@ -90,7 +92,19 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(movie_id=int(movie_id))
 
             if show_time_date:
-                queryset = queryset.filter(show_time=show_time_date)
+                parsed_date = parse_date(show_time_date)
+                if parsed_date:
+                    start_of_day = datetime.combine(
+                        parsed_date,
+                        datetime.min.time()
+                    )
+                    end_of_day = datetime.combine(
+                        parsed_date,
+                        datetime.max.time()
+                    )
+                    queryset = queryset.filter(
+                        show_time__range=(start_of_day, end_of_day)
+                    )
 
             queryset = (
                 queryset
