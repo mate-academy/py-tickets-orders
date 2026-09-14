@@ -1,4 +1,7 @@
+from datetime import datetime, timedelta
+
 from django.db.models import Count, F
+from django.utils import timezone
 
 from rest_framework import viewsets
 
@@ -87,7 +90,13 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            queryset = queryset.filter(show_time__date=date)
+            start_of_day = timezone.make_aware(
+                datetime.strptime(date, "%Y-%m-%d")
+            )
+            queryset = queryset.filter(
+                show_time__gte=start_of_day,
+                show_time__lt=start_of_day + timedelta(days=1),
+            )
 
         if movie:
             queryset = queryset.filter(movie_id=movie)
