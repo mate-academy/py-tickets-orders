@@ -1,4 +1,5 @@
 from django.db.models import Count, F
+from django.db.models.functions import TruncDate
 
 from rest_framework import viewsets
 
@@ -87,7 +88,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            queryset = queryset.filter(show_time=date)
+            queryset = queryset.alias(show_date=TruncDate("show_time"))
+            queryset = queryset.filter(show_date=date)
 
         if movie:
             queryset = queryset.filter(movie_id=movie)
