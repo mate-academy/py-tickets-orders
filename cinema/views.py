@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
 
 from cinema.models import (
     Genre,
@@ -86,7 +87,9 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie = self.request.query_params.get("movie")
 
         if date:
-            queryset = queryset.filter(show_time__date=date)
+            queryset = queryset.filter(
+                Q(show_time=date) | Q(show_time__date=date)
+            )
         if movie:
             queryset = queryset.filter(movie_id=movie)
         return queryset
