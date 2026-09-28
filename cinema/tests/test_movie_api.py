@@ -47,7 +47,9 @@ class MovieApiTests(TestCase):
         )
         self.assertEqual(len(movies.data), 1)
         movies = self.client.get(
-            f"/api/cinema/movies/?genres={self.comedy.id},2,3"
+            "/api/cinema/movies/?genres={id_1},{id_2},{id_3}".format(
+                id_1=self.comedy.id, id_2=2, id_3=3
+            )
         )
         self.assertEqual(len(movies.data), 1)
         movies = self.client.get("/api/cinema/movies/?genres=123213")
@@ -58,13 +60,13 @@ class MovieApiTests(TestCase):
             f"/api/cinema/movies/?actors={self.actress.id}"
         )
         self.assertEqual(len(movies.data), 1)
-        movies = self.client.get(f"/api/cinema/movies/?actors={123}")
+        movies = self.client.get("/api/cinema/movies/?actors=123")
         self.assertEqual(len(movies.data), 0)
 
     def test_get_movies_with_title_filtering(self):
-        movies = self.client.get(f"/api/cinema/movies/?title=ita")
+        movies = self.client.get("/api/cinema/movies/?title=ita")
         self.assertEqual(len(movies.data), 1)
-        movies = self.client.get(f"/api/cinema/movies/?title=ati")
+        movies = self.client.get("/api/cinema/movies/?title=ati")
         self.assertEqual(len(movies.data), 0)
 
     def test_post_movies(self):
