@@ -23,6 +23,7 @@ from cinema.serializers import (
     OrderSerializer,
     TicketSerializer,
     OrderListSerializer,
+    OrderCreateSerializer
 )
 
 
@@ -131,7 +132,7 @@ class TicketViewSet(viewsets.ModelViewSet):
 
 
 class OrderSetPagination(PageNumberPagination):
-    page_size = 3
+    page_size = 2
     page_size_query_param = "page_size"
     max_page_size = 20
 
@@ -159,4 +160,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class
         if self.action == "list":
             serializer = OrderListSerializer
+        if self.action == "create":
+            serializer = OrderCreateSerializer
         return serializer
