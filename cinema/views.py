@@ -1,6 +1,8 @@
-from rest_framework import viewsets
+import rest_framework
+from rest_framework import viewsets, pagination
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
+from cinema.filters import MovieFilter, MovieSessionFilter
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
     GenreSerializer,
@@ -11,7 +13,7 @@ from cinema.serializers import (
     MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
-    MovieListSerializer,
+    MovieListSerializer, OrderSerializer,
 )
 
 
@@ -33,6 +35,7 @@ class CinemaHallViewSet(viewsets.ModelViewSet):
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+    filterset_class = MovieFilter
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -47,6 +50,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
+    filterset_class = MovieSessionFilter
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -56,3 +60,23 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionDetailSerializer
 
         return MovieSessionSerializer
+
+
+class OrderPagination(pagination.PageNumberPagination):
+    page_size = 2
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    pagination_class = OrderPagination
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class OrderPagination(pagination.PageNumberPagination):
+    page_size = 10
