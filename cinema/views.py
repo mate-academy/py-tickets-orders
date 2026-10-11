@@ -115,7 +115,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    # pagination_class = StandardResultsSetPagination
 
     def get_serializer_class(self):
         if self.action == "create":
