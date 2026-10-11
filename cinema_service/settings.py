@@ -138,3 +138,8 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_REDIRECT_URL = "/api/cinema/orders/"
+
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "cinema.pagination.OrderPagination",
+    "PAGE_SIZE": 10,
+}

@@ -1,5 +1,6 @@
 from rest_framework import viewsets
-from rest_framework.pagination import PageNumberPagination
+
+from cinema.pagination import OrderPagination
 
 from cinema.models import (
     Genre,
@@ -28,21 +29,25 @@ from rest_framework.permissions import IsAuthenticated
 
 
 class GenreViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
@@ -68,12 +73,14 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         actors = self.request.query_params.get("actors")
         if actors:
-            queryset = queryset.filter(actors__id=actors)
+            actor_ids = actors.split(",")
+            queryset = queryset.filter(actors__id__in=actor_ids)
 
         return queryset.distinct()
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
@@ -95,10 +102,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         if movie:
             queryset = queryset.filter(movie_id=movie)
         return queryset
-
-
-class OrderPagination(PageNumberPagination):
-    page_size = 10
 
 
 class OrderViewSet(viewsets.ModelViewSet):
