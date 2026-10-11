@@ -89,6 +89,9 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
+    class Meta:
+        unique_together = ("movie_session", "row", "seat")
+
     @staticmethod
     def validate_ticket(row, seat, cinema_hall, error_to_raise):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
@@ -123,16 +126,13 @@ class Ticket(models.Model):
     ):
         self.full_clean()
         super(Ticket, self).save(
-            force_insert,
-            force_update,
-            using,
-            update_fields,
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
         )
 
-
-def __str__(self):
-    return f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
-
-
-class Meta:
-    unique_together = ("movie_session", "row", "seat")
+    def __str__(self):
+        return (
+            f"{str(self.movie_session)} (row: {self.row}, seat: {self.seat})"
+        )

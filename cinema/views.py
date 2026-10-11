@@ -159,7 +159,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        if self.action in ("list", "retrive"):
+        if self.action in ("list", "retrieve"):
             return OrderListSerializer
         return OrderSerializer
 
