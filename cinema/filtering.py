@@ -1,4 +1,3 @@
-from django.db.models import Q
 from django_filters import rest_framework as filters
 
 from cinema.models import MovieSession, Movie
@@ -22,9 +21,7 @@ class MovieFilter(filters.FilterSet):
         field_name="genres__id",
         lookup_expr="in",
     )
-    actors = filters.NumberFilter(
-        field_name="actors__id",
-    )
+    actors = filters.BaseInFilter(field_name="actors__id", lookup_expr="in")
 
     class Meta:
         model = Movie
