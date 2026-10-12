@@ -108,6 +108,7 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
     def get_taken_places(self, obj):
         return list(obj.tickets.values("row", "seat"))
 
+
 class TicketSerializer(serializers.ModelSerializer):
     movie_session = MovieSessionListSerializer(read_only=True)
 
@@ -115,12 +116,14 @@ class TicketSerializer(serializers.ModelSerializer):
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
 
+
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
         fields = ("id", "tickets", "created_at")
+
 
 class TicketCreateSerializer(serializers.ModelSerializer):
     movie_session = serializers.PrimaryKeyRelatedField(
@@ -130,6 +133,7 @@ class TicketCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ("row", "seat", "movie_session")
+
 
 class OrderCreateSerializer(serializers.ModelSerializer):
     tickets = TicketCreateSerializer(many=True, allow_empty=False)
