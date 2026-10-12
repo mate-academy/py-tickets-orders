@@ -60,6 +60,10 @@ class MovieSession(models.Model):
     def __str__(self):
         return self.movie.title + " " + str(self.show_time)
 
+    @property
+    def taken_places(self):
+        return self.tickets.values("row", "seat")
+
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
