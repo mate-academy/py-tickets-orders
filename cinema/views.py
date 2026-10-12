@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db.models import Prefetch, F, Count
 from rest_framework import viewsets, pagination
 
@@ -106,6 +108,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             )
 
         if date:
+            date = datetime.strptime(date, "%Y-%m-%d").date()
             queryset = queryset.filter(show_time__date=date)
 
         if movie:
@@ -136,8 +139,9 @@ class OrderViewSet(viewsets.ModelViewSet):
     pagination_class = OrderPagination
 
     def get_queryset(self):
+        queryset = self.queryset.filter(user=self.request.user)
         if self.action == "list":
-            queryset = Order.objects.prefetch_related(
+            queryset = queryset.prefetch_related(
                 Prefetch(
                     "tickets",
                     queryset=Ticket.objects.select_related(
@@ -146,8 +150,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     ),
                 )
             )
-            return queryset
-        return self.queryset
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
