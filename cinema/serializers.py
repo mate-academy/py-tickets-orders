@@ -132,13 +132,6 @@ class TicketSerializer(serializers.ModelSerializer):
         if movie_session.cinema_hall.seats_in_row < seat or seat < 1:
             raise serializers.ValidationError("Invalid seat")
 
-        if Ticket.objects.filter(
-                row=row,
-                seat=seat,
-                movie_session=movie_session
-        ).exists():
-            raise serializers.ValidationError("Seat is occupied")
-
         return attrs
 
 
