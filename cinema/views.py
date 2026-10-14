@@ -1,6 +1,5 @@
 from django.db.models import Count, F
 from rest_framework import viewsets
-from rest_framework.pagination import PageNumberPagination
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
@@ -10,7 +9,6 @@ from cinema.serializers import (
     CinemaHallSerializer,
     MovieSerializer,
     MovieSessionSerializer,
-    MovieSessionListSerializer,
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
@@ -105,13 +103,8 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class OrderPagination(PageNumberPagination):
-    page_size = 10
-
-
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
-    pagination_class = OrderPagination
 
     def get_queryset(self):
         return (
