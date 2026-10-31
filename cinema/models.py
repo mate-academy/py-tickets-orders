@@ -84,16 +84,22 @@ class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
 
-    def clean(self):
+    @staticmethod
+    def validate_seat_and_row(
+        row: int,
+        seat: int,
+        cinema_hall: CinemaHall,
+        error_to_raise: type[Exception]
+    ):
         for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
-            (self.row, "row", "rows"),
-            (self.seat, "seat", "seats_in_row"),
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row"),
         ]:
             count_attrs = getattr(
-                self.movie_session.cinema_hall, cinema_hall_attr_name
+                cinema_hall, cinema_hall_attr_name
             )
             if not (1 <= ticket_attr_value <= count_attrs):
-                raise ValidationError(
+                raise error_to_raise(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
                         f"number must be in available range: "
@@ -101,6 +107,30 @@ class Ticket(models.Model):
                         f"(1, {count_attrs})"
                     }
                 )
+
+    def clean(self):
+        Ticket.validate_seat_and_row(
+            self.row,
+            self.seat,
+            self.movie_session.cinema_hall,
+            ValidationError
+        )
+        # for ticket_attr_value, ticket_attr_name, cinema_hall_attr_name in [
+        #     (self.row, "row", "rows"),
+        #     (self.seat, "seat", "seats_in_row"),
+        # ]:
+        #     count_attrs = getattr(
+        #         self.movie_session.cinema_hall, cinema_hall_attr_name
+        #     )
+        #     if not (1 <= ticket_attr_value <= count_attrs):
+        #         raise ValidationError(
+        #             {
+        #                 ticket_attr_name: f"{ticket_attr_name} "
+        #                 f"number must be in available range: "
+        #                 f"(1, {cinema_hall_attr_name}): "
+        #                 f"(1, {count_attrs})"
+        #             }
+        #         )
 
     def save(
         self,
@@ -111,7 +141,10 @@ class Ticket(models.Model):
     ):
         self.full_clean()
         super(Ticket, self).save(
-            force_insert, force_update, using, update_fields
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields
         )
 
     def __str__(self):
