@@ -1,6 +1,14 @@
 from rest_framework import serializers
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Ticket, Order
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Ticket,
+    Order
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -117,7 +125,8 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall","taken_places")
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
+
 
 class MovieSessionTicketSerializer(serializers.ModelSerializer):
     movie_title = serializers.CharField(
@@ -132,6 +141,7 @@ class MovieSessionTicketSerializer(serializers.ModelSerializer):
         source="cinema_hall.capacity",
         read_only=True,
     )
+
     class Meta:
         model = MovieSession
         fields = (
@@ -145,6 +155,7 @@ class MovieSessionTicketSerializer(serializers.ModelSerializer):
 
 class TicketSerializer(serializers.ModelSerializer):
     movie_session = MovieSessionTicketSerializer(read_only=True)
+
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
@@ -154,6 +165,7 @@ class TicketCreateSerializer(serializers.ModelSerializer):
     movie_session = serializers.PrimaryKeyRelatedField(
         queryset=MovieSession.objects.all()
     )
+
     class Meta:
         model = Ticket
         fields = ("row", "seat", "movie_session")
@@ -168,7 +180,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True, read_only=True)
+    tickets = TicketSerializer(many=True,)
 
     class Meta:
         model = Order
