@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
 from cinema.models import (
     Genre,
@@ -68,6 +69,8 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
+    pagination_class = None
+    serializer_class = MovieSessionSerializer
     queryset = MovieSession.objects.select_related(
         "movie",
         "cinema_hall",
@@ -111,8 +114,13 @@ class TicketsViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+        return Order.objects.filter(
+            user=self.request.user
+        )
+
     def get_serializer_class(self):
         if self.action == "create":
             return OrderCreateSerializer
