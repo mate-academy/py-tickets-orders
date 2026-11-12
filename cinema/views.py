@@ -24,38 +24,48 @@ from cinema.serializers import (
     TicketSerializer,
     OrderCreateSerializer,
     OrderSerializer,
+    MovieSessionCreateSerializer,
 )
 
 
 class GenreViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
     queryset = Movie.objects.all()
+    pagination_class = None
 
     def get_queryset(self):
-        queryset = Movie.objects.prefetch_related("genres", "actors")
+        queryset = Movie.objects.prefetch_related(
+            "genres",
+            "actors",
+        )
         title = self.request.query_params.get("title")
         actors = self.request.query_params.get("actors")
         genres = self.request.query_params.get("genres")
         if title:
             queryset = queryset.filter(title__icontains=title)
         if actors:
-            queryset = queryset.filter(actors__id=actors)
+            actor_ids = actors.split(",")
+            queryset = queryset.filter(actors__id__in=actor_ids)
         if genres:
-            queryset = queryset.filter(genres__id=genres)
+            genre_ids = genres.split(",")
+            queryset = queryset.filter(genres__id__in=genre_ids)
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -101,12 +111,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
-
         if self.action == "retrieve":
             return MovieSessionDetailSerializer
-
+        if self.action == "create":
+            return MovieSessionCreateSerializer
         return MovieSessionSerializer
-
 
 class TicketsViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
@@ -114,6 +123,7 @@ class TicketsViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
