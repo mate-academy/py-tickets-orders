@@ -126,6 +126,7 @@ class MovieSessionCreateSerializer(serializers.ModelSerializer):
     cinema_hall = serializers.PrimaryKeyRelatedField(
         queryset=CinemaHall.objects.all()
     )
+
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")

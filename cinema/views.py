@@ -117,6 +117,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             return MovieSessionCreateSerializer
         return MovieSessionSerializer
 
+
 class TicketsViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
