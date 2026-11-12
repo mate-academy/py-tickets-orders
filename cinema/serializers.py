@@ -191,7 +191,7 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ("id", "row", "seat", "movie_session")
-        read_only_fields = "id"
+        read_only_fields = ("id",)
 
     def validate(self, attrs):
         movie_session = attrs.get("movie_session",
