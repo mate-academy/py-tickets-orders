@@ -180,12 +180,10 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    tickets = TicketSerializer(many=True,)
-
+    tickets = TicketCreateSerializer(many=True)
     class Meta:
         model = Order
         fields = ("id", "tickets", "created_at")
-
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
         order = Order.objects.create(
