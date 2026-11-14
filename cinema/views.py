@@ -43,13 +43,19 @@ class MovieViewSet(viewsets.ModelViewSet):
         title_filter = self.request.query_params.get("title")
 
         if actors_filter:
-            queryset = queryset.filter(actors__in=self._parse_field_param(actors_filter)).distinct()
+            queryset = queryset.filter(
+                actors__in=self._parse_field_param(actors_filter)
+            ).distinct()
 
         if genres_filter:
-            queryset = queryset.filter(genres__in=self._parse_field_param(genres_filter)).distinct()
+            queryset = queryset.filter(
+                genres__in=self._parse_field_param(genres_filter)
+            ).distinct()
 
         if title_filter:
-            queryset = queryset.filter(title__icontains=title_filter).distinct()
+            queryset = queryset.filter(
+                title__icontains=title_filter
+            ).distinct()
 
         if self.action in ["list", "retrieve"]:
             return queryset.prefetch_related("actors")
@@ -67,7 +73,11 @@ class MovieViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _parse_field_param(param):
-        return [int(field.strip()) for field in param.split(",") if field.strip().isdigit()]
+        return [
+            int(field.strip())
+            for field in param.split(",")
+            if field.strip().isdigit()
+        ]
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
@@ -81,10 +91,14 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie_filter = self.request.query_params.get("movie")
 
         if show_time_filter:
-            queryset = queryset.filter(show_time__date=show_time_filter).distinct()
+            queryset = queryset.filter(
+                show_time__date=show_time_filter
+            ).distinct()
 
         if movie_filter:
-            queryset = queryset.filter(movie__in=self._parse_field_param(movie_filter)).distinct()
+            queryset = queryset.filter(
+                movie__in=self._parse_field_param(movie_filter)
+            ).distinct()
 
         return queryset.all()
 
@@ -99,7 +113,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def _parse_field_param(param):
-        return [int(field.strip()) for field in param.split(",") if field.strip().isdigit()]
+        return [
+            int(field.strip())
+            for field in param.split(",")
+            if field.strip().isdigit()
+        ]
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()

@@ -2,7 +2,15 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Ticket, Order
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Ticket,
+    Order
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -114,15 +122,21 @@ class OrderSerializer(serializers.ModelSerializer):
 class OrderListSerializer(OrderSerializer):
     tickets = TicketListSerializer(many=True, read_only=True)
 
+
 class TicketInMovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ("row", "seat")
 
+
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
-    taken_places = TicketInMovieSessionSerializer(source="tickets", many=True, read_only=True)
+    taken_places = TicketInMovieSessionSerializer(
+        source="tickets",
+        many=True,
+        read_only=True
+    )
 
     class Meta:
         model = MovieSession
