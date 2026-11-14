@@ -97,6 +97,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
         return MovieSessionSerializer
 
+    @staticmethod
+    def _parse_field_param(param):
+        return [int(field.strip()) for field in param.split(",") if field.strip().isdigit()]
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
