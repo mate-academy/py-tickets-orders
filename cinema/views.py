@@ -81,10 +81,10 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         movie_filter = self.request.query_params.get("movie")
 
         if show_time_filter:
-            queryset = queryset.filter(show_time__icontains=show_time_filter).distinct()
+            queryset = queryset.filter(show_time__date=show_time_filter).distinct()
 
         if movie_filter:
-            queryset = queryset.filter(movie__in=movie_filter).distinct()
+            queryset = queryset.filter(movie__in=self._parse_field_param(movie_filter)).distinct()
 
         return queryset.all()
 
