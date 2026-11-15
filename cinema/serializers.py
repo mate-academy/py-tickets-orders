@@ -91,9 +91,16 @@ class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ["id", "row", "seat", "movie_session", "order"]
+        fields = ["id", "row", "seat", "movie_session"]
 
 
 class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer(read_only=True)
 
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ("id", "tickets", "created_at")
