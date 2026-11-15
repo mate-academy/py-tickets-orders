@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
+from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
 from cinema.serializers import (
     GenreSerializer,
@@ -12,7 +12,9 @@ from cinema.serializers import (
     MovieDetailSerializer,
     MovieSessionDetailSerializer,
     MovieListSerializer,
-    OrderSerializer
+    OrderSerializer,
+    TicketSerializer,
+    TicketListSerializer,
 )
 
 
@@ -62,3 +64,11 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+
+class TicketViewSet(viewsets.ModelViewSet):
+    queryset = Ticket.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == "list" or "retrieve":
+            return TicketListSerializer
