@@ -1,9 +1,21 @@
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.viewsets import GenericViewSet
+from rest_framework import viewsets, mixins
+from rest_framework.permissions import IsAuthenticated
+from cinema.models import Order
+from cinema.serializers import OrderSerializer
+
+class OrderPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+from rest_framework import viewsets, mixins
+from cinema.pagination import OrderPagination
 from django.db.models import Count, F
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import mixins, viewsets
-from rest_framework.pagination import PageNumberPagination
-
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 from cinema.serializers import (
     GenreSerializer,
@@ -145,19 +157,17 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(
-    mixins.CreateModelMixin,
     mixins.ListModelMixin,
-    viewsets.GenericViewSet,
+    mixins.CreateModelMixin,
+    GenericViewSet,
 ):
-    queryset = Order.objects.prefetch_related(
-        "tickets__movie_session__movie",
-        "tickets__movie_session__cinema_hall",
-    )
+    queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    pagination_class = PageNumberPagination
+    pagination_class = OrderPagination
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        return Order.objects.filter(user=self.request.user)
 
     def get_serializer_class(self):
         if self.action == "list":
