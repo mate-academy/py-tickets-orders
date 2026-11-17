@@ -1,10 +1,8 @@
-from cinema.permissions import IsAdminOrIfAuthenticatedReadOnly
 from django.db.models import Count, F
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import mixins, viewsets
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 from cinema.serializers import (
@@ -23,25 +21,21 @@ from cinema.serializers import (
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
 
@@ -97,7 +91,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
@@ -162,7 +155,6 @@ class OrderViewSet(
     )
     serializer_class = OrderSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
