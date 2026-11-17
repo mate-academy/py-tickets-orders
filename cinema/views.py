@@ -1,3 +1,4 @@
+from cinema.permissions import IsAdminOrIfAuthenticatedReadOnly
 from django.db.models import Count, F
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -22,21 +23,25 @@ from cinema.serializers import (
 
 
 class GenreViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
 
@@ -92,6 +97,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
     queryset = MovieSession.objects.all()
     serializer_class = MovieSessionSerializer
 
