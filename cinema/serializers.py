@@ -47,6 +47,33 @@ class MovieDetailSerializer(MovieSerializer):
         fields = ("id", "title", "description", "duration", "genres", "actors")
 
 
+class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class TicketInOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat", "movie_session")
+
+    def validate(self, attrs):
+        ticket = Ticket(**attrs)
+        try:
+            ticket.full_clean(exclude=["order"])
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+        return attrs
+
+
+class TicketSeatSerializer(TicketSerializer):
+
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
+
+
 class MovieSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieSession
@@ -76,30 +103,15 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 class MovieSessionDetailSerializer(MovieSessionSerializer):
     movie = MovieListSerializer(many=False, read_only=True)
     cinema_hall = CinemaHallSerializer(many=False, read_only=True)
+    taken_places = TicketSeatSerializer(
+        source = "tickets",
+        many=True,
+        read_only=True
+    )
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
-
-
-class TicketSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Ticket
-        fields = ("id", "row", "seat", "movie_session")
-
-
-class TicketInOrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Ticket
-        fields = ("row", "seat", "movie_session")
-
-    def validate(self, attrs):
-        ticket = Ticket(**attrs)
-        try:
-            ticket.full_clean(exclude=["order"])
-        except ValidationError as e:
-            raise serializers.ValidationError(e.message_dict)
-        return attrs
+        fields = ("id", "show_time", "movie", "cinema_hall", "taken_places")
 
 
 class TicketListSerializer(TicketSerializer):
