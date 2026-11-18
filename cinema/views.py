@@ -1,4 +1,6 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
@@ -64,20 +66,33 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
-    
+
     def get_serializer_class(self):
-        if self.action == "list" or "retriev":
+        if self.action in ["list", "retrieve"]:
             return OrderListSerializer
         return OrderSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        response_serializer = OrderListSerializer(
+            serializer.instance, context=self.get_serializer_context()
+        )
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+    
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
 
     def get_serializer_class(self):
-        if self.action == "list" or "retrieve":
+        if self.action in ["list", "retrieve"]:
             return TicketListSerializer
         return TicketSerializer

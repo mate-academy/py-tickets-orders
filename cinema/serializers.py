@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from django.db import transaction
+from django.core.exceptions import ValidationError
 
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
 
@@ -80,27 +82,46 @@ class MovieSessionDetailSerializer(MovieSessionSerializer):
         fields = ("id", "show_time", "movie", "cinema_hall")
 
 
-class OrderSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Order
-        fields = ("id", "user", "created_at")
-
-
 class TicketSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Ticket
-        fields = ["id", "row", "seat", "movie_session"]
+        fields = ("id", "row", "seat", "movie_session")
+
+
+class TicketInOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat", "movie_session")
+
+    def validate(self, attrs):
+        ticket = Ticket(**attrs)
+        try:
+            ticket.full_clean(exclude=["order"])
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+        return attrs
 
 
 class TicketListSerializer(TicketSerializer):
     movie_session = MovieSessionListSerializer(read_only=True)
 
 
-class OrderListSerializer(OrderSerializer):
-    tickets = TicketListSerializer(many=True, read_only=True)
+class OrderSerializer(serializers.ModelSerializer):
+    tickets = TicketInOrderSerializer(many=True, allow_empty=False)
 
     class Meta:
         model = Order
         fields = ("id", "tickets", "created_at")
+        read_only_fields = ("id", "created_at")
+
+    def create(self, validated_data):
+        tickets_data = validated_data.pop("tickets")
+        with transaction.atomic():
+            order = Order.objects.create(**validated_data)
+            for ticket_data in tickets_data:
+                Ticket.objects.create(order=order, **ticket_data)
+        return order
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
