@@ -3,7 +3,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Count, F
 
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order, Ticket
+from cinema.models import (
+    Genre,
+    Actor,
+    CinemaHall,
+    Movie,
+    MovieSession,
+    Order,
+    Ticket
+)
 
 from cinema.serializers import (
     GenreSerializer,
@@ -99,8 +107,15 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie__id=int(movie))
 
         if self.action in ["list", "retrieve"]:
-            queryset = queryset.select_related("movie", "cinema_hall").annotate(available=F("cinema_hall__rows") * F("cinema_hall__seats_in_row") - Count("tickets"))
-
+            queryset = (
+                queryset.select_related("movie", "cinema_hall")
+                .annotate(
+                    tickets_available=(
+                        F("cinema_hall__rows") * F("cinema_hall__seats_in_row")
+                        - Count("tickets")
+                    )
+                )
+            )
         return queryset.distinct()
 
 
@@ -124,10 +139,14 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         response_serializer = OrderListSerializer(
-            serializer.instance, context=self.get_serializer_context()
+            serializer.instance,
+            context=self.get_serializer_context()
         )
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    
+        return Response(
+            response_serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+
 
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
