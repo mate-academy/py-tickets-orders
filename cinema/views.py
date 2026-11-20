@@ -5,17 +5,13 @@ from rest_framework.permissions import IsAuthenticated
 from cinema.models import Order
 from cinema.serializers import OrderSerializer
 
+
 class OrderPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 100
 
-from rest_framework import viewsets, mixins
-from cinema.pagination import OrderPagination
 from django.db.models import Count, F
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import mixins, viewsets
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 from cinema.serializers import (
     GenreSerializer,
@@ -79,28 +75,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         return queryset.distinct()
 
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                "genres",
-                type=OpenApiTypes.STR,
-                description="Filter by genre ids (e.g. ?genres=1,2)",
-            ),
-            OpenApiParameter(
-                "actors",
-                type=OpenApiTypes.STR,
-                description="Filter by actor ids (e.g. ?actors=1,2)",
-            ),
-            OpenApiParameter(
-                "title",
-                type=OpenApiTypes.STR,
-                description="Filter by movie title (e.g. ?title=Inception)",
-            ),
-        ]
-    )
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
     queryset = MovieSession.objects.all()
@@ -137,23 +111,6 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(movie_id=movie)
 
         return queryset
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                "date",
-                type=OpenApiTypes.DATE,
-                description="Filter by show time date (e.g. ?date=2022-12-12)",
-            ),
-            OpenApiParameter(
-                "movie",
-                type=OpenApiTypes.INT,
-                description="Filter by movie id (e.g. ?movie=1)",
-            ),
-        ]
-    )
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
 
 
 class OrderViewSet(
