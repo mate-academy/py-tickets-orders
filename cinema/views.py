@@ -1,27 +1,24 @@
+from django.db.models import Count, F
+from rest_framework import mixins, viewsets
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.viewsets import GenericViewSet
-from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticated
-from cinema.models import Order
-from cinema.serializers import OrderSerializer
+from rest_framework.viewsets import GenericViewSet
 
-
-class OrderPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = "page_size"
-    max_page_size = 100
-
-    GenreSerializer,
+from cinema.models import Actor, CinemaHall, Genre, Movie, MovieSession, Order
+from cinema.pagination import OrderPagination
+from cinema.serializers import (
     ActorSerializer,
     CinemaHallSerializer,
-    MovieSerializer,
-    MovieListSerializer,
+    GenreSerializer,
     MovieDetailSerializer,
-    MovieSessionSerializer,
-    MovieSessionListSerializer,
+    MovieListSerializer,
+    MovieSerializer,
     MovieSessionDetailSerializer,
-    OrderSerializer,
+    MovieSessionListSerializer,
+    MovieSessionSerializer,
     OrderListSerializer,
+    OrderSerializer,
+)
 
 
 class GenreViewSet(viewsets.ModelViewSet):
