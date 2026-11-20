@@ -11,9 +11,6 @@ class OrderPagination(PageNumberPagination):
     page_size_query_param = "page_size"
     max_page_size = 100
 
-from django.db.models import Count, F
-from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
-from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
     CinemaHallSerializer,
