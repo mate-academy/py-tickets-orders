@@ -22,7 +22,6 @@ class OrderPagination(PageNumberPagination):
     MovieSessionDetailSerializer,
     OrderSerializer,
     OrderListSerializer,
-)
 
 
 class GenreViewSet(viewsets.ModelViewSet):
