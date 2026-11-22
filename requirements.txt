@@ -1,4 +1,4 @@
-﻿django
+django
 djangorestframework
 sqlparse
 psycopg2-binary
