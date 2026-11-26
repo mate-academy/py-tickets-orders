@@ -1,4 +1,4 @@
-django
+django==4.1
 flake8
 flake8-quotes
 flake8-variables-names
