@@ -136,3 +136,9 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    # Only the page size is set here. The pagination class is applied
+    # to the orders endpoint only, so other lists stay unpaginated.
+    "PAGE_SIZE": 5,
+}
