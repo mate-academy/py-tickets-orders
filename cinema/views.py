@@ -1,6 +1,6 @@
 from django.db.models import F, Count
 
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, permissions
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import GenericViewSet
 
@@ -153,6 +153,7 @@ class OrderViewSet(
         "tickets__movie_session__cinema_hall",
     )
     serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
